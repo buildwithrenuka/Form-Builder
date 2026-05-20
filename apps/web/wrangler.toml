@@ -1,0 +1,13 @@
+name    = "formquest-web"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-01-01"
+
+# ── Build command ─────────────────────────────────────────────────────────
+# wrangler pages deploy dist
+# Or connect this repo in the Cloudflare dashboard:
+#   Build command:  npm run build
+#   Output dir:     dist
+#   Root dir:       apps/web
+
+# ── Environment variables (set in Cloudflare Pages dashboard) ─────────────
+# VITE_API_URL = https://formquest-api.<your-subdomain>.workers.dev

@@ -1,0 +1,29 @@
+name            = "formquest-api"
+main            = "src/index.ts"
+compatibility_date  = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ── D1 SQLite database ─────────────────────────────────────────────────────
+# Run: wrangler d1 create formquest-db
+# Then paste the database_id returned below.
+[[d1_databases]]
+binding       = "DB"
+database_name = "formquest-db"
+database_id   = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# ── Non-secret vars (override per environment below) ──────────────────────
+[vars]
+IP_SALT       = "formquest-ip-salt"
+PASSWORD_SALT = "formquest-pw-salt"
+
+# JWT_SECRET must be set as a secret, NOT here in plaintext:
+#   wrangler secret put JWT_SECRET
+
+# ── Local dev overrides ────────────────────────────────────────────────────
+[dev]
+port = 3001
+
+# ── Production environment ─────────────────────────────────────────────────
+[env.production]
+name = "formquest-api"
+# Set production secrets via: wrangler secret put JWT_SECRET --env production

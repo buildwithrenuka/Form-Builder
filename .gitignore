@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Cloudflare
+.wrangler/
+.dev.vars
+
+# Database files
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Turborepo
+.turbo/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# IDE / editor
+.vscode/settings.json
+.idea/
+
+# AI assistant workspaces
+.claude/
+
+# Expo
+.expo/
+expo-env.d.ts
+web-build/
+
+# macOS
+.DS_Store
+*.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+coverage/

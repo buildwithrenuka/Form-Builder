@@ -1,0 +1,11 @@
+# Copy this file to .dev.vars and fill in your values.
+# .dev.vars is loaded automatically by `wrangler dev` and is gitignored.
+
+# Secret used to sign JWT tokens — use a long random string in production
+JWT_SECRET=change-me-to-a-long-random-secret
+
+# Salt mixed into IP addresses before hashing (for rate limiting)
+IP_SALT=change-me-to-another-random-string
+
+# Salt used when hashing passwords
+PASSWORD_SALT=change-me-to-yet-another-random-string
