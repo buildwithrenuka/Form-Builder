@@ -1,482 +1,220 @@
-# Building a Full-Stack Monorepo from Scratch — React + Node.js + TypeScript
+# Form Quest 🏛️
 
-> One repo. Two apps. Zero copy-paste. This is the monorepo way.
+> A cinematic form builder with two radically different experiences — a gamified Temple Run adventure and a classy Globe Explorer travel experience. Built as a Turborepo monorepo with React + Vite on the frontend and a Cloudflare Workers API on the backend.
+
 
 ---
 
-## What is a Monorepo?
+## What is Form Quest?
 
-Imagine you are building a full-stack app. Normally you would have:
+Form Quest is a full-stack cinematic form builder with two distinct experiences:
 
-- One repo for your React frontend
-- Another repo for your Node.js backend
-- And somehow you need to share TypeScript types between them 😅
+| Experience | Vibe | Theme |
+|---|---|---|
+| 🏃 **Temple Run** | Gamified adventure | Choose an avatar runner, pick a legendary world (jungle, volcano, space…), build forms with cinematic doors, ambient audio, and story intros |
+| ✈️ **Globe Explorer** | Classy travel | Choose a destination, get landmark cinematics, build visa/itinerary/customs forms with local currency and locale presets |
 
-You end up copy-pasting types. You update `User` in one place and forget the other. Bugs happen. Life is sad.
+---
 
-**A monorepo solves this.** Everything lives in one Git repository — your frontend, backend, and shared code. They can all import from each other like they are best friends.
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 + Vite + TypeScript |
+| Styling | Inline styles — Cinzel Decorative, Rajdhani, Exo 2 fonts |
+| Backend | Hono + tRPC + Drizzle ORM on Cloudflare Workers |
+| Database | Cloudflare D1 (SQLite at the edge) |
+| Auth | JWT (via `jose`) |
+| Monorepo | Turborepo + npm Workspaces |
+| Shared types | `packages/shared` |
+
+---
+
+## Project Structure
 
 ```
-my-monorepo/
+Form-Builder/
 ├── apps/
-│   ├── web/       ← React + Vite + Tailwind
-│   └── api/       ← Node.js + Express
+│   ├── web/                    ← React + Vite frontend
+│   │   └── src/
+│   │       ├── App.tsx         ← Screen router (home → picker → login → experience)
+│   │       ├── auth.ts         ← Auth state helpers
+│   │       ├── globeData.ts    ← 12 travel destinations data
+│   │       ├── soundEngine.ts  ← Ambient audio synthesis
+│   │       ├── themes.ts       ← World colour themes
+│   │       ├── types.ts        ← Frontend types
+│   │       ├── index.css       ← Keyframe animations
+│   │       └── components/
+│   │           ├── HomePage.tsx          ← Landing page (dual experience showcase)
+│   │           ├── ExperienceSelector.tsx← Choose Temple Run or Globe Explorer
+│   │           ├── LoginScreen.tsx       ← Dual-theme login (jungle vs travel)
+│   │           ├── AvatarSelector.tsx    ← Pick runner avatar (Temple Run)
+│   │           ├── WorldSelector.tsx     ← Pick one of 9 worlds (Temple Run)
+│   │           ├── WorldDoorTransition.tsx← Cinematic door opening animation
+│   │           ├── WorldCinematic.tsx    ← 3-panel story intro per world
+│   │           ├── StoryIntro.tsx        ← Avatar's story monologue
+│   │           ├── MapPurposeScreen.tsx  ← Mission map — pick form purpose
+│   │           ├── FormBuilder.tsx       ← Main form builder (17 field types)
+│   │           ├── FormPreview.tsx       ← Themed full-screen preview
+│   │           ├── VersionPanel.tsx      ← Version history & snapshots
+│   │           ├── SharedFormView.tsx    ← Public form fill page
+│   │           ├── GlobeIntro.tsx        ← Globe Explorer cinematic intro
+│   │           ├── GlobeSelector.tsx     ← Pick one of 12 travel destinations
+│   │           ├── CountryCinematic.tsx  ← Landmark cinematic per country
+│   │           ├── GlobeFormBuilder.tsx  ← Locale-aware form builder
+│   │           ├── ParticleBackground.tsx← Reusable animated background
+│   │           └── TutorialScreen.tsx    ← How It Works walkthrough
+│   └── api/                    ← Cloudflare Workers backend
+│       ├── wrangler.toml       ← Workers config + D1 binding
+│       ├── drizzle.config.ts   ← Drizzle ORM config
+│       ├── migrations/
+│       │   └── 0001_initial.sql← DB schema migration
+│       └── src/
+│           ├── index.ts        ← Hono app, tRPC mount, OpenAPI + Scalar docs
+│           ├── trpc.ts         ← tRPC init + context
+│           ├── context.ts      ← Request context (D1, JWT)
+│           ├── schemas.ts      ← Shared Zod schemas
+│           ├── auth/
+│           │   ├── jwt.ts      ← JWT sign/verify with jose
+│           │   └── router.ts   ← register / login / me routes
+│           ├── routers/
+│           │   ├── forms.ts    ← CRUD, publish/unpublish, getBySlug
+│           │   └── responses.ts← Submit, list, analytics, D1 rate-limiting
+│           └── db/
+│               ├── schema.ts   ← Drizzle schema (users, forms, responses, rateLimits)
+│               └── index.ts    ← D1 client init
 └── packages/
-    └── shared/    ← Common TypeScript types
-```
-
-Companies like Google, Meta, Vercel, and Microsoft use monorepos at massive scale. Now you will too.
-
----
-
-## Tools We Will Use
-
-| Tool | Why |
-|------|-----|
-| **npm Workspaces** | Lets all packages share `node_modules` and import each other locally |
-| **Turborepo** | Smart build runner — builds packages in the right order, caches results |
-| **TypeScript** | Type safety across all apps |
-| **React + Vite** | Fast frontend development |
-| **Express** | Simple Node.js backend |
-
----
-
-## Step 1 — Root Setup
-
-First, create the folder structure:
-
-```bash
-mkdir my-monorepo
-cd my-monorepo
-mkdir apps
-mkdir packages
-```
-
-Now create `package.json` in the root — this is the heart of the monorepo:
-
-```json
-{
-  "name": "my-monorepo",
-  "version": "1.0.0",
-  "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build"
-  },
-  "devDependencies": {
-    "turbo": "^2.0.0",
-    "typescript": "^5.4.0"
-  }
-}
-```
-
-The `"workspaces"` key is the magic. It tells npm — *"every folder inside `apps/` and `packages/` is part of this project"*. They can share `node_modules` and reference each other by name.
-
-`"private": true` makes sure you never accidentally publish the root to npm.
-
----
-
-Now create `turbo.json`:
-
-```json
-{
-  "$schema": "https://turbo.build/schema.json",
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    }
-  }
-}
-```
-
-The line `"dependsOn": ["^build"]` is important. The `^` means *upstream packages*. So if `web` depends on `shared`, Turbo builds `shared` first — automatically. No manual ordering needed.
-
----
-
-Create `tsconfig.base.json` — one TypeScript config that all apps extend:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "declaration": true,
-    "sourceMap": true
-  }
-}
-```
-
-Write once, inherit everywhere. If you need to change a TypeScript setting, change it here — done.
-
-Now install everything:
-
-```bash
-npm install
+    └── shared/
+        └── src/
+            └── index.ts        ← Shared types (User, FormField, FieldType, ApiResponse…)
 ```
 
 ---
 
-## Step 2 — The Shared Package
+## Features Built
 
-This is where the real power of monorepos shows up. Create:
+### 🏃 Temple Run Experience
 
-```
-packages/shared/
-├── package.json
-└── src/
-    └── index.ts
-```
+- **11 Avatar Runners** — each with unique name, emoji, colour, and world-entry quote
+- **9 Themed Worlds** — Jungle, Snow, Desert, Space, Underwater, Volcano, Heaven, Hell, Flower
+- **Cinematic World Doors** — animated door swing-open transition into the chosen world
+- **3-Panel Story Cinematics** — avatar speaks, world reacts, mission begins
+- **Mission Map** — interactive purpose picker that scaffolds fields automatically
+- **Ambient Soundscapes** — synthesised audio per world (jungle chirps, space drones, hellfire)
+- **Form Builder** — 17 field types: text, email, phone, number, textarea, select, multi-select, checkbox, radio, date, time, rating, slider, file upload, currency, section divider, URL
+- **Smart Validation** — PAN, GST, IFSC, pincode, regex — live error messages
+- **Smart Collections** — drop full field groups (Bank, Address, Health, Social Links) in one click
+- **Half-Width Grid** — drag fields into two-column layouts
+- **Live Preview** — world-themed full-screen preview exactly as respondents see it
+- **Version History** — name and publish snapshots, restore any version
+- **Import / Export** — `.trform.json` format
+- **Shareable Link** — public or unlisted, anyone fills in-browser, no account needed
 
-`packages/shared/package.json`:
+### ✈️ Globe Explorer Experience
 
-```json
-{
-  "name": "@myapp/shared",
-  "version": "1.0.0",
-  "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts"
-}
-```
+- **12 Travel Destinations** — India, USA, UK, Germany, Japan, Brazil, UAE, Australia, China, France, Canada, South Africa
+- **Landmark Cinematics** — each country opens with capital city, landmark, and cultural intro
+- **Locale-Aware Fields** — native field types per destination (PAN, SSN, IBAN, CPF, TFN…)
+- **Native Validation** — country-specific regex for ID numbers
+- **Currency Formatting** — ₹, $, £, €, ¥, R$, د.إ, A$, C$ per destination
+- **Travel Form Templates** — visa applications, customs declarations, hotel registrations, itineraries
+- **Classy Gold Aesthetic** — warm `#c9a84c` palette, Exo 2 font, no game language
 
-The name `@myapp/shared` is important. Other apps will import from this exact name:
+### 🔐 Authentication & API
 
-```ts
-import { User } from "@myapp/shared"
-```
+- **JWT Auth** — register, login, `/me` endpoint via `jose`
+- **tRPC** — end-to-end type-safe API with Zod validation
+- **Cloudflare D1** — SQLite at the edge via Drizzle ORM
+- **Rate Limiting** — per-IP submission limits stored in D1
+- **OpenAPI + Scalar** — auto-generated API docs at `/docs`
+- **Forms CRUD** — create, read, update, delete, publish/unpublish, get by slug
+- **Response Analytics** — submit, list, per-form analytics
 
-`packages/shared/src/index.ts`:
+### 🎨 UI & Visual Polish
 
-```ts
-// User type — web and api both use this
-export type User = {
-  id: number
-  name: string
-  email: string
-}
-
-// Standard API response wrapper
-export type ApiResponse<T> = {
-  data: T
-  success: boolean
-  message: string
-}
-
-// Login types
-export type LoginRequest = {
-  email: string
-  password: string
-}
-
-export type LoginResponse = {
-  success: boolean
-  message: string
-  token?: string
-}
-```
-
-Define once. Use everywhere. No copy-paste. No drift. This is the monorepo superpower. ⚡
+- **Dual-theme LoginScreen** — jungle/gold for Temple Run, starfield/travel for Globe
+- **Aurora background** — radial gradient blobs + grid overlay + shooting stars
+- **Runner bar** — animated 🏃 runner scrolls across the bottom of every page
+- **Glitch effect** — title glitches on hover and on an interval
+- **Scroll-triggered stats** — count-up animation when stats enter viewport
+- **Card hover animations** — lift, glow, colour transitions on all cards
+- **`card-enter` keyframe** — staggered entrance animation for grids
+- **Fonts** — Cinzel Decorative (game titles), Rajdhani (game UI), Exo 2 (Globe + body)
 
 ---
 
-## Step 3 — The API (Node.js + Express)
+## Running Locally
 
-```
-apps/api/
-├── package.json
-├── tsconfig.json
-└── src/
-    └── index.ts
-```
-
-`apps/api/package.json`:
-
-```json
-{
-  "name": "@myapp/api",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "ts-node src/index.ts",
-    "build": "tsc"
-  },
-  "dependencies": {
-    "express": "^4.18.0",
-    "@myapp/shared": "*"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.0",
-    "@types/node": "^20.0.0",
-    "ts-node": "^10.9.0",
-    "typescript": "^5.4.0"
-  }
-}
-```
-
-Notice `"@myapp/shared": "*"` — this tells npm to use the local shared package. No publishing, no versioning headaches.
-
-`apps/api/tsconfig.json`:
-
-```json
-{
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src"
-  },
-  "include": ["src"]
-}
-```
-
-`apps/api/src/index.ts`:
-
-```ts
-import express from "express"
-import { User, ApiResponse, LoginRequest, LoginResponse } from "@myapp/shared"
-
-const app = express()
-app.use(express.json())
-
-// CORS fix
-app.use((req: any, res: any, next: any) => {
-  res.header("Access-Control-Allow-Origin", "*")
-  res.header("Access-Control-Allow-Headers", "Content-Type")
-  next()
-})
-
-// Fake users data
-const users: User[] = [
-  { id: 1, name: "Renuk", email: "renuk@gmail.com" },
-  { id: 2, name: "Rahul", email: "rahul@gmail.com" }
-]
-
-// Get all users
-app.get("/users", (req, res) => {
-  const response: ApiResponse<User[]> = {
-    data: users,
-    success: true,
-    message: "Users fetched!"
-  }
-  res.json(response)
-})
-
-// Login route
-app.post("/login", (req, res) => {
-  const { email, password }: LoginRequest = req.body
-
-  if (email === "renuk@gmail.com" && password === "1234") {
-    const response: LoginResponse = {
-      success: true,
-      message: "Login successful!",
-      token: "fake-jwt-token-123"
-    }
-    res.json(response)
-  } else {
-    const response: LoginResponse = {
-      success: false,
-      message: "Wrong email or password"
-    }
-    res.status(401).json(response)
-  }
-})
-
-app.listen(3001, () => {
-  console.log("API running on http://localhost:3001 🚀")
-})
-```
-
-Run it:
-
-```bash
-cd apps/api
-npx ts-node src/index.ts
-```
-
-Visit `http://localhost:3001/users` — you will see your data. ✅
-
----
-
-## Step 4 — The Frontend (React + Vite + Tailwind)
-
-```
-apps/web/
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-├── index.html
-└── src/
-    ├── main.tsx
-    └── App.tsx
-```
-
-`apps/web/package.json`:
-
-```json
-{
-  "name": "@myapp/web",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build"
-  },
-  "dependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "@myapp/shared": "*"
-  },
-  "devDependencies": {
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "@vitejs/plugin-react": "^4.0.0",
-    "typescript": "^5.4.0",
-    "vite": "^5.0.0"
-  }
-}
-```
-
-`apps/web/src/App.tsx`:
-
-```tsx
-import { useState, useEffect } from "react"
-import { User, ApiResponse } from "@myapp/shared"
-
-function App() {
-  const [users, setUsers] = useState<User[]>([])
-
-  useEffect(() => {
-    fetch("http://localhost:3001/users")
-      .then(res => res.json())
-      .then((res: ApiResponse<User[]>) => {
-        setUsers(res.data)
-      })
-  }, [])
-
-  return (
-    <div>
-      <h1>Users List</h1>
-      {users.map(user => (
-        <div key={user.id}>
-          <p>Name: {user.name}</p>
-          <p>Email: {user.email}</p>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-export default App
-```
-
-Run it:
+### Web (frontend)
 
 ```bash
 cd apps/web
-npx vite
+npx vite --port 5174
+# → http://localhost:5174
 ```
 
-Visit `http://localhost:5173` — your React app fetches from the API. ✅
+### API (Cloudflare Workers — local dev)
 
----
-
-## The Big Picture — What We Achieved
-
-```
-@myapp/shared   defines →   User, ApiResponse, LoginRequest, LoginResponse
-      ↓                              ↓
-@myapp/api      imports ←───────────┘
-@myapp/web      imports ←───────────┘
+```bash
+cd apps/api
+# Create .dev.vars from the example:
+cp .dev.vars.example .dev.vars
+# Fill in JWT_SECRET, IP_SALT, PASSWORD_SALT
+npx wrangler dev
+# → http://localhost:3001
 ```
 
-Both apps use the **same types**. Change `User` in shared — TypeScript immediately tells you everywhere it breaks. No surprises in production.
+> **Note:** The API requires `@cloudflare/workers-types` and Wrangler. If your npm registry blocks `@cloudflare` scoped packages, add this to `apps/api/.npmrc`:
+> ```
+> @cloudflare:registry=https://registry.npmjs.org/
+> ```
 
 ---
 
-## Why This Matters
+## Environment Variables
 
-**Without monorepo:**
-- 3 separate repos
-- Copy-paste types everywhere
-- Out-of-sync code between frontend and backend
-- Painful to run both apps together
-
-**With monorepo:**
-- 1 repo, everything together
-- Types defined once, shared everywhere
-- `npm run dev` starts everything
-- Turborepo caches builds — blazing fast ⚡
-
----
-
-## Key Concepts Recap
-
-| Concept | What it does |
-|---------|-------------|
-| `"workspaces"` in root `package.json` | Tells npm all apps are one project |
-| `@myapp/shared` | Local package imported like an npm package |
-| `"extends"` in tsconfig | Inherit base TypeScript settings |
-| `"dependsOn": ["^build"]` in turbo.json | Build dependencies in correct order |
-| `"@myapp/shared": "*"` in dependencies | Use local package, not from npm |
-
----
-
-## What is Next?
-
-Now that your monorepo is set up, you can:
-
-- Add **authentication** with JWT tokens
-- Add a **database** (PostgreSQL or MongoDB)
-- Add **more apps** — admin panel, mobile app, etc.
-- Deploy with **Docker** — one container per app
-- Add **CI/CD** with GitHub Actions
-
-The foundation is solid. Build on top of it! 🚀
-
----
-
-## Final Project Structure
+**`apps/api/.dev.vars`** (local Workers dev, not committed):
 
 ```
-my-monorepo/
-├── apps/
-│   ├── api/
-│   │   ├── src/
-│   │   │   └── index.ts
-│   │   ├── package.json
-│   │   └── tsconfig.json
-│   └── web/
-│       ├── src/
-│       │   ├── main.tsx
-│       │   └── App.tsx
-│       ├── index.html
-│       ├── package.json
-│       ├── tsconfig.json
-│       └── vite.config.ts
-├── packages/
-│   └── shared/
-│       ├── src/
-│       │   └── index.ts
-│       └── package.json
-├── package.json
-├── turbo.json
-├── tsconfig.base.json
-└── .gitignore
+JWT_SECRET=your-secret-here
+IP_SALT=your-ip-salt-here
+PASSWORD_SALT=your-password-salt-here
+```
+
+**`apps/web/.env`** (not committed):
+
+```
+VITE_API_URL=http://localhost:3001
 ```
 
 ---
 
-*Built step by step, with patience and curiosity. That is the best way to learn anything.* 🙌
+## Database
+
+Schema lives in `apps/api/src/db/schema.ts` (Drizzle) and `apps/api/migrations/0001_initial.sql`.
+
+Tables: `users`, `forms`, `responses`, `rateLimits`
+
+To apply migrations locally with Wrangler:
+
+```bash
+cd apps/api
+npx wrangler d1 execute formquest-db --local --file=migrations/0001_initial.sql
+```
+
+---
+
+## What's Next
+
+- [ ] Connect web app to tRPC API (replace mock auth with real JWT calls)
+- [ ] Deploy API to Cloudflare Workers production
+- [ ] Add form response dashboard
+- [ ] Add more Globe destinations
+- [ ] Add form embed widget (iframe)
+
+---
+
+*Built with patience, caffeine, and a healthy love of over-engineered landing pages. 🏛️*
+
 
 ---
