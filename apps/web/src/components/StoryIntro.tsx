@@ -16,6 +16,7 @@ type StoryPanel = {
 type Props = {
   playerName: string;
   onComplete: () => void;
+  onBack: () => void;
 };
 
 const PANELS: StoryPanel[] = [
@@ -76,7 +77,7 @@ const PANELS: StoryPanel[] = [
 const AUTO_ADVANCE_MS = 3800;
 const TYPING_SPEED_MS = 34;
 
-export function StoryIntro({ playerName, onComplete }: Props) {
+export function StoryIntro({ playerName, onComplete, onBack }: Props) {
   const [panelIndex, setPanelIndex] = useState(0);
   const [displayedChars, setDisplayedChars] = useState(0);
   const [showSubtext, setShowSubtext] = useState(false);
@@ -183,6 +184,28 @@ export function StoryIntro({ playerName, onComplete }: Props) {
             animation: 'scan-line 10s linear infinite',
           }}
         />
+          <button
+            onClick={onBack}
+            style={{
+              position: 'absolute',
+              top: 18,
+              left: 20,
+              zIndex: 10,
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.14)',
+              borderRadius: 9,
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 700,
+              padding: '8px 16px',
+              cursor: 'pointer',
+              fontFamily: "'Rajdhani', sans-serif",
+              letterSpacing: '0.08em',
+            }}
+          >
+            ← Back
+          </button>
+
       </div>
 
       {/* ── Cinematic TOP bar ── */}

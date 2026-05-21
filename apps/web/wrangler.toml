@@ -10,4 +10,5 @@ compatibility_date = "2025-01-01"
 #   Root dir:       apps/web
 
 # ── Environment variables (set in Cloudflare Pages dashboard) ─────────────
-# VITE_API_URL = https://formquest-api.<your-subdomain>.workers.dev
+# VITE_API_URL = http://localhost:3001
+# or production: https://formquest-api.<your-subdomain>.workers.dev

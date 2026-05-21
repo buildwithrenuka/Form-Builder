@@ -1,10 +1,14 @@
 export type Screen =
   // shared
-  | 'home' | 'login' | 'shared' | 'tutorial' | 'experiencePicker'
+  | 'home' | 'login' | 'shared' | 'tutorial' | 'experiencePicker' | 'explore'
+  // new pages
+  | 'pricing' | 'dashboard'
   // experience 1: temple run
   | 'story' | 'avatar' | 'world' | 'worldDoor' | 'worldCinematic' | 'mapPurpose' | 'builder' | 'preview'
   // experience 2: globe
-  | 'globeIntro' | 'globeSelector' | 'countryCinematic' | 'globeBuilder' | 'globePreview';
+  | 'globeIntro' | 'globeSelector' | 'countryPortal' | 'countryCinematic' | 'globeBuilder' | 'globePreview'
+  // experience 3: library
+  | 'libraryIntro' | 'librarySelector' | 'libraryPortal' | 'libraryCinematic' | 'libraryBuilder' | 'libraryPreview';
 
 export type FormVersion = {
   id: string;

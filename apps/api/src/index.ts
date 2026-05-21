@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { cors } from '@hono/cors';
+import { cors } from 'hono/cors';
 import { trpcServer } from '@hono/trpc-server';
 import { apiReference } from '@scalar/hono-api-reference';
 import { router } from './trpc';

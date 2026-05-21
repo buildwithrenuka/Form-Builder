@@ -4,8 +4,9 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { router, publicProc, authProc } from '../trpc';
 import type { AppDB } from '../db';
-import { forms, responses, rateLimits } from '../db/schema';
+import { forms, responses, rateLimits, users } from '../db/schema';
 import { SubmitResponseInput, FormFieldsSchema, FieldSchema } from '../schemas';
+import { sendSubmissionAlert } from '../email';
 
 function uid(): string { return crypto.randomUUID(); }
 
@@ -13,12 +14,26 @@ function ipHash(ip: string, salt: string): string {
   return createHash('sha256').update(ip + salt).digest('hex');
 }
 
+function isLocalDevelopmentIp(ip: string | null): boolean {
+  if (!ip) return true;
+
+  const normalized = ip.trim().toLowerCase();
+  if (!normalized) return true;
+
+  return normalized === '127.0.0.1'
+    || normalized === '::1'
+    || normalized === 'localhost'
+    || normalized.startsWith('192.168.')
+    || normalized.startsWith('10.')
+    || /^172\.(1[6-9]|2\d|3[0-1])\./.test(normalized);
+}
+
 // ── Dynamic Zod validator built from a form's schema ──────────────────────
 function buildResponseValidator(fields: FieldSchema[]) {
   const shape: Record<string, z.ZodTypeAny> = {};
 
   for (const field of fields) {
-    if (field.type === 'section_divider') continue;
+    if (field.type === 'section' || field.type === 'section_divider') continue;
 
     let validator: z.ZodTypeAny = z.string();
 
@@ -28,8 +43,10 @@ function buildResponseValidator(fields: FieldSchema[]) {
       case 'number':
       case 'currency':
       case 'rating':
-      case 'scale':   validator = z.number(); break;
+      case 'range':
+      case 'scale':   validator = z.coerce.number(); break;
       case 'date':    validator = z.string().regex(/^\d{4}-\d{2}-\d{2}$/); break;
+      case 'time':    validator = z.string().regex(/^\d{2}:\d{2}$/); break;
       case 'url':     validator = z.string().url(); break;
       case 'pan':     validator = z.string().regex(/^[A-Z]{5}\d{4}[A-Z]$/); break;
       case 'gst':     validator = z.string().regex(/^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}$/); break;
@@ -45,9 +62,15 @@ function buildResponseValidator(fields: FieldSchema[]) {
       default: validator = z.string();
     }
 
-    if (field.maxLength) validator = (validator as z.ZodString).max(field.maxLength);
-    if (field.minLength) validator = (validator as z.ZodString).min(field.minLength);
-    if (field.customRegex) validator = z.string().regex(new RegExp(field.customRegex));
+    if (validator instanceof z.ZodString) {
+      let stringValidator = validator;
+      if (field.maxLength) stringValidator = stringValidator.max(field.maxLength);
+      if (field.minLength) stringValidator = stringValidator.min(field.minLength);
+      if (field.customPattern || field.customRegex) {
+        stringValidator = stringValidator.regex(new RegExp(field.customPattern || field.customRegex || ''));
+      }
+      validator = stringValidator;
+    }
 
     shape[field.id] = field.required ? validator : validator.optional();
   }
@@ -87,12 +110,14 @@ export const responsesRouter = router({
       });
       if (!form) throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
 
-      const clientIp = (ctx as any).ip ?? '0.0.0.0';
-      const hash     = ipHash(clientIp, ctx.env.IP_SALT);
-      const rlKey    = `${input.formId}:${hash}`;
-      const allowed  = await checkRateLimit(ctx.db, rlKey);
-      if (!allowed) {
-        throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many submissions. Please wait.' });
+      const clientIp = ctx.ip;
+      const hash     = clientIp ? ipHash(clientIp, ctx.env.IP_SALT) : null;
+      if (hash && !isLocalDevelopmentIp(clientIp)) {
+        const rlKey   = `${input.formId}:${hash}`;
+        const allowed = await checkRateLimit(ctx.db, rlKey);
+        if (!allowed) {
+          throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many submissions. Please wait.' });
+        }
       }
 
       const fields    = FormFieldsSchema.parse(JSON.parse(form.schema));
@@ -110,10 +135,26 @@ export const responsesRouter = router({
         id:          uid(),
         formId:      input.formId,
         data:        JSON.stringify(parsed.data),
-        ipHash:      hash,
+        ipHash:      hash ?? 'unavailable',
         submittedAt: new Date(),
       };
       await ctx.db.insert(responses).values(response);
+
+      // Fire-and-forget email notification to form creator
+      const creator = await ctx.db.query.users.findFirst({
+        where: eq(users.id, form.creatorId),
+        columns: { email: true },
+      });
+      if (creator?.email) {
+        void sendSubmissionAlert(ctx.env as { RESEND_API_KEY?: string }, {
+          creatorEmail:  creator.email,
+          formTitle:     form.title,
+          responseId:    response.id,
+          formId:        input.formId,
+          submittedAt:   new Date().toUTCString(),
+        });
+      }
+
       return { success: true, id: response.id };
     }),
 
@@ -157,6 +198,8 @@ export const responsesRouter = router({
         totalResponses: total,
         published:      form.published,
         visibility:     form.visibility,
+        updatedAt:      form.updatedAt,
+        createdAt:      form.createdAt,
       };
     }),
 });

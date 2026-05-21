@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-type Props = { onComplete: () => void };
+type Props = { onComplete: () => void; onBack: () => void };
 
 const PANELS = [
   {
@@ -26,23 +26,48 @@ const PANELS = [
   },
 ];
 
-export function GlobeIntro({ onComplete }: Props) {
+export function GlobeIntro({ onComplete, onBack }: Props) {
   const [panel, setPanel]   = useState(0);
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const timeoutsRef = useRef<number[]>([]);
+
+  function queueTimeout(callback: () => void, delay: number) {
+    const timeoutId = window.setTimeout(() => {
+      timeoutsRef.current = timeoutsRef.current.filter((id) => id !== timeoutId);
+      callback();
+    }, delay);
+    timeoutsRef.current.push(timeoutId);
+  }
 
   useEffect(() => {
-    setTimeout(() => setVisible(true), 80);
+    queueTimeout(() => setVisible(true), 80);
+    return () => {
+      timeoutsRef.current.forEach((id) => window.clearTimeout(id));
+      timeoutsRef.current = [];
+    };
   }, []);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        advance();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
 
   function advance() {
     setLeaving(true);
-    setTimeout(() => {
+    queueTimeout(() => {
       if (panel < PANELS.length - 1) {
         setPanel(p => p + 1);
         setLeaving(false);
         setVisible(false);
-        setTimeout(() => setVisible(true), 60);
+        queueTimeout(() => setVisible(true), 60);
       } else {
         onComplete();
       }
@@ -61,7 +86,33 @@ export function GlobeIntro({ onComplete }: Props) {
         overflow: 'hidden',
       }}
       onClick={advance}
+      role="presentation"
     >
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+          onBack();
+        }}
+        style={{
+          position: 'absolute',
+          top: 18,
+          left: 20,
+          zIndex: 10,
+          background: 'rgba(255,255,255,0.08)',
+          border: '1px solid rgba(255,255,255,0.14)',
+          borderRadius: 9,
+          color: '#fff',
+          fontSize: 12,
+          fontWeight: 700,
+          padding: '8px 16px',
+          cursor: 'pointer',
+          fontFamily: "'Rajdhani', sans-serif",
+          letterSpacing: '0.08em',
+        }}
+      >
+        ← Back
+      </button>
+
       {/* Star field */}
       {Array.from({ length: 60 }, (_, i) => (
         <div key={i} style={{
@@ -148,16 +199,26 @@ export function GlobeIntro({ onComplete }: Props) {
         ))}
       </div>
 
-      {/* Tap hint */}
-      <div style={{
-        position: 'absolute', bottom: 28,
-        color: 'rgba(255,255,255,0.35)',
-        fontSize: 12,
-        letterSpacing: '0.2em',
-        textTransform: 'uppercase',
-        fontFamily: 'monospace',
-      }}>
-        {panel < PANELS.length - 1 ? 'tap to continue' : 'tap to begin'}
+      <div style={{ position: 'absolute', bottom: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            advance();
+          }}
+          style={{ background: `linear-gradient(135deg, ${p.color}, #ffffff22)`, border: `1px solid ${p.color}66`, color: '#fff', borderRadius: 999, padding: '12px 24px', fontSize: 13, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: `0 0 24px ${p.glow}` }}
+        >
+          {panel < PANELS.length - 1 ? 'Continue' : 'Start Building'}
+        </button>
+        <div style={{
+          color: 'rgba(255,255,255,0.35)',
+          fontSize: 12,
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          fontFamily: 'monospace',
+        }}>
+          Click, tap, or press Enter
+        </div>
       </div>
 
       <style>{`

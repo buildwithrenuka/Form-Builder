@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { FormField, WorldTheme, Avatar } from '../types';
 import { WORLDS, AVATARS, VALIDATION_PRESETS } from '../themes';
+import { COUNTRIES, type Country } from '../globeData';
+import { LIBRARY_WORLDS, type LibraryWorld } from '../libraryData';
 import { ParticleBackground } from './ParticleBackground';
+import { trpc } from '../trpc';
+import { copyText } from '../utils/clipboard';
 
 type SharedPayload = {
   formTitle: string;
@@ -9,6 +13,75 @@ type SharedPayload = {
   worldId: string;
   avatarId: string;
 };
+
+function countryToSharedWorld(country: Country): WorldTheme {
+  return {
+    id: country.id,
+    name: country.name,
+    emoji: country.emoji,
+    description: country.lore,
+    tagline: country.tagline,
+    primaryColor: country.color,
+    secondaryColor: country.accentColor,
+    accentColor: country.accentColor,
+    textColor: '#f0f0f0',
+    mutedColor: `${country.color}aa`,
+    bg: country.bgGradient,
+    cardBg: 'rgba(0,0,0,0.88)',
+    borderColor: country.color,
+    buttonGradient: `linear-gradient(135deg, ${country.color}, ${country.accentColor})`,
+    buttonText: '#fff',
+    inputBg: 'rgba(255,255,255,0.06)',
+    particles: [],
+    glowColor: country.glowColor,
+  };
+}
+
+function libraryToSharedWorld(world: LibraryWorld): WorldTheme {
+  return {
+    id: world.id,
+    name: world.name,
+    emoji: world.emoji,
+    description: world.lore,
+    tagline: world.tagline,
+    primaryColor: world.color,
+    secondaryColor: world.accentColor,
+    accentColor: world.accentColor,
+    textColor: '#f0f0f0',
+    mutedColor: `${world.color}aa`,
+    bg: world.bgGradient,
+    cardBg: 'rgba(0,0,0,0.88)',
+    borderColor: world.color,
+    buttonGradient: `linear-gradient(135deg, ${world.color}, ${world.accentColor})`,
+    buttonText: '#fff',
+    inputBg: 'rgba(255,255,255,0.06)',
+    particles: world.particles,
+    glowColor: world.glowColor,
+  };
+}
+
+function normalizeWorldId(worldId: string): string {
+  return worldId.replace(/^globe_/, '').replace(/^library_/, '');
+}
+
+function resolveSharedWorld(worldId: string): WorldTheme {
+  const normalizedWorldId = normalizeWorldId(worldId);
+  const templeWorld = WORLDS.find((world) => world.id === normalizedWorldId);
+  if (templeWorld) return templeWorld;
+
+  const country = COUNTRIES.find((item) => item.id === normalizedWorldId);
+  if (country) return countryToSharedWorld(country);
+
+  const libraryWorld = LIBRARY_WORLDS.find((item) => item.id === normalizedWorldId);
+  if (libraryWorld) return libraryToSharedWorld(libraryWorld);
+
+  return WORLDS[0];
+}
+
+function resolveSharedAvatar(avatarId: string): Avatar | null {
+  if (!avatarId) return null;
+  return AVATARS.find((avatar) => avatar.id === avatarId) ?? null;
+}
 
 // Encode form to a shareable URL hash
 export function encodeSharePayload(payload: SharedPayload): string {
@@ -183,9 +256,212 @@ function ShareField({ field, world }: { field: FormField; world: WorldTheme }) {
   );
 }
 
-type Props = { encoded: string; onBack: () => void };
+type Props = { encoded?: string; slug?: string; onBack: () => void };
 
-export function SharedFormView({ encoded, onBack }: Props) {
+// ── Slug-based live form fetcher + submitter ──────────────────────────────
+function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
+  const { data, isLoading, error } = trpc.forms.getBySlug.useQuery({ slug });
+  const submit = trpc.responses.submit.useMutation();
+  const [formValues, setFormValues] = useState<Record<string, unknown>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  const world = resolveSharedWorld(data?.worldTheme ?? '');
+
+  async function handleSubmit() {
+    if (!data) return;
+    setSubmitError('');
+    try {
+      await submit.mutateAsync({ formId: data.id, data: formValues as Record<string, unknown> });
+      setSubmitted(true);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Submission failed. Please try again.';
+      setSubmitError(msg);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: '#03001c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+        <div style={{ width: 40, height: 40, border: '3px solid rgba(124,58,237,0.2)', borderTop: '3px solid #7c3aed', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ fontFamily: "'Rajdhani', sans-serif", color: 'rgba(167,139,250,0.5)', fontSize: 13 }}>Loading form...</p>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <span style={{ fontSize: 48 }}>💀</span>
+        <p style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 18, color: '#ff4444' }}>Form Not Found</p>
+        <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>This form may have been unpublished or deleted.</p>
+        <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)', borderRadius: 8, padding: '10px 20px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", fontSize: 12 }}>← Go Back</button>
+      </div>
+    );
+  }
+
+  const visibleFields = (data.schema as unknown as FormField[]).filter(f => !f.hidden);
+  type ApiField = (typeof visibleFields)[number] & { type: string };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: world.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <ParticleBackground particles={world.particles} count={18} />
+
+      {/* Header */}
+      <div style={{ position: 'relative', zIndex: 10, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(14px)', borderBottom: `1px solid ${world.borderColor}33`, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.07)', border: `1px solid ${world.borderColor}33`, color: world.mutedColor, borderRadius: 7, padding: '7px 12px', cursor: 'pointer', fontSize: 11, fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em' }}>← HOME</button>
+        <span style={{ fontSize: 16 }}>{world.emoji}</span>
+        <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 12, fontWeight: 700, color: world.accentColor, letterSpacing: '0.06em' }}>PUBLIC FORM</div>
+      </div>
+
+      <div className="tr-scroll" style={{ position: 'relative', zIndex: 5, flex: 1, padding: '28px 20px 40px' }}>
+        <div style={{ maxWidth: 640, margin: '0 auto', background: world.cardBg, border: `1px solid ${world.borderColor}55`, borderRadius: 16, overflow: 'hidden', boxShadow: `0 8px 48px rgba(0,0,0,0.6), 0 0 40px ${world.glowColor}22` }}>
+          {/* Form header */}
+          <div style={{ background: `linear-gradient(135deg, ${world.cardBg}, rgba(0,0,0,0.6))`, borderBottom: `1px solid ${world.borderColor}44`, padding: '24px 26px 18px' }}>
+            <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(15px, 3vw, 22px)', fontWeight: 900, color: world.accentColor, letterSpacing: '0.04em', marginBottom: 6 }}>{data.title}</div>
+            {data.description && <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: world.mutedColor, marginBottom: 6 }}>{data.description}</div>}
+            <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 11, color: world.mutedColor, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              {world.emoji} {world.name} · {visibleFields.filter(f => !['section', 'section_divider'].includes((f as ApiField).type)).length} fields
+            </div>
+          </div>
+
+          {!submitted ? (
+            <div style={{ padding: '22px 26px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {visibleFields.map(field => {
+                if (['section', 'section_divider'].includes((field as ApiField).type)) {
+                  return (
+                    <div key={field.id} style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: world.accentColor, flexShrink: 0, boxShadow: `0 0 8px ${world.glowColor}` }} />
+                      <span style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 12, fontWeight: 700, color: world.accentColor }}>{field.label}</span>
+                      <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${world.accentColor}44, transparent)` }} />
+                    </div>
+                  );
+                }
+                return (
+                  <div key={field.id}>
+                    <label style={{ display: 'block', fontFamily: "'Rajdhani', sans-serif", color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: 600, marginBottom: 6, letterSpacing: '0.04em' }}>
+                      {field.label}
+                      {field.required && <span style={{ color: world.accentColor, marginLeft: 4 }}>*</span>}
+                    </label>
+                    {field.type === 'textarea' ? (
+                      <textarea value={(formValues[field.id] as string) ?? ''} onChange={e => setFormValues(p => ({ ...p, [field.id]: e.target.value }))} placeholder={field.placeholder} rows={3}
+                        style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: `1px solid ${world.borderColor}66`, borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'system-ui' }} />
+                    ) : field.type === 'select' ? (
+                      <select value={(formValues[field.id] as string) ?? ''} onChange={e => setFormValues(p => ({ ...p, [field.id]: e.target.value }))}
+                        style={{ width: '100%', background: '#1a0a2e', border: `1px solid ${world.borderColor}66`, borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, outline: 'none' }}>
+                        <option value="">Select...</option>
+                        {(field.options ?? []).map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    ) : field.type === 'radio' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {(field.options ?? []).map(o => (
+                          <label key={o} style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.7)', fontSize: 14, cursor: 'pointer' }}>
+                            <input type="radio" name={field.id} value={o} checked={formValues[field.id] === o} onChange={() => setFormValues(p => ({ ...p, [field.id]: o }))} />
+                            {o}
+                          </label>
+                        ))}
+                      </div>
+                    ) : field.type === 'checkbox' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {(field.options ?? []).map(o => {
+                          const selected = Array.isArray(formValues[field.id]) ? formValues[field.id] as string[] : [];
+                          const checked = selected.includes(o);
+                          return (
+                            <label key={o} style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.7)', fontSize: 14, cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                value={o}
+                                checked={checked}
+                                onChange={() => setFormValues((prev) => {
+                                  const current = Array.isArray(prev[field.id]) ? prev[field.id] as string[] : [];
+                                  return {
+                                    ...prev,
+                                    [field.id]: checked ? current.filter((item) => item !== o) : [...current, o],
+                                  };
+                                })}
+                              />
+                              {o}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : field.type === 'rating' ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {Array.from({ length: field.max ?? 5 }, (_, index) => {
+                          const star = index + 1;
+                          const active = Number(formValues[field.id] ?? 0) >= star;
+                          return (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setFormValues((prev) => ({ ...prev, [field.id]: star }))}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 24, color: active ? world.accentColor : 'rgba(255,255,255,0.25)' }}
+                            >
+                              ★
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : field.type === 'range' ? (
+                      <div>
+                        <input
+                          type="range"
+                          min={field.min ?? 0}
+                          max={field.max ?? 100}
+                          value={Number(formValues[field.id] ?? field.min ?? 0)}
+                          onChange={e => setFormValues(p => ({ ...p, [field.id]: Number(e.target.value) }))}
+                          style={{ width: '100%', accentColor: world.accentColor, cursor: 'pointer' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: world.mutedColor, marginTop: 4 }}>
+                          <span>{field.min ?? 0}</span>
+                          <span style={{ color: world.accentColor, fontWeight: 700 }}>{Number(formValues[field.id] ?? field.min ?? 0)}</span>
+                          <span>{field.max ?? 100}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <input
+                        type={['number', 'currency', 'scale'].includes(field.type) ? 'number' : field.type === 'email' ? 'email' : field.type === 'date' ? 'date' : field.type === 'time' ? 'time' : field.type === 'url' ? 'url' : field.type === 'password' ? 'password' : field.type === 'file' ? 'file' : 'text'}
+                        value={(formValues[field.id] as string) ?? ''}
+                        onChange={e => setFormValues(p => ({ ...p, [field.id]: field.type === 'file' ? e.target.files?.[0]?.name ?? '' : e.target.value }))}
+                        placeholder={field.placeholder}
+                        style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: `1px solid ${world.borderColor}66`, borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'system-ui' }}
+                      />
+                    )}
+                    {field.helperText && <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 11, color: world.mutedColor, marginTop: 4 }}>{field.helperText}</div>}
+                  </div>
+                );
+              })}
+
+              {submitError && <div style={{ background: 'rgba(255,60,60,0.1)', border: '1px solid rgba(255,60,60,0.3)', borderRadius: 8, padding: '10px 14px', color: '#ff8888', fontSize: 13, fontFamily: "'Rajdhani', sans-serif" }}>⚠ {submitError}</div>}
+
+              <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${world.borderColor}66, transparent)`, marginTop: 8 }} />
+
+              <button onClick={handleSubmit} disabled={submit.isPending}
+                style={{ background: world.buttonGradient, color: world.buttonText, fontSize: 14, padding: '14px 32px', letterSpacing: '0.15em', borderRadius: 8, alignSelf: 'flex-start', boxShadow: `0 0 20px ${world.glowColor}66`, border: 'none', cursor: submit.isPending ? 'not-allowed' : 'pointer', opacity: submit.isPending ? 0.7 : 1, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700 }}>
+                {submit.isPending ? '⏳ Submitting...' : '🏃 SUBMIT FORM'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ padding: '48px 26px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
+              <span style={{ fontSize: 64, filter: `drop-shadow(0 0 16px ${world.glowColor})` }}>🏆</span>
+              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 20, fontWeight: 900, color: world.accentColor, filter: `drop-shadow(0 0 10px ${world.glowColor})` }}>Submitted!</div>
+              <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: world.mutedColor, letterSpacing: '0.08em', maxWidth: 260 }}>Mission complete in {world.name}!</p>
+              <button onClick={() => { setSubmitted(false); setFormValues({}); }} style={{ background: world.buttonGradient, color: world.buttonText, fontSize: 12, padding: '10px 22px', letterSpacing: '0.1em', marginTop: 8, boxShadow: `0 0 14px ${world.glowColor}55`, border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", fontWeight: 700 }}>↩ Submit Again</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SharedFormView({ encoded, slug, onBack }: Props) {
+  if (slug) return <ApiFormView slug={slug} onBack={onBack} />;
+
+  return <EncodedFormView encoded={encoded ?? ''} onBack={onBack} />;
+}
+
+function EncodedFormView({ encoded, onBack }: { encoded: string; onBack: () => void }) {
   const [payload, setPayload] = useState<SharedPayload | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -205,15 +481,15 @@ export function SharedFormView({ encoded, onBack }: Props) {
     );
   }
 
-  const world = WORLDS.find(w => w.id === payload.worldId) ?? WORLDS[0];
-  const avatar = AVATARS.find(a => a.id === payload.avatarId) ?? AVATARS[0];
+  const world = resolveSharedWorld(payload.worldId);
+  const avatar = resolveSharedAvatar(payload.avatarId);
   const visibleFields = payload.fields.filter(f => !f.hidden);
 
-  function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    });
+  async function copyLink() {
+    const copiedOk = await copyText(window.location.href);
+    if (!copiedOk) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   }
 
   return (
@@ -229,10 +505,12 @@ export function SharedFormView({ encoded, onBack }: Props) {
           <button onClick={copyLink} style={{ background: copied ? `${world.accentColor}22` : 'rgba(255,255,255,0.06)', border: `1px solid ${copied ? world.accentColor + '55' : 'rgba(255,255,255,0.12)'}`, borderRadius: '7px', color: copied ? world.accentColor : 'rgba(255,255,255,0.5)', fontFamily: "'Rajdhani', sans-serif", fontSize: '11px', fontWeight: 700, padding: '7px 13px', cursor: 'pointer', letterSpacing: '0.08em', transition: 'all 0.2s' }}>
             {copied ? '✓ COPIED!' : '🔗 COPY LINK'}
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: `${avatar.color}15`, border: `1px solid ${avatar.color}33`, borderRadius: '12px', padding: '3px 9px 3px 5px' }}>
-            <span style={{ fontSize: '16px' }}>{avatar.emoji}</span>
-            <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '11px', color: avatar.color, fontWeight: 600 }}>{avatar.name}</span>
-          </div>
+          {avatar && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: `${avatar.color}15`, border: `1px solid ${avatar.color}33`, borderRadius: '12px', padding: '3px 9px 3px 5px' }}>
+              <span style={{ fontSize: '16px' }}>{avatar.emoji}</span>
+              <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '11px', color: avatar.color, fontWeight: 600 }}>{avatar.name}</span>
+            </div>
+          )}
         </div>
       </div>
 

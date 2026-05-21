@@ -16,50 +16,50 @@ type Panel = {
   isFinal?: boolean;
 };
 
-const PANELS: Panel[] = [
+export const TUTORIAL_PANELS: Panel[] = [
   {
     step: 0,
-    icon: '🏛️',
-    title: 'FORM QUEST',
-    text: 'Build forms that feel like an adventure — not a chore.',
-    subtext: "A cinematic form builder with 6 worlds, 6 runners, 17+ field types, real-time preview, version history, and instant sharing.",
+    icon: '✨',
+    title: 'FORMVERSE',
+    text: 'Build forms in three distinct worlds instead of one generic dashboard.',
+    subtext: 'FormVerse combines Temple Run, Globe Explorer, and The Library into one cinematic builder with live preview, version history, and instant sharing.',
     hint: 'CLICK ANYWHERE TO ADVANCE',
-    bg: 'radial-gradient(ellipse at 50% 20%, #1a0a00 0%, #0d0800 50%, #060605 100%)',
-    accent: '#ffd700',
-    glow: '#cc9900',
-    particles: ['⭐', '✨', '🌟', '💫', '🏛️'],
+    bg: 'radial-gradient(ellipse at 50% 20%, #120020 0%, #0a0618 50%, #04040a 100%)',
+    accent: '#c084fc',
+    glow: '#7c4dff',
+    particles: ['✨', '🌍', '📚', '🏛️', '💫'],
   },
   {
     step: 1,
-    icon: '🏃',
-    title: 'STEP 1: CHOOSE YOUR RUNNER',
-    text: 'Pick your avatar from 6 legendary characters — each with unique stats, lore, and a special ability.',
-    subtext: "Guy Dangerous, Scarlett Fox, Barry Bones, Karma Lee, Montana Smith, Francisco Montoya. Each one runs differently. Each one has a story.",
-    hint: '6 LEGENDARY CHARACTERS → SPEED · POWER · AGILITY',
-    bg: 'radial-gradient(ellipse at 30% 40%, #1a0050 0%, #0a0020 55%, #040012 100%)',
+    icon: '🎭',
+    title: 'STEP 1: PICK YOUR EXPERIENCE',
+    text: 'Start with the vibe that matches the form you want to create.',
+    subtext: 'Temple Run is mission-led and dramatic. Globe Explorer is travel-ready and locale-aware. The Library is built for lore, archives, and world-building.',
+    hint: '3 EXPERIENCES → GAMIFIED · TRAVEL · LORE',
+    bg: 'radial-gradient(ellipse at 30% 40%, #12002c 0%, #080018 55%, #040012 100%)',
     accent: '#b39ddb',
     glow: '#7c4dff',
-    particles: ['🏃', '💀', '🦊', '⚔️', '🐉', '🪖'],
+    particles: ['🏛️', '✈️', '📚', '🎭', '🗺️', '📖'],
   },
   {
     step: 2,
     icon: '🌍',
     title: 'STEP 2: ENTER YOUR WORLD',
-    text: 'Six worlds. Each one sounds, looks, and feels completely different.',
-    subtext: "Jungle, Snow, Desert, Space, Underwater, Volcano — your chosen world sets the visual theme for your entire form. When you enter, a cinematic story plays.",
-    hint: 'WORLD THEME = FORM THEME → AMBIENT SOUNDS INCLUDED',
+    text: 'Every experience narrows quickly into a themed starting point instead of a blank canvas.',
+    subtext: 'Choose a temple world, a real country, or a library realm. That selection drives the cinematic, presets, accents, and how the final form feels to respondents.',
+    hint: 'THEME FIRST → FASTER START → STRONGER FORM IDENTITY',
     bg: 'radial-gradient(ellipse at 70% 30%, #0d1f0d 0%, #050a04 55%, #020401 100%)',
     accent: '#5ab55a',
     glow: '#3a9a3a',
-    particles: ['🌴', '❄️', '🏜️', '🚀', '🌊', '🌋'],
+    particles: ['🌴', '🇮🇳', '📜', '🚀', '🌊', '🌋'],
   },
   {
     step: 3,
     icon: '🔧',
     title: 'STEP 3: BUILD YOUR FORM',
-    text: 'The left palette has 17+ field types. Click any field to add it instantly.',
-    subtext: "Text, email, phone, dropdowns, ratings, sliders, file uploads, currency fields, section dividers. Or drop a whole Collection — Bank Details, Address Block, or Tax Info in one click.",
-    hint: 'PALETTE → FIELD TYPES + COLLECTIONS → DRAG TO REORDER',
+    text: 'Use presets for speed, then refine with the full field palette when you need control.',
+    subtext: 'Start from templates, mission scaffolds, or curated world presets. Then adjust labels, validation, sections, layout, visibility, and helper text without leaving the builder.',
+    hint: 'PRESET FIRST → CUSTOMIZE SECOND → SHARE FAST',
     bg: 'radial-gradient(ellipse at 50% 80%, #1a0800 0%, #0d0400 55%, #060200 100%)',
     accent: '#ffd700',
     glow: '#cc8800',
@@ -68,10 +68,10 @@ const PANELS: Panel[] = [
   {
     step: 4,
     icon: '✏️',
-    title: 'STEP 4: CUSTOMIZE FIELDS',
-    text: 'Click any field in the canvas to open its editor — three tabs of options.',
-    subtext: "Basic tab: label, placeholder, required toggle. Rules tab: min/max length, validation presets (PAN, GST, IFSC, email, URL). Display tab: half-width layout, section headers.",
-    hint: '3-TAB EDITOR → BASIC · RULES · DISPLAY',
+    title: 'STEP 4: CUSTOMIZE WITH CONFIDENCE',
+    text: 'The editor lets you move from rough draft to production-ready form without guesswork.',
+    subtext: 'Tune required fields, country-specific validation, numeric limits, choice options, widths, helper copy, and sections while the preview updates in the same world theme.',
+    hint: 'RULES · DISPLAY · PREVIEW → ALL IN ONE FLOW',
     bg: 'radial-gradient(ellipse at 60% 20%, #001428 0%, #000a18 55%, #000508 100%)',
     accent: '#00e5ff',
     glow: '#00aacc',
@@ -81,9 +81,9 @@ const PANELS: Panel[] = [
     step: 5,
     icon: '🕐',
     title: 'STEP 5: PUBLISH & SHARE',
-    text: "Hit VERSIONS to save named snapshots — restore any old version instantly. Hit SHARE to copy a link.",
-    subtext: "Anyone with your share link can fill the form in their browser — no account, no setup, no friction. The form renders in your exact world theme.",
-    hint: '🕐 VERSIONS = SAVE HISTORY → 🔗 SHARE = INSTANT LINK',
+    text: 'Save versions, publish when ready, and send a link that keeps the same immersive theme.',
+    subtext: 'Respondents land on a polished public form instead of a stripped-down fallback. You can review responses and analytics from the creator dashboard after launch.',
+    hint: 'VERSIONS → PUBLISH → SHARE → TRACK RESPONSES',
     bg: 'radial-gradient(ellipse at 40% 60%, #001a00 0%, #000d00 55%, #000400 100%)',
     accent: '#69f0ae',
     glow: '#00c853',
@@ -92,9 +92,9 @@ const PANELS: Panel[] = [
   {
     step: 6,
     icon: '⚡',
-    title: 'YOU ARE READY TO RUN',
-    text: 'Choose your runner. Enter your world. Build something legendary.',
-    subtext: "The demons are already running. The idol is in your hands. The clock started the moment you entered the temple.",
+    title: 'YOU ARE READY TO BUILD',
+    text: 'Pick a world, create your first account, and ship a form that already feels memorable.',
+    subtext: 'The strongest first run is simple: choose an experience, let the product scaffold the mood, then publish something people want to complete.',
     hint: '',
     bg: 'radial-gradient(ellipse at 50% 50%, #1a0500 0%, #0d0700 55%, #060800 100%)',
     accent: '#ffd700',
@@ -118,7 +118,7 @@ export function TutorialScreen({ onComplete }: Props) {
   const [showCTA, setShowCTA] = useState(false);
   const [cursorOn, setCursorOn] = useState(true);
 
-  const panel = PANELS[idx];
+  const panel = TUTORIAL_PANELS[idx];
   const isTypingDone = chars >= panel.text.length;
 
   useEffect(() => {
@@ -166,7 +166,7 @@ export function TutorialScreen({ onComplete }: Props) {
   }, [isTypingDone, showSub, idx]);
 
   const doAdvance = useCallback(() => {
-    if (fading || idx >= PANELS.length - 1) return;
+    if (fading || idx >= TUTORIAL_PANELS.length - 1) return;
     setFading(true);
     playWhoosh();
     setTimeout(() => { setIdx(i => i + 1); setFading(false); }, 380);
@@ -211,7 +211,7 @@ export function TutorialScreen({ onComplete }: Props) {
 
       {/* Step dots */}
       <div style={{ position: 'absolute', top: '68px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 20 }}>
-        {PANELS.map((_, i) => (
+        {TUTORIAL_PANELS.map((_, i) => (
           <div key={i} style={{ width: i === idx ? '28px' : '8px', height: '3px', borderRadius: '2px', background: i <= idx ? panel.accent : 'rgba(255,255,255,0.18)', transition: 'all 0.3s ease' }} />
         ))}
       </div>
@@ -267,7 +267,7 @@ export function TutorialScreen({ onComplete }: Props) {
                 animation: 'pulse-glow 2s ease-in-out infinite',
               }}
             >
-              ⚡ ENTER TEMPLE
+              ⚡ ENTER FORMVERSE
             </button>
           </div>
         )}

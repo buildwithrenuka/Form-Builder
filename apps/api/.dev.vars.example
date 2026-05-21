@@ -9,3 +9,12 @@ IP_SALT=change-me-to-another-random-string
 
 # Salt used when hashing passwords
 PASSWORD_SALT=change-me-to-yet-another-random-string
+
+# ── Email Notifications (Optional) ──────────────────────────────────────────
+# Get your key at https://resend.com — free tier: 3,000 emails/month
+# Leave blank to disable (form submissions still work without it)
+RESEND_API_KEY=re_your_resend_api_key_here
+
+# ── Demo credentials (seeded via migrations/0002_seed.sql) ──────────────────
+# Email:    demo@formverse.io
+# Password: Demo1234!

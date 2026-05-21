@@ -5,6 +5,7 @@ import { ParticleBackground } from './ParticleBackground';
 
 type Props = {
   avatar: Avatar;
+  currentWorld?: WorldTheme | null;
   onSelect: (world: WorldTheme) => void;
   onBack: () => void;
 };
@@ -23,6 +24,9 @@ function WorldCard({
   const [hovered, setHovered] = useState(false);
 
   const active = selected || hovered;
+  const cardBackground = active
+    ? `linear-gradient(180deg, ${world.primaryColor}18 0%, ${world.cardBg} 34%, rgba(5,5,10,0.96) 100%)`
+    : `linear-gradient(180deg, rgba(255,255,255,0.04) 0%, ${world.cardBg} 38%, rgba(5,5,10,0.94) 100%)`;
 
   return (
     <button
@@ -31,10 +35,10 @@ function WorldCard({
       onMouseLeave={() => setHovered(false)}
       className="tr-card"
       style={{
-        background: active ? world.bg : 'rgba(10, 10, 20, 0.8)',
+        background: cardBackground,
         border: `2px solid ${selected ? world.accentColor : hovered ? world.borderColor : 'rgba(255,255,255,0.1)'}`,
-        borderRadius: '14px',
-        padding: '28px 22px',
+        borderRadius: '18px',
+        padding: 0,
         cursor: 'pointer',
         textAlign: 'left',
         color: world.textColor,
@@ -51,20 +55,29 @@ function WorldCard({
         minHeight: '260px',
         display: 'flex',
         flexDirection: 'column',
+        transform: selected ? 'translateY(-4px) scale(1.015)' : hovered ? 'translateY(-3px)' : 'none',
       }}
     >
-      {/* Background overlay when active */}
-      {active && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: world.bg,
-            opacity: 0.85,
-            borderRadius: '12px',
-          }}
-        />
-      )}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(circle at 50% 0%, ${world.glowColor}${active ? '44' : '16'} 0%, transparent 52%)`,
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '3px',
+          background: `linear-gradient(90deg, transparent, ${world.accentColor}, transparent)`,
+          opacity: active ? 1 : 0.5,
+        }}
+      />
 
       {/* Selected badge */}
       {selected && (
@@ -88,86 +101,129 @@ function WorldCard({
         </div>
       )}
 
-      <div style={{ position: 'relative', zIndex: 1, flex: 1 }}>
-        {/* World emoji */}
-        <div
-          style={{
-            fontSize: '56px',
-            marginBottom: '12px',
-            display: 'inline-block',
-            filter: selected ? `drop-shadow(0 0 16px ${world.glowColor})` : undefined,
-            animation: selected ? 'float 3s ease-in-out infinite' : undefined,
-          }}
-        >
-          {world.emoji}
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, padding: '24px 20px 18px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '16px' }}>
+          <div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: `${world.accentColor}14`,
+                border: `1px solid ${world.accentColor}2f`,
+                borderRadius: '999px',
+                padding: '4px 10px',
+                marginBottom: '12px',
+              }}
+            >
+              <span style={{ fontSize: '11px' }}>{world.emoji}</span>
+              <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '9px', fontWeight: 800, color: world.accentColor, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+                Temple Theme
+              </span>
+            </div>
+
+            {/* World name */}
+            <div
+              style={{
+                fontFamily: "'Cinzel Decorative', serif",
+                fontSize: '15px',
+                fontWeight: 700,
+                color: active ? world.accentColor : '#f2eee4',
+                marginBottom: '4px',
+                lineHeight: 1.2,
+                textShadow: active ? `0 0 12px ${world.glowColor}` : 'none',
+                transition: 'color 0.2s ease',
+              }}
+            >
+              {world.name}
+            </div>
+
+            {/* Tagline */}
+            <div
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontSize: '10px',
+                fontWeight: 700,
+                color: world.mutedColor,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {world.tagline}
+            </div>
+          </div>
+
+          {/* World emoji */}
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: `radial-gradient(circle, ${world.accentColor}24 0%, transparent 70%)`,
+              border: `1px solid ${world.accentColor}33`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              boxShadow: active ? `0 0 22px ${world.glowColor}55` : 'none',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '34px',
+                filter: selected ? `drop-shadow(0 0 16px ${world.glowColor})` : undefined,
+                animation: selected ? 'float 3s ease-in-out infinite' : undefined,
+              }}
+            >
+              {world.emoji}
+            </div>
+          </div>
         </div>
 
-        {/* World name */}
-        <div
-          style={{
-            fontFamily: "'Cinzel Decorative', serif",
-            fontSize: '15px',
-            fontWeight: 700,
-            color: active ? world.accentColor : '#ddd',
-            marginBottom: '4px',
-            lineHeight: 1.2,
-            textShadow: active ? `0 0 12px ${world.glowColor}` : 'none',
-            transition: 'color 0.2s ease',
-          }}
-        >
-          {world.name}
-        </div>
+        <div style={{ height: '1px', background: `linear-gradient(90deg, ${world.borderColor}00, ${world.borderColor}55, transparent)`, marginBottom: '14px' }} />
 
-        {/* Tagline */}
         <div
-          style={{
-            fontFamily: "'Rajdhani', sans-serif",
-            fontSize: '10px',
-            fontWeight: 700,
-            color: world.mutedColor,
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            marginBottom: '12px',
-          }}
-        >
-          {world.tagline}
-        </div>
-
-        {/* Description */}
-        <p
           style={{
             fontFamily: "'Exo 2', sans-serif",
             fontSize: '12px',
-            color: active ? world.textColor : 'rgba(200,200,200,0.55)',
-            lineHeight: 1.5,
+            color: active ? world.textColor : 'rgba(232,232,232,0.68)',
+            lineHeight: 1.55,
             transition: 'color 0.2s ease',
+            minHeight: '74px',
+            flex: 1,
           }}
         >
           {world.description}
-        </p>
+        </div>
 
-        {/* Particle preview */}
         <div
           style={{
             marginTop: '16px',
             display: 'flex',
             gap: '6px',
             flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          {world.particles.slice(0, 5).map((p, i) => (
-            <span
-              key={i}
-              style={{
-                fontSize: '18px',
-                opacity: active ? 1 : 0.4,
-                animation: active ? `bounce 1.2s ease-in-out ${i * 0.15}s infinite` : undefined,
-                transition: 'opacity 0.2s ease',
-              }}
-            >
-              {p}
-            </span>
-          ))}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {world.particles.slice(0, 4).map((p, i) => (
+              <span
+                key={i}
+                style={{
+                  fontSize: '18px',
+                  opacity: active ? 1 : 0.42,
+                  animation: active ? `bounce 1.2s ease-in-out ${i * 0.15}s infinite` : undefined,
+                  transition: 'opacity 0.2s ease',
+                }}
+              >
+                {p}
+              </span>
+            ))}
+          </div>
+          <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '10px', fontWeight: 800, color: active ? world.accentColor : 'rgba(255,255,255,0.34)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+            {selected ? 'Ready to enter' : 'Preview realm'}
+          </div>
         </div>
       </div>
 
@@ -189,8 +245,8 @@ function WorldCard({
   );
 }
 
-export function WorldSelector({ avatar, onSelect, onBack }: Props) {
-  const [selected, setSelected] = useState<WorldTheme | null>(null);
+export function WorldSelector({ avatar, currentWorld = null, onSelect, onBack }: Props) {
+  const [selected, setSelected] = useState<WorldTheme | null>(currentWorld);
 
   return (
     <div
@@ -267,11 +323,13 @@ export function WorldSelector({ avatar, onSelect, onBack }: Props) {
               fontFamily: "'Cinzel Decorative', serif",
               fontSize: 'clamp(14px, 2.5vw, 24px)',
               fontWeight: 900,
+              color: '#ffe08a',
               background: 'linear-gradient(135deg, #ffd700, #ffec70, #ffd700)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-              filter: 'drop-shadow(0 0 6px rgba(255,215,0,0.5))',
+              textShadow: '0 0 12px rgba(49, 24, 0, 0.3)',
+              filter: 'drop-shadow(0 0 6px rgba(255,215,0,0.35))',
             }}
           >
             Choose Your World

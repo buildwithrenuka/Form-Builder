@@ -5,6 +5,7 @@ import { ParticleBackground } from './ParticleBackground';
 import { playClick, playCoin, playHover } from '../soundEngine';
 
 type Props = {
+  currentAvatar?: Avatar | null;
   onSelect: (avatar: Avatar) => void;
   onBack: () => void;
 };
@@ -66,6 +67,9 @@ function AvatarCard({
           : '0 4px 20px rgba(0,0,0,0.4)',
         transition: 'all 0.25s ease',
         transform: selected ? 'scale(1.02)' : hovered ? 'scale(1.01)' : 'scale(1)',
+        minHeight: '430px',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Background shimmer on active */}
@@ -103,7 +107,7 @@ function AvatarCard({
         </div>
       )}
 
-      <div style={{ position: 'relative', zIndex: 1, padding: '52px 18px 18px' }}>
+      <div style={{ position: 'relative', zIndex: 1, padding: '52px 18px 18px', display: 'flex', flexDirection: 'column', flex: 1 }}>
 
         {/* Glow ring + emoji */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
@@ -131,7 +135,7 @@ function AvatarCard({
         </div>
 
         {/* Description */}
-        <p style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginBottom: '14px', textAlign: 'left', minHeight: '46px' }}>
+        <p style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.68)', lineHeight: 1.58, marginBottom: '14px', textAlign: 'left', flex: 1 }}>
           {avatar.description}
         </p>
 
@@ -140,10 +144,10 @@ function AvatarCard({
           background: `${avatar.color}12`,
           border: `1px solid ${avatar.color}33`,
           borderRadius: '7px', padding: '8px 12px', marginBottom: '14px',
-          display: 'flex', alignItems: 'center', gap: '8px',
+          display: 'flex', alignItems: 'flex-start', gap: '8px',
         }}>
           <span style={{ fontSize: '16px' }}>{avatar.abilityIcon}</span>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '9px', color: avatar.color, letterSpacing: '0.18em', fontWeight: 700, marginBottom: '2px' }}>SPECIAL ABILITY</div>
             <div style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.3 }}>{avatar.ability}</div>
           </div>
@@ -170,8 +174,8 @@ function AvatarCard({
   );
 }
 
-export function AvatarSelector({ onSelect, onBack }: Props) {
-  const [selected, setSelected] = useState<Avatar | null>(null);
+export function AvatarSelector({ currentAvatar = null, onSelect, onBack }: Props) {
+  const [selected, setSelected] = useState<Avatar | null>(currentAvatar);
 
   return (
     <div
@@ -209,7 +213,7 @@ export function AvatarSelector({ onSelect, onBack }: Props) {
         </button>
 
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(14px, 2.5vw, 24px)', fontWeight: 900, background: 'linear-gradient(135deg, #ffd700, #ffec70, #ffd700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 0 8px rgba(255,215,0,0.45))' }}>
+          <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(14px, 2.5vw, 24px)', fontWeight: 900, color: '#ffe08a', background: 'linear-gradient(135deg, #ffd700, #ffec70, #ffd700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textShadow: '0 0 12px rgba(49, 24, 0, 0.3)', filter: 'drop-shadow(0 0 8px rgba(255,215,0,0.35))' }}>
             Choose Your Runner
           </div>
           <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.22em', marginTop: '3px' }}>

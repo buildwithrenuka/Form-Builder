@@ -333,12 +333,13 @@ const MAP_NODES: { id: string; emoji: string; x: number; y: number }[] = [
 type Props = {
   world: WorldTheme;
   avatar: Avatar;
+  currentPurposeId?: string;
   onSelect: (fields: FormField[], title: string, purposeId: string) => void;
   onBack: () => void;
 };
 
-export function MapPurposeScreen({ world, avatar, onSelect, onBack }: Props) {
-  const [selected, setSelected] = useState<Purpose | null>(null);
+export function MapPurposeScreen({ world, avatar, currentPurposeId = '', onSelect, onBack }: Props) {
+  const [selected, setSelected] = useState<Purpose | null>(() => PURPOSES.find((purpose) => purpose.id === currentPurposeId) ?? null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [launching, setLaunching] = useState(false);
 
