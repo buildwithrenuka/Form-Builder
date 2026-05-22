@@ -11,11 +11,6 @@ export type Context = {
   db:     AppDB;
   env:    Env;
   ip:     string | null;
-};
-
-function getAdminEmails(env: Env): Set<string> {
-  const configured = env.ADMIN_EMAILS?.split(',').map((value) => value.trim().toLowerCase()).filter(Boolean) ?? [];
-  return new Set(configured.length ? configured : ['demo@formverse.io']);
 }
 
 function getClientIp(c: HonoCtx<{ Bindings: Env }>): string | null {
@@ -44,10 +39,10 @@ export async function createContext(c: HonoCtx<{ Bindings: Env }>): Promise<Cont
 
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
-      columns: { email: true },
+      columns: { email: true, role: true },
     });
     const userEmail = user?.email ?? null;
-    const isAdmin = userEmail ? getAdminEmails(c.env).has(userEmail.toLowerCase()) : false;
+    const isAdmin = user?.role === 'admin';
 
     return { userId, userEmail, isAdmin, db, env: c.env, ip };
   } catch {

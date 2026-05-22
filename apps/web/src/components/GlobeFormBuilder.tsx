@@ -186,7 +186,7 @@ function emptyField(type: FieldType, country: Country): FormField {
     label: type === 'page_break' ? 'New Page' : def?.label ?? type,
     placeholder: `Enter ${(def?.label ?? type).toLowerCase()}...`,
     required: false,
-    options: type === 'radio' || type === 'select' || type === 'checkbox'
+    options: type === 'radio' || type === 'select' || type === 'checkbox' || type === 'multi_select'
       ? ['Option 1', 'Option 2', 'Option 3'] : [],
     min: type === 'rating' ? 1 : 0,
     max: type === 'rating' ? 5 : 100,
@@ -375,7 +375,7 @@ function FieldEditorPanel({ field, world, allFields, onChange }: {
   if (field.type === 'section' || field.type === 'page_break') return <SectionEditor field={field} world={world} onChange={onChange} />;
 
   const isText = ['text', 'textarea', 'email', 'password', 'url', 'phone'].includes(field.type);
-  const hasOptions = field.type === 'radio' || field.type === 'select' || field.type === 'checkbox';
+  const hasOptions = field.type === 'radio' || field.type === 'select' || field.type === 'checkbox' || field.type === 'multi_select';
   const hasMinMax = field.type === 'range' || field.type === 'rating' || field.type === 'number';
   const eligibleConditionFields = allFields.filter((candidate) => candidate.id !== field.id && candidate.type !== 'section' && candidate.type !== 'page_break');
   const tabs = [
@@ -406,7 +406,7 @@ function FieldEditorPanel({ field, world, allFields, onChange }: {
             <EditorLabel world={world}>Field Label</EditorLabel>
             <EditorInput world={world} value={field.label} onChange={(v) => onChange({ ...field, label: v })} />
           </div>
-          {!['checkbox', 'radio', 'select', 'rating', 'file'].includes(field.type) && (
+          {!['checkbox', 'radio', 'select', 'multi_select', 'rating', 'file'].includes(field.type) && (
             <div>
               <EditorLabel world={world}>Placeholder</EditorLabel>
               <EditorInput world={world} value={field.placeholder} onChange={(v) => onChange({ ...field, placeholder: v })} />
@@ -705,6 +705,7 @@ function FieldPreview({ field, world }: { field: FormField; world: WorldTheme })
       );
     case 'radio':
     case 'checkbox':
+    case 'multi_select':
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {(field.options.length ? field.options : ['Option 1', 'Option 2']).slice(0, 3).map((o, i) => (
@@ -757,8 +758,9 @@ function FieldPreview({ field, world }: { field: FormField; world: WorldTheme })
 }
 
 // ── Rich field card ────────────────────────────────────────────────────────
-function FieldCard({ field, index, total, world, isEditing, onEdit, onDelete, onMoveUp, onMoveDown, onChange, onDuplicate, onInsertBelow }: {
+function FieldCard({ field, index, total, world, allFields, isEditing, onEdit, onDelete, onMoveUp, onMoveDown, onChange, onDuplicate, onInsertBelow }: {
   field: FormField; index: number; total: number; world: WorldTheme;
+  allFields: FormField[];
   isEditing: boolean; onEdit: () => void; onDelete: () => void;
   onMoveUp: () => void; onMoveDown: () => void; onChange: (f: FormField) => void;
   onDuplicate: () => void; onInsertBelow: (type: FieldType) => void;
@@ -806,7 +808,7 @@ function FieldCard({ field, index, total, world, isEditing, onEdit, onDelete, on
       </div>
       {isEditing && (
         <div style={{ borderTop: `1px solid ${world.borderColor}28`, padding: '14px 18px 18px' }}>
-          <FieldEditorPanel field={field} world={world} onChange={onChange} />
+          <FieldEditorPanel field={field} world={world} allFields={allFields} onChange={onChange} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 16, paddingTop: 12, borderTop: `1px solid ${world.borderColor}18` }}>
             <button onClick={() => onInsertBelow(field.type)}
               style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none',
@@ -837,7 +839,7 @@ function FieldCard({ field, index, total, world, isEditing, onEdit, onDelete, on
 }
 
 // ── Palette sidebar ────────────────────────────────────────────────────────
-function PaletteSidebar({ world, country, presets, onAddField, onAddCollection, onAddPresetGroup, settingsPanel, settingsActive, onToggleSettings }: {
+function PaletteSidebar({ world, country, presets, onAddField, onAddCollection, onAddPresetGroup, settingsPanel, settingsActive, onToggleSettings, filePanel, historyPanel, reviewPanel, onActiveTabChange }: {
   world: WorldTheme; country: Country;
   presets: { group: string; fields: Partial<FormField & { label: string; type: FieldType }>[] }[];
   onAddField: (t: FieldType) => void;
@@ -852,8 +854,17 @@ function PaletteSidebar({ world, country, presets, onAddField, onAddCollection, 
   onActiveTabChange?: (tab: 'file' | 'history' | 'review' | 'design' | null) => void;
 }) {
   const [activeTab, setActiveTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
-  const [activeDesignTab, setActiveDesignTab] = useState<'fields' | 'presets' | 'collections'>('fields');
   const [activeFieldCategory, setActiveFieldCategory] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab === 'design' && !activeFieldCategory) {
+      setActiveFieldCategory(PALETTE_CATEGORIES[0]?.id ?? null);
+    }
+
+    if (activeTab !== 'design' && activeFieldCategory) {
+      setActiveFieldCategory(null);
+    }
+  }, [activeTab, activeFieldCategory]);
 
   useEffect(() => {
     onActiveTabChange?.(activeTab);
@@ -907,27 +918,17 @@ function PaletteSidebar({ world, country, presets, onAddField, onAddCollection, 
             {settingsPanel}
           </div>
         ) : activeTab === 'design' ? (
-          <div style={{ position: 'absolute', top: 'calc(100% + 14px)', right: '16px', width: '212px', maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px', background: 'rgba(18,22,34,0.9)', border: `1px solid ${world.borderColor}14`, borderRadius: '24px', boxShadow: '0 14px 30px rgba(0,0,0,0.18)', zIndex: 30 }}>
+          <div style={{ position: 'absolute', top: 'calc(100% + 14px)', right: '16px', width: '212px', maxHeight: 'calc(100vh - 210px)', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px', background: 'rgba(18,22,34,0.9)', border: `1px solid ${world.borderColor}14`, borderRadius: '24px', boxShadow: '0 14px 30px rgba(0,0,0,0.18)', zIndex: 30 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontSize: '11px', fontWeight: 700, color: world.accentColor, letterSpacing: '0.10em' }}>Design</span>
               <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.4 }}>Use fields, presets, and collections.</span>
             </div>
+            <div className="tr-scroll" style={{ position: 'relative', zIndex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'stretch', width: '100%', paddingRight: '2px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'stretch', width: '100%' }}>
-              <button style={{ ...tabStyle(activeDesignTab === 'fields'), width: '100%', justifyContent: 'space-between', borderRadius: '14px', padding: '11px 13px' }} onClick={() => setActiveDesignTab('fields')}>
-                <PremiumIcon token="🧩" size={15} />
+              <div style={sectionTitleStyle}>
+                <PremiumIcon token="🧩" size={14} />
                 <span>Fields</span>
-              </button>
-              <button style={{ ...tabStyle(activeDesignTab === 'presets'), width: '100%', justifyContent: 'space-between', borderRadius: '14px', padding: '11px 13px' }} onClick={() => setActiveDesignTab('presets')}>
-                <span>{country.emoji}</span>
-                <span>Presets</span>
-              </button>
-              <button style={{ ...tabStyle(activeDesignTab === 'collections'), width: '100%', justifyContent: 'space-between', borderRadius: '14px', padding: '11px 13px' }} onClick={() => setActiveDesignTab('collections')}>
-                <PremiumIcon token="📦" size={15} />
-                <span>Collections</span>
-              </button>
-            </div>
-            {activeDesignTab === 'fields' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'stretch', width: '100%' }}>
+              </div>
               {PALETTE_CATEGORIES.map((cat) => (
                 <div key={cat.id} style={{ position: 'relative' }}>
                   <button style={{ ...categoryTabStyle(activeFieldCategory === cat.id), width: '100%', minWidth: '100%', minHeight: '56px' }} onClick={() => setActiveFieldCategory((current) => current === cat.id ? null : cat.id)}>
@@ -964,8 +965,11 @@ function PaletteSidebar({ world, country, presets, onAddField, onAddCollection, 
                 </div>
               ))}
             </div>
-            ) : activeDesignTab === 'presets' ? (
           <div style={{ width: '100%' }}>
+            <div style={sectionTitleStyle}>
+              <span>{country.emoji}</span>
+              <span>Presets</span>
+            </div>
             <div style={{ display: 'grid', gap: '8px' }}>
               {presets.map((preset, i) => (
                 <button key={i} onClick={() => onAddPresetGroup(preset.fields)}
@@ -978,8 +982,11 @@ function PaletteSidebar({ world, country, presets, onAddField, onAddCollection, 
               ))}
             </div>
           </div>
-        ) : (
           <div style={{ width: '100%' }}>
+            <div style={sectionTitleStyle}>
+              <PremiumIcon token="📦" size={14} />
+              <span>Collections</span>
+            </div>
             <div style={{ display: 'grid', gap: '8px' }}>
               {COLLECTIONS.map((col) => (
                 <button key={col.id} onClick={() => onAddCollection(col.id)}
@@ -995,7 +1002,7 @@ function PaletteSidebar({ world, country, presets, onAddField, onAddCollection, 
               ))}
             </div>
           </div>
-        )}
+          </div>
           </div>
         ) : null}
       </div>
@@ -1027,6 +1034,7 @@ export function GlobeFormBuilder({ country, onBack, onLogout, onPreview, initial
   const [accessPassword, setAccessPassword] = useState('');
   const [activeRibbonTab, setActiveRibbonTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
 
+  const trpcUtils = trpc.useUtils();
   const createMut  = trpc.forms.create.useMutation();
   const updateMut  = trpc.forms.update.useMutation();
   const publishMut = trpc.forms.setPublished.useMutation();
@@ -1058,6 +1066,7 @@ export function GlobeFormBuilder({ country, onBack, onLogout, onPreview, initial
       });
       const next = !isPublished;
       await publishMut.mutateAsync({ id: fid, published: next });
+      await trpcUtils.forms.listPublic.invalidate();
       setIsPublished(next);
       setPublishMsg(next ? '✓ Published!' : '✓ Unpublished');
       setTimeout(() => setPublishMsg(''), 3000);
@@ -1568,6 +1577,7 @@ export function GlobeFormBuilder({ country, onBack, onLogout, onPreview, initial
                         onMoveDown={() => moveField(i, 'down')}
                         onChange={updateField} />
                     : <FieldCard key={field.id} field={field} index={i} total={fields.length} world={world}
+                      allFields={fields}
                         isEditing={editingId === field.id}
                         onEdit={() => setEditingId(id => id === field.id ? null : field.id)}
                         onDelete={() => removeField(field.id)}

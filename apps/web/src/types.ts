@@ -72,6 +72,7 @@ export type FieldType =
   | 'checkbox'
   | 'radio'
   | 'select'
+  | 'multi_select'
   | 'range'
   | 'rating'
   | 'file'

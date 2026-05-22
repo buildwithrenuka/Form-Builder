@@ -140,7 +140,10 @@ function buildResponseValidator(fields: FieldSchema[]) {
           validator = z.enum(field.options as [string, ...string[]]);
         }
         break;
-      case 'checkbox': validator = z.array(z.string()); break;
+      case 'checkbox':
+      case 'multi_select':
+        validator = z.array(z.string());
+        break;
       default: validator = z.string();
     }
 
@@ -220,6 +223,15 @@ async function countResponsesForForm(db: AppDB, formId: string): Promise<number>
   return result?.total ?? 0;
 }
 
+async function hasExistingResponseForIp(db: AppDB, formId: string, hash: string): Promise<boolean> {
+  const existing = await db.query.responses.findFirst({
+    where: and(eq(responses.formId, formId), eq(responses.ipHash, hash)),
+    columns: { id: true },
+  });
+
+  return Boolean(existing);
+}
+
 function matchesResponseQuery(data: Record<string, unknown>, query: string): boolean {
   if (!query) return true;
   const normalized = query.toLowerCase();
@@ -290,6 +302,11 @@ export const responsesRouter = router({
       const clientIp = ctx.ip;
       const hash     = clientIp ? ipHash(clientIp, ctx.env.IP_SALT) : null;
       if (hash && !isLocalDevelopmentIp(clientIp)) {
+        const alreadySubmitted = await hasExistingResponseForIp(ctx.db, input.formId, hash);
+        if (alreadySubmitted) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'You have already submitted this form.' });
+        }
+
         const rlKey   = `${input.formId}:${hash}`;
         const allowed = await checkRateLimit(ctx.db, rlKey);
         if (!allowed) {

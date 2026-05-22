@@ -12,14 +12,28 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
+  const cinematicPanels = country.cinematic.length > 0
+    ? country.cinematic
+    : [{ icon: country.emoji, title: country.name, text: country.tagline }];
+  const activePanel = cinematicPanels[Math.min(panel, cinematicPanels.length - 1)];
+
   useEffect(() => {
     setTimeout(() => setVisible(true), 100);
   }, []);
 
+  useEffect(() => {
+    setPanel(0);
+    setVisible(false);
+    setLeaving(false);
+
+    const timeoutId = window.setTimeout(() => setVisible(true), 100);
+    return () => window.clearTimeout(timeoutId);
+  }, [country.id]);
+
   function advance() {
     setLeaving(true);
     setTimeout(() => {
-      if (panel < country.cinematic.length - 1) {
+      if (panel < cinematicPanels.length - 1) {
         setPanel(p => p + 1);
         setLeaving(false);
         setVisible(false);
@@ -29,8 +43,6 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
       }
     }, 350);
   }
-
-  const cp = country.cinematic[panel];
 
   return (
     <div
@@ -139,7 +151,7 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
           filter: `drop-shadow(0 0 24px ${country.glowColor})`,
           lineHeight: 1,
         }}>
-          {cp.icon}
+          {activePanel.icon}
         </div>
 
         <h2 style={{
@@ -150,7 +162,7 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
           lineHeight: 1.2,
           textShadow: `0 0 30px ${country.glowColor}`,
         }}>
-          {cp.title}
+          {activePanel.title}
         </h2>
 
         <p style={{
@@ -159,7 +171,7 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
           lineHeight: 1.7,
           margin: 0,
         }}>
-          {cp.text}
+          {activePanel.text}
         </p>
       </div>
 
@@ -168,7 +180,7 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
         display: 'flex', gap: 10,
         position: 'absolute', bottom: 60,
       }}>
-        {country.cinematic.map((_, i) => (
+        {cinematicPanels.map((_, i) => (
           <div key={i} style={{
             width: i === panel ? 28 : 8,
             height: 8,
@@ -189,7 +201,7 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
         textTransform: 'uppercase',
         fontFamily: 'monospace',
       }}>
-        {panel < country.cinematic.length - 1 ? 'tap to continue' : 'tap to build'}
+        {panel < cinematicPanels.length - 1 ? 'tap to continue' : 'tap to build'}
       </div>
 
       {/* Flag stripe bottom */}

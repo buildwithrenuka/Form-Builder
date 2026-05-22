@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { HomeTheme } from './HomePage';
+import { PremiumIcon } from './PremiumIcon';
 
 type Props = {
   onSelectTempleRun: () => void;
@@ -155,20 +156,20 @@ export function ExperienceSelector({ onSelectTempleRun, onSelectGlobe, onSelectL
           <button onClick={onDashboard} style={{ background: T.dashboardBg, border: `1px solid ${T.dashboardBorder}`, color: T.dashboardColor, borderRadius: 10, padding: '8px 18px', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em', transition: 'all 0.18s' }}
             onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.boxShadow = `0 0 16px ${T.dashboardBorder}`; }}
             onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.boxShadow = 'none'; }}>
-            📊 Dashboard
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><PremiumIcon token="📊" size={14} />Dashboard</span>
           </button>
         )}
         {onAdmin && (
           <button onClick={onAdmin} style={{ background: T.backBg, border: `1px solid ${T.backBorder}`, color: T.backColor, borderRadius: 10, padding: '8px 18px', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em', transition: 'all 0.18s' }}
             onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.08)'; }}
             onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; }}>
-            🛠 Admin
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><PremiumIcon token="🛠" size={14} />Admin</span>
           </button>
         )}
         <button onClick={onLogout} style={{ background: T.backBg, border: `1px solid ${T.backBorder}`, color: T.backColor, borderRadius: 10, padding: '8px 18px', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'system-ui, sans-serif', transition: 'all 0.18s' }}
           onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.08)'; }}
           onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; }}>
-          Logout
+          Sign Out
         </button>
       </div>
 

@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const FieldTypeEnum = z.enum([
   'text', 'email', 'password', 'phone', 'number',
   'date', 'time', 'url', 'currency', 'textarea',
-  'checkbox', 'radio', 'select', 'range', 'rating',
+  'checkbox', 'radio', 'select', 'multi_select', 'range', 'rating',
   'file', 'section', 'page_break',
   // Legacy/backward-compatible types
   'section_divider', 'scale', 'pan', 'gst', 'ifsc', 'pincode',
@@ -81,6 +81,20 @@ export const RegisterInput = z.object({
 export const LoginInput = z.object({
   email:    z.string().email().toLowerCase(),
   password: z.string().min(1).max(128),
+});
+
+export const ForgotPasswordInput = z.object({
+  email: z.string().email().toLowerCase(),
+});
+
+export const ResetPasswordInput = z.object({
+  token: z.string().min(20).max(256),
+  password: z.string()
+    .min(10, 'Password must be at least 10 characters long.')
+    .max(128)
+    .regex(/[a-z]/, 'Password must include a lowercase letter.')
+    .regex(/[A-Z]/, 'Password must include an uppercase letter.')
+    .regex(/\d/, 'Password must include a number.'),
 });
 
 // ── Form CRUD ──────────────────────────────────────────────────────────────

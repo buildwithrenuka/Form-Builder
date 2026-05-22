@@ -2,12 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { FormVerseLogo } from './Logo';
 import { TUTORIAL_PANELS } from './TutorialScreen';
 import { PricingSection } from './PricingSection';
+import { PremiumIcon } from './PremiumIcon';
 import { trpc } from '../trpc';
 import { COUNTRIES } from '../globeData';
 import { LIBRARY_WORLDS } from '../libraryData';
 import { AVATARS, WORLDS } from '../themes';
 
 export type HomeTheme = 'dark' | 'light' | 'rainbow' | 'firecracker' | 'jugnu';
+
+const HOME_GALLERY_PREVIEW_LIMIT = 6;
 
 type Props = {
   onEnter: () => void;
@@ -395,6 +398,14 @@ const JUGNU = {
 
 const THEMES = { dark: DARK, light: LIGHT, rainbow: RAINBOW, firecracker: FIRECRACKER, jugnu: JUGNU } as const;
 
+const HOME_THEME_OPTIONS = [
+  { id: 'dark', icon: '🌙', title: 'Dark', glow: 'rgba(100,80,255,0.55)' },
+  { id: 'light', icon: '☀️', title: 'Light', glow: 'rgba(255,200,0,0.55)' },
+  { id: 'rainbow', icon: '🌈', title: 'Rainbow', glow: 'rgba(255,0,200,0.55)' },
+  { id: 'firecracker', icon: '🎆', title: 'Firecracker', glow: 'rgba(255,80,0,0.65)' },
+  { id: 'jugnu', icon: '✨', title: 'Jugnu', glow: 'rgba(160,255,0,0.55)' },
+] as const satisfies ReadonlyArray<{ id: HomeTheme; icon: string; title: string; glow: string }>;
+
 const EXPERIENCES = [
   {
     id: 'temple', num: '01', emoji: '🏛️',
@@ -685,16 +696,20 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
   const [tagIdx,    setTagIdx]    = useState(0);
   const [tagVisible,setTagVisible]= useState(true);
   const [tutorialIdx, setTutorialIdx] = useState(0);
+  const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const [previewModalId, setPreviewModalId] = useState<string | null>(null);
   const [canHover, setCanHover] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
   const previewVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const themeSelectorRef = useRef<HTMLDivElement>(null);
   const T = THEMES[theme];
   const isDark = theme !== 'light';
   const rainbow     = theme === 'rainbow';
   const firecracker = theme === 'firecracker';
   const jugnu       = theme === 'jugnu';
-  const { data: publicForms, isLoading: publicFormsLoading } = trpc.forms.listPublic.useQuery({ limit: 30 }, { staleTime: 60_000 });
+  const { data: publicForms, isLoading: publicFormsLoading } = trpc.forms.listPublic.useQuery({ limit: HOME_GALLERY_PREVIEW_LIMIT }, { staleTime: 60_000 });
+  const publicGalleryPreview = publicForms?.items ?? [];
+  const publicGalleryTotal = publicForms?.total ?? 0;
   const previewModalExperience = EXPERIENCES.find((exp) => exp.id === previewModalId) ?? null;
 
   useEffect(() => { setTimeout(() => setHeroIn(true), 60); }, []);
@@ -756,7 +771,21 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
     };
   }, [previewModalId]);
 
+  useEffect(() => {
+    if (!themeMenuOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!themeSelectorRef.current?.contains(event.target as Node)) {
+        setThemeMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handlePointerDown);
+    return () => window.removeEventListener('mousedown', handlePointerDown);
+  }, [themeMenuOpen]);
+
   const tutorialPanel = TUTORIAL_PANELS[tutorialIdx];
+  const activeThemeOption = HOME_THEME_OPTIONS.find((option) => option.id === theme) ?? HOME_THEME_OPTIONS[0];
 
   const fade = (delay: string) => ({
     opacity:    heroIn ? 1 : 0,
@@ -863,36 +892,91 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
               Login
             </button>
           )}
-          <div style={{ width: 1, height: 24, background: T.divider, margin: '0 10px' }} />
-          {/* Theme selector */}
-          {([
-            { id: 'dark',        icon: '🌙', title: 'Dark',        glow: 'rgba(100,80,255,0.55)' },
-            { id: 'light',       icon: '☀️', title: 'Light',       glow: 'rgba(255,200,0,0.55)' },
-            { id: 'rainbow',     icon: '🌈', title: 'Rainbow',     glow: 'rgba(255,0,200,0.55)' },
-            { id: 'firecracker', icon: '🎆', title: 'Firecracker', glow: 'rgba(255,80,0,0.65)' },
-            { id: 'jugnu',       icon: '✨', title: 'Jugnu',       glow: 'rgba(160,255,0,0.55)' },
-          ] as { id: HomeTheme; icon: string; title: string; glow: string }[]).map(t => (
-            <button key={t.id} onClick={() => onThemeChange(t.id)} title={t.title}
+          <div ref={themeSelectorRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setThemeMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={themeMenuOpen}
               style={{
-                background: theme === t.id
-                  ? (theme === 'light' ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.13)')
-                  : (theme === 'light' ? 'rgba(90,40,0,0.06)' : 'rgba(255,255,255,0.03)'),
-                border: `1px solid ${theme === t.id
-                  ? (theme === 'light' ? 'rgba(90,40,0,0.22)' : 'rgba(255,255,255,0.45)')
-                  : (theme === 'light' ? 'rgba(90,40,0,0.12)' : 'rgba(255,255,255,0.1)')}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                background: theme === 'light' ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.08)',
+                border: `1px solid ${theme === 'light' ? 'rgba(90,40,0,0.16)' : 'rgba(255,255,255,0.18)'}`,
                 borderRadius: 8,
-                fontSize: 16,
-                padding: '5px 9px',
+                color: theme === 'light' ? '#5c2f00' : '#f4f7ff',
+                fontSize: 12,
+                fontWeight: 800,
+                padding: '7px 12px',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                fontFamily: "'Rajdhani', sans-serif",
                 cursor: 'pointer',
-                transition: 'all 0.2s',
-                lineHeight: 1,
-                boxShadow: theme === t.id ? `0 0 16px ${t.glow}, 0 0 40px ${t.glow}` : 'none',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.14)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}>
-              {t.icon}
+                boxShadow: theme === 'light' ? '0 8px 18px rgba(255,180,0,0.1)' : '0 8px 22px rgba(0,0,0,0.18)',
+              }}>
+              <PremiumIcon token={activeThemeOption.icon} size={15} />
+              <span>{activeThemeOption.title}</span>
+              <span style={{ fontSize: 11, transform: themeMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>▾</span>
             </button>
-          ))}
+
+            {themeMenuOpen && (
+              <div
+                role="menu"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 10px)',
+                  right: 0,
+                  width: 240,
+                  background: theme === 'light' ? 'rgba(255,252,245,0.98)' : 'rgba(10,8,22,0.96)',
+                  border: `1px solid ${theme === 'light' ? 'rgba(90,40,0,0.14)' : 'rgba(255,255,255,0.14)'}`,
+                  borderRadius: 18,
+                  padding: 10,
+                  display: 'grid',
+                  gap: 8,
+                  boxShadow: theme === 'light' ? '0 18px 40px rgba(140,80,0,0.12)' : '0 24px 60px rgba(0,0,0,0.34)',
+                }}>
+                {HOME_THEME_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    role="menuitemradio"
+                    aria-checked={theme === option.id}
+                    onClick={() => {
+                      onThemeChange(option.id);
+                      setThemeMenuOpen(false);
+                    }}
+                    title={option.title}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                      background: theme === option.id
+                        ? (theme === 'light' ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.14)')
+                        : (theme === 'light' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.04)'),
+                      border: `1px solid ${theme === option.id
+                        ? (theme === 'light' ? 'rgba(90,40,0,0.22)' : 'rgba(255,255,255,0.42)')
+                        : (theme === 'light' ? 'rgba(90,40,0,0.1)' : 'rgba(255,255,255,0.12)')}`,
+                      borderRadius: 14,
+                      padding: '10px 12px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: theme === option.id ? `0 0 16px ${option.glow}, 0 0 24px ${option.glow}` : 'none',
+                      color: theme === 'light' ? '#2b1700' : '#f8fbff',
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 700,
+                      letterSpacing: '0.05em',
+                    }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <PremiumIcon token={option.icon} size={16} />
+                      <span style={{ fontSize: 12, textTransform: 'uppercase' }}>{option.title}</span>
+                    </span>
+                    <span style={{ fontSize: 11, opacity: theme === option.id ? 1 : 0.35 }}>{theme === option.id ? 'Active' : 'Select'}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 
@@ -1156,6 +1240,20 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
             <div style={{ fontSize: 11, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: 10, textShadow: T.sectionLabelShadow }}>✦ Public Form Gallery</div>
             <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(24px, 4vw, 38px)', fontWeight: 900, color: isDark ? '#f7f4ff' : '#351000', background: T.h2Gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textShadow: isDark ? '0 0 16px rgba(8, 4, 26, 0.24)' : '0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(171, 81, 0, 0.14)', margin: '0 0 12px' }}>Try Real Public Forms</h2>
             <p style={{ fontSize: 14, color: T.subText, maxWidth: 720, margin: '0 auto', lineHeight: 1.7 }}>Browse public forms created for Realm Runner, Globe Explorer, and The Library. Open any card, submit it, and experience the respondent flow exactly as your users will.</p>
+            {!publicFormsLoading && publicGalleryTotal > 0 && (
+              <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: T.expChipColor, background: T.expChipBg, border: `1px solid ${T.expChipBorder}`, borderRadius: 999, padding: '6px 12px', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  Showing {Math.min(publicGalleryPreview.length, HOME_GALLERY_PREVIEW_LIMIT)} of {publicGalleryTotal}
+                </span>
+                {onExplore && publicGalleryTotal > HOME_GALLERY_PREVIEW_LIMIT && (
+                  <button
+                    onClick={onExplore}
+                    style={{ background: 'transparent', border: `1px solid ${T.tutorialBorder}`, borderRadius: 999, color: T.tutorialColor, fontSize: 11, fontWeight: 800, padding: '8px 14px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                    View All Public Forms
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {publicFormsLoading ? (
@@ -1164,9 +1262,9 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                 <div key={index} style={{ minHeight: 210, borderRadius: 20, background: T.featCardBg, border: `1px solid ${T.featCardBorder}`, opacity: 0.7 }} />
               ))}
             </div>
-          ) : (publicForms?.length ?? 0) > 0 ? (
+          ) : publicGalleryPreview.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-              {publicForms?.map((form) => {
+              {publicGalleryPreview.map((form) => {
                 const meta = getPublicFormMeta(form.worldTheme);
                 const isH = hovGallery === form.id;
                 return (
@@ -1196,7 +1294,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                         <div style={{ fontSize: 10, fontWeight: 700, color: meta.color, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>{meta.label}</div>
                         <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 17, fontWeight: 900, color: T.expH3, lineHeight: 1.35 }}>{form.title}</div>
                       </div>
-                      <div style={{ width: 42, height: 42, flexShrink: 0, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${meta.color}18`, border: `1px solid ${meta.color}33`, fontSize: 20 }}>{meta.emoji}</div>
+                      <div style={{ width: 42, height: 42, flexShrink: 0, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${meta.color}18`, border: `1px solid ${meta.color}33`, color: meta.color }}><PremiumIcon token={meta.emoji} size={20} /></div>
                     </div>
 
                     <p style={{ fontSize: 12.5, lineHeight: 1.65, color: T.expDesc, margin: 0 }}>{form.description || 'Open this public form and test the live submission experience.'}</p>

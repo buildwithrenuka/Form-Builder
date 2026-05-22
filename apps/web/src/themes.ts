@@ -380,6 +380,7 @@ export const PALETTE_CATEGORIES: PaletteCategory[] = [
       { type: 'checkbox', icon: '☑️', label: 'Checkbox' },
       { type: 'radio',    icon: '🔘', label: 'Radio Group' },
       { type: 'select',   icon: '📂', label: 'Dropdown' },
+      { type: 'multi_select', icon: '☑️', label: 'Multi-Select' },
     ],
   },
   {

@@ -8,6 +8,7 @@ import { trpc } from '../trpc';
 import { copyText } from '../utils/clipboard';
 import { ControlledFormField, StructureFieldBanner } from './FormFieldRenderer';
 import { countInteractiveFields, getFormPages } from '../utils/formFlow';
+import { buildSubmissionLockKey, hasSubmissionLock, setSubmissionLock } from '../utils/submissionLock';
 
 type SharedPayload = {
   formTitle: string;
@@ -17,6 +18,10 @@ type SharedPayload = {
 };
 
 type Props = { encoded?: string; slug?: string; onBack: () => void };
+
+function isStructuralSharedField(field: Pick<FormField, 'type'>): boolean {
+  return field.type === 'section' || field.type === 'section_divider';
+}
 
 function countryToSharedWorld(country: Country): WorldTheme {
   return {
@@ -116,14 +121,14 @@ function renderPageRows(pageFields: FormField[], world: WorldTheme, values: Reco
 
   while (index < pageFields.length) {
     const field = pageFields[index];
-    if (field.type === 'section') {
+    if (isStructuralSharedField(field)) {
       rows.push(<StructureFieldBanner key={field.id} field={field} />);
       index += 1;
       continue;
     }
 
     const nextField = pageFields[index + 1];
-    if (field.fieldWidth === 'half' && nextField && nextField.fieldWidth === 'half' && nextField.type !== 'section') {
+    if (field.fieldWidth === 'half' && nextField && nextField.fieldWidth === 'half' && !isStructuralSharedField(nextField)) {
       rows.push(
         <div key={`${field.id}-${nextField.id}`} style={{ display: 'flex', gap: '14px' }}>
           <div style={{ flex: 1 }}>
@@ -204,17 +209,29 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [storedSubmissionLock, setStoredSubmissionLock] = useState(false);
 
   const world = resolveSharedWorld(data?.worldTheme ?? '');
   const formFields = (data?.schema as unknown as FormField[] | undefined) ?? [];
   const pages = useMemo(() => getFormPages(formFields, formValues), [formFields, formValues]);
   const currentPage = pages[Math.min(currentPageIndex, Math.max(pages.length - 1, 0))];
+  const lockKey = data?.access === 'available' ? buildSubmissionLockKey('form', data.id) : null;
+  const submissionLocked = submitted || storedSubmissionLock || (data?.access === 'available' ? data.alreadySubmitted : false);
 
   useEffect(() => {
     if (currentPageIndex > pages.length - 1) {
       setCurrentPageIndex(Math.max(pages.length - 1, 0));
     }
   }, [currentPageIndex, pages.length]);
+
+  useEffect(() => {
+    if (!lockKey) {
+      setStoredSubmissionLock(false);
+      return;
+    }
+
+    setStoredSubmissionLock(hasSubmissionLock(lockKey));
+  }, [lockKey]);
 
   function updateValue(fieldId: string, value: unknown) {
     setFormValues((previous) => ({ ...previous, [fieldId]: value }));
@@ -229,6 +246,10 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
         accessPassword: submittedAccessPassword,
         data: formValues,
       });
+      if (lockKey) {
+        setSubmissionLock(lockKey);
+        setStoredSubmissionLock(true);
+      }
       setSubmitted(true);
       setCurrentPageIndex(0);
     } catch (issue: unknown) {
@@ -307,7 +328,7 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
             {currentPage && <PageHeader world={world} pageIndex={currentPageIndex} pageCount={pages.length} title={currentPage.title} description={currentPage.description} />}
           </div>
 
-          {!submitted ? (
+          {!submissionLocked ? (
             <div style={{ padding: '22px 26px', display: 'flex', flexDirection: 'column', gap: 18 }}>
               {currentPage ? renderPageRows(currentPage.fields, world, formValues, updateValue) : null}
               {submitError && <div style={{ background: 'rgba(255,60,60,0.1)', border: '1px solid rgba(255,60,60,0.3)', borderRadius: 8, padding: '10px 14px', color: '#ff8888', fontSize: 13, fontFamily: "'Rajdhani', sans-serif" }}>⚠ {submitError}</div>}
@@ -317,9 +338,8 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
           ) : (
             <div style={{ padding: '48px 26px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
               <span style={{ fontSize: 64, filter: `drop-shadow(0 0 16px ${world.glowColor})` }}>🏆</span>
-              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 20, fontWeight: 900, color: world.accentColor, filter: `drop-shadow(0 0 10px ${world.glowColor})` }}>Submitted!</div>
-              <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: world.mutedColor, letterSpacing: '0.08em', maxWidth: 260 }}>Mission complete in {world.name}!</p>
-              <button onClick={() => { setSubmitted(false); setFormValues({}); setCurrentPageIndex(0); }} style={{ background: world.buttonGradient, color: world.buttonText, fontSize: 12, padding: '10px 22px', letterSpacing: '0.1em', marginTop: 8, boxShadow: `0 0 14px ${world.glowColor}55`, border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", fontWeight: 700 }}>↩ Submit Again</button>
+              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 20, fontWeight: 900, color: world.accentColor, filter: `drop-shadow(0 0 10px ${world.glowColor})` }}>{submitted ? 'Submitted!' : 'Already Submitted'}</div>
+              <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: world.mutedColor, letterSpacing: '0.08em', maxWidth: 280 }}>{submitted ? `Mission complete in ${world.name}.` : 'This response has already been recorded. Additional submissions are disabled for participants.'}</p>
             </div>
           )}
         </div>
@@ -339,10 +359,17 @@ function EncodedFormView({ encoded, onBack }: { encoded: string; onBack: () => v
   const [copied, setCopied] = useState(false);
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [storedSubmissionLock, setStoredSubmissionLock] = useState(false);
 
   useEffect(() => {
     setPayload(decodeSharePayload(encoded));
   }, [encoded]);
+
+  const lockKey = useMemo(() => buildSubmissionLockKey('share', encoded), [encoded]);
+
+  useEffect(() => {
+    setStoredSubmissionLock(hasSubmissionLock(lockKey));
+  }, [lockKey]);
 
   if (!payload) {
     return (
@@ -375,6 +402,7 @@ function EncodedFormView({ encoded, onBack }: { encoded: string; onBack: () => v
 
   const interactiveFieldCount = countInteractiveFields(payload.fields, formValues);
   const isLastPage = currentPageIndex === pages.length - 1;
+  const submissionLocked = submitted || storedSubmissionLock;
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: world.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -404,18 +432,17 @@ function EncodedFormView({ encoded, onBack }: { encoded: string; onBack: () => v
             {currentPage && <PageHeader world={world} pageIndex={currentPageIndex} pageCount={pages.length} title={currentPage.title} description={currentPage.description} />}
           </div>
 
-          {!submitted ? (
+          {!submissionLocked ? (
             <div style={{ padding: '22px 26px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
               {currentPage ? renderPageRows(currentPage.fields, world, formValues, (fieldId, value) => setFormValues((previous) => ({ ...previous, [fieldId]: value })) ) : null}
               <div style={{ height: '1px', background: `linear-gradient(90deg, transparent, ${world.borderColor}66, transparent)`, marginTop: '8px' }} />
-              <NavigationRow world={world} canGoBack={currentPageIndex > 0} isLastPage={isLastPage} onPrevious={() => setCurrentPageIndex((page) => Math.max(page - 1, 0))} onNext={() => setCurrentPageIndex((page) => Math.min(page + 1, pages.length - 1))} onSubmit={() => { setSubmitted(true); setCurrentPageIndex(0); }} submitLabel="🏃 SUBMIT FORM" />
+              <NavigationRow world={world} canGoBack={currentPageIndex > 0} isLastPage={isLastPage} onPrevious={() => setCurrentPageIndex((page) => Math.max(page - 1, 0))} onNext={() => setCurrentPageIndex((page) => Math.min(page + 1, pages.length - 1))} onSubmit={() => { setSubmissionLock(lockKey); setStoredSubmissionLock(true); setSubmitted(true); setCurrentPageIndex(0); }} submitLabel="🏃 SUBMIT FORM" />
             </div>
           ) : (
             <div style={{ padding: '48px 26px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', textAlign: 'center', animation: 'fade-in 0.5s ease-out' }}>
               <span style={{ fontSize: '64px', animation: 'bounce 1s ease-in-out infinite', filter: `drop-shadow(0 0 16px ${world.glowColor})` }}>🏆</span>
-              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: '20px', fontWeight: 900, color: world.accentColor, filter: `drop-shadow(0 0 10px ${world.glowColor})` }}>Submitted!</div>
-              <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '14px', color: world.mutedColor, letterSpacing: '0.08em', maxWidth: '260px' }}>Mission complete in {world.name}!</p>
-              <button onClick={() => { setSubmitted(false); setFormValues({}); setCurrentPageIndex(0); }} className="tr-btn" style={{ background: world.buttonGradient, color: world.buttonText, fontSize: '12px', padding: '10px 22px', letterSpacing: '0.1em', marginTop: '8px', boxShadow: `0 0 14px ${world.glowColor}55` }}>↩ Submit Again</button>
+              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: '20px', fontWeight: 900, color: world.accentColor, filter: `drop-shadow(0 0 10px ${world.glowColor})` }}>{submitted ? 'Submitted!' : 'Already Submitted'}</div>
+              <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '14px', color: world.mutedColor, letterSpacing: '0.08em', maxWidth: '280px' }}>{submitted ? `Mission complete in ${world.name}.` : 'This response has already been recorded in this browser. Additional submissions are disabled.'}</p>
             </div>
           )}
         </div>

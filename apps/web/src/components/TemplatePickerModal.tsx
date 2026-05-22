@@ -297,6 +297,6 @@ function catBtnStyle(active: boolean, world: WorldTheme): React.CSSProperties {
 const FIELD_ICON: Record<string, string> = {
   text: '📝', email: '📧', phone: '📱', number: '🔢', date: '📅',
   time: '🕐', url: '🔗', currency: '💰', textarea: '📄', checkbox: '☑️',
-  radio: '🔘', select: '📋', range: '↔️', rating: '⭐', file: '📎',
+  multi_select: '☑️', radio: '🔘', select: '📋', range: '↔️', rating: '⭐', file: '📎',
   password: '🔒', section: '📌',
 };

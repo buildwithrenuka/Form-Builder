@@ -1,7 +1,7 @@
 import type { FormField } from '../types';
 
 export function isStructuralField(field: Pick<FormField, 'type'>): boolean {
-  return field.type === 'section' || field.type === 'page_break';
+  return field.type === 'section' || field.type === 'section_divider' || field.type === 'page_break';
 }
 
 export function isInteractiveField(field: Pick<FormField, 'type'>): boolean {

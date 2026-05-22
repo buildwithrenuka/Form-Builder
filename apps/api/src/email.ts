@@ -24,6 +24,12 @@ interface RespondentConfirmationPayload {
   formSlug?: string | null;
 }
 
+interface PasswordResetPayload {
+  userEmail: string;
+  userName: string;
+  resetToken: string;
+}
+
 interface OutboundEmail {
   to: string[];
   subject: string;
@@ -145,6 +151,37 @@ export async function sendRespondentConfirmation(env: Env, payload: RespondentCo
   await sendEmail(env, {
     to: [payload.respondentEmail],
     subject: `✅ Submission received for "${payload.formTitle}"`,
+    html,
+  });
+}
+
+export async function sendPasswordResetEmail(env: Env, payload: PasswordResetPayload): Promise<void> {
+  const resetUrl = buildUrl(getAppBaseUrl(env), {
+    resetToken: payload.resetToken,
+  });
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #070b1d; color: #d9e9ff; border-radius: 12px;">
+      <div style="font-size: 32px; text-align: center; margin-bottom: 16px;">🔐</div>
+      <h1 style="font-size: 18px; color: #7dd3fc; margin: 0 0 8px; text-align: center;">Reset your password</h1>
+      <p style="font-size: 14px; color: rgba(186,230,253,0.78); text-align: center; margin: 0 0 24px; line-height: 1.6;">
+        Hi <strong style="color: #ffffff;">${escapeHtml(payload.userName)}</strong>, we received a request to reset your FormVerse password.
+      </p>
+      <div style="margin-top: 24px; text-align: center;">
+        <a href="${resetUrl}" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8); color: #04111e; text-decoration: none; border-radius: 8px; padding: 11px 24px; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; display: inline-block;">Reset password →</a>
+      </div>
+      <p style="font-size: 12px; color: rgba(186,230,253,0.55); text-align: center; margin: 24px 0 0; line-height: 1.6;">
+        This link expires in 1 hour. If you did not request it, you can ignore this email.
+      </p>
+      <p style="font-size: 11px; color: rgba(186,230,253,0.38); text-align: center; margin: 14px 0 0; line-height: 1.6; word-break: break-all;">
+        ${resetUrl}
+      </p>
+    </div>
+  `;
+
+  await sendEmail(env, {
+    to: [payload.userEmail],
+    subject: '🔐 Reset your FormVerse password',
     html,
   });
 }

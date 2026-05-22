@@ -5,7 +5,8 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { router, publicProc, authProc } from '../trpc';
 import type { Context } from '../context';
 import { users, rateLimits } from '../db/schema';
-import { RegisterInput, LoginInput } from '../schemas';
+import { ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from '../schemas';
+import { sendPasswordResetEmail } from '../email';
 import { signToken } from './jwt';
 
 const PBKDF2_PREFIX = 'pbkdf2';
@@ -13,6 +14,7 @@ const PBKDF2_DIGEST = 'SHA-256';
 const PBKDF2_ITERATIONS = 310000;
 const PBKDF2_KEY_LENGTH = 32;
 const DUMMY_SALT = new Uint8Array(16);
+const PASSWORD_RESET_WINDOW_MS = 60 * 60 * 1000;
 
 const encoder = new TextEncoder();
 
@@ -54,6 +56,10 @@ async function derivePbkdf2(password: string, salt: Uint8Array, iterations: numb
 
 function hashLegacyPassword(password: string, salt: string): string {
   return createHash('sha256').update(`${salt}:${password}`).digest('hex');
+}
+
+function hashResetToken(token: string, salt: string): string {
+  return createHash('sha256').update(`${salt}:reset:${token}`).digest('hex');
 }
 
 async function hashPassword(password: string): Promise<string> {
@@ -104,6 +110,15 @@ function normalizeIdentity(value: string): string {
   return value.trim().toLowerCase();
 }
 
+function getBootstrapAdminEmails(ctx: Context): Set<string> {
+  const configured = ctx.env.ADMIN_EMAILS?.split(',').map((value) => value.trim().toLowerCase()).filter(Boolean) ?? [];
+  return new Set(configured.length ? configured : ['demo@formverse.io']);
+}
+
+function resolveRegistrationRole(ctx: Context, email: string): 'user' | 'admin' {
+  return getBootstrapAdminEmails(ctx).has(normalizeIdentity(email)) ? 'admin' : 'user';
+}
+
 async function consumeRateLimit(ctx: Context, key: string, maxAttempts: number, windowMs: number): Promise<boolean> {
   const cutoff = Date.now() - windowMs;
 
@@ -145,6 +160,25 @@ async function enforceAuthRateLimit(ctx: Context, scope: 'login' | 'register', e
   }
 }
 
+async function enforceForgotPasswordRateLimit(ctx: Context, email: string): Promise<void> {
+  const normalizedEmail = normalizeIdentity(email);
+  const normalizedIp = normalizeIdentity(ctx.ip ?? 'unknown');
+  const ipAllowed = await consumeRateLimit(ctx, `auth:forgot:ip:${normalizedIp}`, 5, 15 * 60 * 1000);
+  const emailAllowed = await consumeRateLimit(ctx, `auth:forgot:email:${normalizedEmail}`, 3, 15 * 60 * 1000);
+  if (!ipAllowed || !emailAllowed) {
+    throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many password reset attempts. Please wait and try again.' });
+  }
+}
+
+async function enforceResetPasswordRateLimit(ctx: Context, token: string): Promise<void> {
+  const normalizedIp = normalizeIdentity(ctx.ip ?? 'unknown');
+  const ipAllowed = await consumeRateLimit(ctx, `auth:reset:ip:${normalizedIp}`, 10, 15 * 60 * 1000);
+  const tokenAllowed = await consumeRateLimit(ctx, `auth:reset:token:${hashResetToken(token, ctx.env.PASSWORD_SALT)}`, 5, 15 * 60 * 1000);
+  if (!ipAllowed || !tokenAllowed) {
+    throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many password reset attempts. Please wait and try again.' });
+  }
+}
+
 export const authRouter = router({
   register: publicProc
     .input(RegisterInput)
@@ -162,12 +196,13 @@ export const authRouter = router({
         id:           uid(),
         name:         input.name,
         email:        input.email,
+        role:         resolveRegistrationRole(ctx, input.email),
         passwordHash: await hashPassword(input.password),
         createdAt:    new Date(),
       };
       await ctx.db.insert(users).values(user);
       const token = await signToken(user.id, ctx.env.JWT_SECRET);
-      return { token, user: { id: user.id, name: user.name, email: user.email } };
+      return { token, user: { id: user.id, name: user.name, email: user.email, role: user.role } };
     }),
 
   login: publicProc
@@ -196,8 +231,73 @@ export const authRouter = router({
           .where(eq(users.id, user.id));
       }
 
+      const bootstrapRole = resolveRegistrationRole(ctx, user.email);
+      const effectiveRole = user.role === 'admin' || bootstrapRole === 'admin' ? 'admin' : 'user';
+
+      if (effectiveRole !== user.role) {
+        await ctx.db
+          .update(users)
+          .set({ role: effectiveRole })
+          .where(eq(users.id, user.id));
+      }
+
       const token = await signToken(user.id, ctx.env.JWT_SECRET);
-      return { token, user: { id: user.id, name: user.name, email: user.email } };
+      return { token, user: { id: user.id, name: user.name, email: user.email, role: effectiveRole } };
+    }),
+
+  forgotPassword: publicProc
+    .input(ForgotPasswordInput)
+    .mutation(async ({ ctx, input }) => {
+      await enforceForgotPasswordRateLimit(ctx, input.email);
+
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.email, input.email),
+      });
+
+      if (user) {
+        const resetToken = randomBytes(32).toString('base64url');
+        const resetTokenHash = hashResetToken(resetToken, ctx.env.PASSWORD_SALT);
+        const resetTokenExpiresAt = new Date(Date.now() + PASSWORD_RESET_WINDOW_MS);
+
+        await ctx.db
+          .update(users)
+          .set({ resetTokenHash, resetTokenExpiresAt })
+          .where(eq(users.id, user.id));
+
+        await sendPasswordResetEmail(ctx.env, {
+          userEmail: user.email,
+          userName: user.name,
+          resetToken,
+        });
+      }
+
+      return { ok: true };
+    }),
+
+  resetPassword: publicProc
+    .input(ResetPasswordInput)
+    .mutation(async ({ ctx, input }) => {
+      await enforceResetPasswordRateLimit(ctx, input.token);
+
+      const resetTokenHash = hashResetToken(input.token, ctx.env.PASSWORD_SALT);
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.resetTokenHash, resetTokenHash),
+      });
+
+      if (!user || !user.resetTokenExpiresAt || user.resetTokenExpiresAt.getTime() <= Date.now()) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This password reset link is invalid or has expired.' });
+      }
+
+      await ctx.db
+        .update(users)
+        .set({
+          passwordHash: await hashPassword(input.password),
+          resetTokenHash: null,
+          resetTokenExpiresAt: null,
+        })
+        .where(eq(users.id, user.id));
+
+      return { ok: true };
     }),
 
   me: authProc.query(async ({ ctx }) => {
@@ -205,6 +305,6 @@ export const authRouter = router({
       where: eq(users.id, ctx.userId),
     });
     if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
-    return { id: user.id, name: user.name, email: user.email };
+    return { id: user.id, name: user.name, email: user.email, role: user.role, isAdmin: user.role === 'admin' };
   }),
 });

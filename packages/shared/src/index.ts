@@ -28,7 +28,7 @@ export type PublicFormSummary = {
 // ── Field types supported by the form builder ─────────────────────────────
 export type FieldType =
   | 'text' | 'email' | 'phone' | 'number' | 'textarea'
-  | 'select' | 'radio' | 'checkbox' | 'rating' | 'date'
+  | 'select' | 'multi_select' | 'radio' | 'checkbox' | 'rating' | 'date'
   | 'url' | 'currency' | 'file' | 'section_divider' | 'scale'
   | 'pan' | 'gst' | 'ifsc' | 'pincode'
 

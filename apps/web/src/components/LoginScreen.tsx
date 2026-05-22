@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { ParticleBackground } from './ParticleBackground';
 import { saveSession } from '../auth';
 import { trpc } from '../trpc';
@@ -9,6 +9,24 @@ type Props = {
   theme?: 'temple-run' | 'globe' | 'library' | 'formverse' | 'light' | 'rainbow' | 'firecracker' | 'jugnu';
   initialMode?: 'login' | 'register';
 };
+
+type AuthView = 'login' | 'register' | 'forgot' | 'reset';
+
+function readResetTokenFromUrl(): string {
+  if (typeof window === 'undefined') return '';
+  return new URLSearchParams(window.location.search).get('resetToken')?.trim() ?? '';
+}
+
+function writeResetTokenToUrl(token: string | null) {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  if (token) {
+    url.searchParams.set('resetToken', token);
+  } else {
+    url.searchParams.delete('resetToken');
+  }
+  window.history.replaceState({}, '', url.toString());
+}
 
 const JUNGLE_PARTICLES  = ['🌿', '🍃', '🦋', '🌺', '🐦', '✨', '🪙', '🗿'];
 const GLOBE_PARTICLES   = ['🌍', '🌎', '🌏', '✈️', '🗺️', '⭐', '🔭', '💫', '🌐', '🛸'];
@@ -343,7 +361,8 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
     shadow:        '0 0 0 1px rgba(255,215,0,0.06), 0 0 60px rgba(100,60,18,0.3), 0 24px 80px rgba(0,0,0,0.85)',
   };
 
-  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const [resetToken, setResetToken] = useState(() => readResetTokenFromUrl());
+  const [mode, setMode] = useState<AuthView>(() => readResetTokenFromUrl() ? 'reset' : initialMode);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -353,15 +372,34 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
   const [passActive, setPassActive] = useState(false);
   const [confirmActive, setConfirmActive] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [shaking, setShaking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const loginMut = trpc.auth.login.useMutation();
   const registerMut = trpc.auth.register.useMutation();
+  const forgotPasswordMut = trpc.auth.forgotPassword.useMutation();
+  const resetPasswordMut = trpc.auth.resetPassword.useMutation();
+
+  useEffect(() => {
+    const token = readResetTokenFromUrl();
+    if (token) {
+      setResetToken(token);
+      setMode('reset');
+      setError('');
+      setNotice('');
+    }
+  }, []);
 
   function shake(msg: string) {
+    setNotice('');
     setError(msg);
     setShaking(true);
     setTimeout(() => setShaking(false), 600);
+  }
+
+  function setInfo(msg: string) {
+    setError('');
+    setNotice(msg);
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -369,7 +407,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedName = name.trim();
 
-    if (!trimmedEmail) {
+    if (mode !== 'reset' && !trimmedEmail) {
       shake('Email is required.');
       return;
     }
@@ -379,8 +417,40 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
       return;
     }
 
-    if (mode === 'register' && password !== confirm) {
+    if ((mode === 'register' || mode === 'reset') && password !== confirm) {
       shake('Secret codes do not match!');
+      return;
+    }
+
+    if (mode === 'forgot') {
+      try {
+        await forgotPasswordMut.mutateAsync({ email: trimmedEmail });
+        setInfo('If an account exists, a reset link has been sent to that email.');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unable to start password reset. Please try again.';
+        shake(message);
+      }
+      return;
+    }
+
+    if (mode === 'reset') {
+      if (!resetToken) {
+        shake('This password reset link is missing a token.');
+        return;
+      }
+
+      try {
+        await resetPasswordMut.mutateAsync({ token: resetToken, password });
+        writeResetTokenToUrl(null);
+        setResetToken('');
+        setPassword('');
+        setConfirm('');
+        setMode('login');
+        setInfo('Password updated. Sign in with your new password.');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unable to reset password. Please try again.';
+        shake(message);
+      }
       return;
     }
 
@@ -403,13 +473,32 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
     }
   };
 
-  const switchMode = (m: 'login' | 'register') => {
+  const switchMode = (m: AuthView) => {
     setMode(m);
     setError('');
-    if (m === 'login') setName('');
+    setNotice('');
+    if (m !== 'reset' && resetToken) {
+      writeResetTokenToUrl(null);
+      setResetToken('');
+    }
+    if (m === 'login' || m === 'forgot') setName('');
     setPassword('');
     setConfirm('');
   };
+
+  const currentTitle = mode === 'forgot'
+    ? (isLibrary ? 'REQUEST THE RESET SCROLL' : isCosmic ? 'REQUEST RESET LINK' : 'REQUEST RESET CODE')
+    : mode === 'reset'
+      ? (isLibrary ? 'SET A NEW CIPHER' : isCosmic ? 'SET A NEW PASSCODE' : 'SET A NEW TEMPLE CODE')
+      : T.title(mode);
+
+  const currentSubmitText = mode === 'forgot'
+    ? (isLibrary ? '📬 SEND RESET SCROLL' : isCosmic ? '📬 SEND RESET LINK' : '📬 SEND RESET CODE')
+    : mode === 'reset'
+      ? (isLibrary ? '🔐 SAVE NEW CIPHER' : isCosmic ? '🔐 SAVE NEW PASSCODE' : '🔐 SAVE NEW CODE')
+      : T.submitTxt(mode);
+
+  const isBusy = submitting || loginMut.isPending || registerMut.isPending || forgotPasswordMut.isPending || resetPasswordMut.isPending;
 
   const inputStyle = (active: boolean): React.CSSProperties => ({
     width: '100%',
@@ -606,7 +695,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
         <div style={{ textAlign: 'center', marginBottom: '18px' }}>
           <div style={{ fontSize: '40px', animation: 'idol-pulse 2.2s ease-in-out infinite', display: 'inline-block' }}>{T.icon}</div>
           <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(12px, 2vw, 16px)', fontWeight: 700, color: T.tabActiveColor, letterSpacing: '0.14em', marginTop: '8px', filter: `drop-shadow(0 0 8px ${T.activeBorder}80)` }}>
-            {T.title(mode)}
+            {currentTitle}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
             <div style={{ flex: 1, height: '1px', background: `linear-gradient(90deg, transparent, ${T.divider})` }} />
@@ -617,12 +706,25 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
 
         {/* Login / Register tabs */}
         <div style={{ display: 'flex', gap: '6px', marginBottom: '18px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', padding: '4px' }}>
-          {(['login', 'register'] as const).map(m => (
-            <button key={m} type="button" onClick={() => switchMode(m)}
-              style={{ flex: 1, background: mode === m ? T.tabActive : 'transparent', border: 'none', borderRadius: '7px', color: mode === m ? T.tabActiveColor : `${T.tabActiveColor}44`, fontFamily: "'Cinzel Decorative', serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', padding: '9px', cursor: 'pointer', transition: 'all 0.22s', boxShadow: mode === m ? `0 0 12px ${T.activeBorder}30` : 'none' }}>
-              {m === 'login' ? T.loginTab : T.registerTab}
-            </button>
-          ))}
+          {mode === 'login' || mode === 'register' ? (
+            (['login', 'register'] as const).map(m => (
+              <button key={m} type="button" onClick={() => switchMode(m)}
+                style={{ flex: 1, background: mode === m ? T.tabActive : 'transparent', border: 'none', borderRadius: '7px', color: mode === m ? T.tabActiveColor : `${T.tabActiveColor}44`, fontFamily: "'Cinzel Decorative', serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', padding: '9px', cursor: 'pointer', transition: 'all 0.22s', boxShadow: mode === m ? `0 0 12px ${T.activeBorder}30` : 'none' }}>
+                {m === 'login' ? T.loginTab : T.registerTab}
+              </button>
+            ))
+          ) : (
+            <>
+              <button type="button" onClick={() => switchMode('login')}
+                style={{ flex: 1, background: T.tabActive, border: 'none', borderRadius: '7px', color: T.tabActiveColor, fontFamily: "'Cinzel Decorative', serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', padding: '9px', cursor: 'pointer', transition: 'all 0.22s', boxShadow: `0 0 12px ${T.activeBorder}30` }}>
+                {T.loginTab}
+              </button>
+              <button type="button" onClick={() => switchMode('register')}
+                style={{ flex: 1, background: 'transparent', border: 'none', borderRadius: '7px', color: `${T.tabActiveColor}66`, fontFamily: "'Cinzel Decorative', serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', padding: '9px', cursor: 'pointer', transition: 'all 0.22s' }}>
+                {T.registerTab}
+              </button>
+            </>
+          )}
         </div>
 
         {mode === 'register' && (
@@ -635,25 +737,37 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
           </div>
         )}
 
+        {mode !== 'reset' && (
         <div style={{ position: 'relative', marginBottom: '12px' }}>
           <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', zIndex: 1, pointerEvents: 'none' }}>✉️</span>
           <input type="email" placeholder="Your email address..." value={email}
             onChange={e => { setEmail(e.target.value); setError(''); }}
             onFocus={() => setEmailActive(true)} onBlur={() => setEmailActive(false)}
-            style={inputStyle(emailActive)} maxLength={120} autoComplete="email" autoFocus={mode === 'login'} />
+            style={inputStyle(emailActive)} maxLength={120} autoComplete="email" autoFocus={mode === 'login' || mode === 'forgot'} />
         </div>
+        )}
 
         {/* Password field */}
+        {mode !== 'forgot' && (
         <div style={{ position: 'relative', marginBottom: '12px' }}>
           <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '20px', zIndex: 1, pointerEvents: 'none' }}>🔒</span>
           <input type="password" placeholder={isLibrary ? 'Your secret cipher...' : isCosmic ? 'Your secret passcode...' : 'Secret temple code...'} value={password}
             onChange={e => { setPassword(e.target.value); setError(''); }}
             onFocus={() => setPassActive(true)} onBlur={() => setPassActive(false)}
-            style={inputStyle(passActive)} maxLength={64} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
+            style={inputStyle(passActive)} maxLength={64} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} autoFocus={mode === 'reset'} />
         </div>
+        )}
+
+        {mode === 'login' && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-2px', marginBottom: '12px' }}>
+            <button type="button" onClick={() => switchMode('forgot')} style={{ background: 'none', border: 'none', color: T.guestColor, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', letterSpacing: '0.08em', padding: 0 }}>
+              Forgot password?
+            </button>
+          </div>
+        )}
 
         {/* Confirm password (register only) */}
-        {mode === 'register' && (
+        {(mode === 'register' || mode === 'reset') && (
           <div style={{ position: 'relative', marginBottom: '12px' }}>
             <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '20px', zIndex: 1, pointerEvents: 'none' }}>🔐</span>
             <input type="password" placeholder="Confirm your code..." value={confirm}
@@ -666,13 +780,14 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
         {/* Error */}
         <div style={{ height: '18px', marginBottom: '10px', textAlign: 'center' }}>
           {error && <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', color: '#ff7070', letterSpacing: '0.08em', animation: 'fade-in 0.2s ease-out' }}>⚠️ {error}</span>}
+          {!error && notice && <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', color: '#86efac', letterSpacing: '0.06em', animation: 'fade-in 0.2s ease-out' }}>✓ {notice}</span>}
         </div>
 
         <div style={{ width: '100%', height: '1px', background: `linear-gradient(90deg, transparent, ${T.divider}, transparent)`, marginBottom: '16px' }} />
 
         {/* Submit */}
-        <button type="submit" className="tr-btn" disabled={submitting || loginMut.isPending || registerMut.isPending} style={{ width: '100%', background: T.submitBtn, color: T.submitColor, fontSize: 'clamp(12px, 2vw, 15px)', padding: '15px', letterSpacing: '0.18em', fontWeight: 900, borderRadius: '8px', marginBottom: '10px', boxShadow: `0 0 24px ${T.activeBorder}44, 0 4px 16px rgba(0,0,0,0.5)`, opacity: submitting || loginMut.isPending || registerMut.isPending ? 0.7 : 1, cursor: submitting || loginMut.isPending || registerMut.isPending ? 'not-allowed' : 'pointer' }}>
-          {submitting || loginMut.isPending || registerMut.isPending ? '⏳ AUTHENTICATING' : T.submitTxt(mode)}
+        <button type="submit" className="tr-btn" disabled={isBusy} style={{ width: '100%', background: T.submitBtn, color: T.submitColor, fontSize: 'clamp(12px, 2vw, 15px)', padding: '15px', letterSpacing: '0.18em', fontWeight: 900, borderRadius: '8px', marginBottom: '10px', boxShadow: `0 0 24px ${T.activeBorder}44, 0 4px 16px rgba(0,0,0,0.5)`, opacity: isBusy ? 0.7 : 1, cursor: isBusy ? 'not-allowed' : 'pointer' }}>
+          {isBusy ? '⏳ AUTHENTICATING' : currentSubmitText}
         </button>
 
         <div style={{ textAlign: 'center', marginTop: '16px' }}>

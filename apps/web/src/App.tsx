@@ -135,6 +135,7 @@ function App() {
     if (params?.get('confirmation')) return 'submissionConfirmed';
     if (params?.get('share')) return 'shared';
     if (params?.get('slug')) return 'shared';
+    if (params?.get('resetToken')) return 'login';
     return persistedAppState?.screen && persistedAppState.screen !== 'shared' ? persistedAppState.screen : 'home';
   });
   const [playerName, setPlayerName] = useState(() => getSession() ?? '');
@@ -159,6 +160,11 @@ function App() {
   const [libraryWorld, setLibraryWorld]   = useState<LibraryWorld | null>(() => LIBRARY_WORLDS.find((entry) => entry.id === persistedAppState?.libraryWorldId) ?? null);
   const [libraryFields, setLibraryFields] = useState<FormField[]>(persistedAppState?.libraryFields ?? []);
   const [libraryTitle, setLibraryTitle]   = useState(persistedAppState?.libraryTitle ?? 'Library Form');
+  const { data: currentUser } = trpc.auth.me.useQuery(undefined, {
+    enabled: Boolean(playerName),
+    retry: false,
+    staleTime: 60_000,
+  });
 
   // After login we need to know which experience was picked
   // (pendingExp removed — experience is now chosen AFTER login)
@@ -228,7 +234,7 @@ function App() {
     setScreen('home');
   }
 
-  const canAccessAdmin = sessionEmail.toLowerCase() === 'demo@formverse.io';
+  const canAccessAdmin = currentUser?.isAdmin ?? false;
 
   const shareEncoded = params?.get('share') ?? null;
   const sharedSlug = params?.get('slug') ?? null;
@@ -303,6 +309,7 @@ function App() {
             window.history.replaceState({}, '', `?slug=${slug}`);
             setScreen('shared');
           }}
+          theme={homeTheme}
         />
       )}
 
@@ -319,6 +326,7 @@ function App() {
             playerName={playerName}
             onBack={() => setScreen('experiencePicker')}
             onLogout={() => { logout(); setPlayerName(''); setScreen('home'); }}
+            onAdmin={canAccessAdmin ? () => setScreen('admin') : undefined}
             onViewForm={(slug) => {
               window.history.replaceState({}, '', `?slug=${slug}`);
               setScreen('shared');
@@ -332,6 +340,7 @@ function App() {
           <AdminDashboardPage
             onBack={() => setScreen('experiencePicker')}
             onLogout={handleLogout}
+            theme={homeTheme}
           />
         ) : null
       )}

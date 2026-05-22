@@ -55,6 +55,14 @@ export function PremiumIcon({ token, size = 16, stroke = 1.85, style }: PremiumI
       return <IconFrame token={token} size={size} stroke={stroke} style={style}><circle cx="12" cy="12" r="3.1" /><path d="M12 3.7v2.1" /><path d="M12 18.2v2.1" /><path d="m5.9 5.9 1.5 1.5" /><path d="m16.6 16.6 1.5 1.5" /><path d="M3.7 12h2.1" /><path d="M18.2 12h2.1" /><path d="m5.9 18.1 1.5-1.5" /><path d="m16.6 7.4 1.5-1.5" /></IconFrame>;
     case '✦':
       return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M12 3.5 13.9 10 20.5 12l-6.6 2-1.9 6.5-1.9-6.5-6.6-2 6.6-2z" /></IconFrame>;
+    case '🌙':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M15.8 4.8a7.8 7.8 0 1 0 3.4 14.7A8.6 8.6 0 0 1 15.8 4.8Z" /></IconFrame>;
+    case '☀':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><circle cx="12" cy="12" r="3.6" /><path d="M12 2.8v2.3" /><path d="M12 18.9v2.3" /><path d="m5.5 5.5 1.6 1.6" /><path d="m16.9 16.9 1.6 1.6" /><path d="M2.8 12h2.3" /><path d="M18.9 12h2.3" /><path d="m5.5 18.5 1.6-1.6" /><path d="m16.9 7.1 1.6-1.6" /></IconFrame>;
+    case '🌈':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M4 16a8 8 0 0 1 16 0" /><path d="M7 16a5 5 0 0 1 10 0" /><path d="M10 16a2 2 0 0 1 4 0" /></IconFrame>;
+    case '🎆':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M12 4v6" /><path d="M12 14v6" /><path d="M4 12h6" /><path d="M14 12h6" /><path d="m6.3 6.3 4.2 4.2" /><path d="m13.5 13.5 4.2 4.2" /><path d="m17.7 6.3-4.2 4.2" /><path d="m10.5 13.5-4.2 4.2" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /></IconFrame>;
     case '🧩':
       return <IconFrame token={token} size={size} stroke={stroke} style={style}><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></IconFrame>;
     case '📦':
@@ -69,6 +77,10 @@ export function PremiumIcon({ token, size = 16, stroke = 1.85, style }: PremiumI
       return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M10 14 8 16a3 3 0 0 1-4.2-4.2l2.2-2.2A3 3 0 0 1 10.2 9" /><path d="M14 10l2-2a3 3 0 0 1 4.2 4.2L18 14.4A3 3 0 0 1 13.8 15" /><path d="M9 12h6" /></IconFrame>;
     case '🌐':
       return <IconFrame token={token} size={size} stroke={stroke} style={style}><circle cx="12" cy="12" r="8" /><path d="M4.5 12h15" /><path d="M12 4a12 12 0 0 1 0 16" /><path d="M12 4a12 12 0 0 0 0 16" /></IconFrame>;
+    case '🔍':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><circle cx="11" cy="11" r="5.5" /><path d="m16 16 3.5 3.5" /></IconFrame>;
+    case '🔭':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M5 18h10" /><path d="m6.2 14.5 7.8-7.8 3.6 3.6-7.8 7.8" /><path d="M14 6.7 17 4l3 3-2.7 2.7" /><path d="m8.4 12.3-2.2 5.7" /><path d="m13.7 17.6 1 2.4" /></IconFrame>;
     case '👁':
       return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M2.8 12s3.4-5.3 9.2-5.3 9.2 5.3 9.2 5.3-3.4 5.3-9.2 5.3S2.8 12 2.8 12Z" /><circle cx="12" cy="12" r="2.4" /></IconFrame>;
     case '🙈':
@@ -79,6 +91,18 @@ export function PremiumIcon({ token, size = 16, stroke = 1.85, style }: PremiumI
       return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M5 4.5h10v15H5z" /><path d="M15 12h5" /><path d="m17 9 3 3-3 3" /><circle cx="9.5" cy="12" r=".8" fill="currentColor" stroke="none" /></IconFrame>;
     case '⚠':
       return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M12 4.2 20 18H4z" /><path d="M12 9v4.5" /><circle cx="12" cy="16.4" r=".8" fill="currentColor" stroke="none" /></IconFrame>;
+    case '📊':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M5 19.2h14" /><path d="M7.5 16V11" /><path d="M12 16V7.5" /><path d="M16.5 16v-5" /></IconFrame>;
+    case '🛠':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="m4.5 18.5 5.6-5.6" /><path d="m13.7 6.3 4 4" /><path d="m12.3 7.7 4-4 1.4 1.4-4 4" /><path d="M7.7 12.3 3.8 8.4 6.6 5.6l3.9 3.9" /></IconFrame>;
+    case '🏛':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M4 20h16" /><path d="M6 10h12" /><path d="M12 4 4.5 8h15Z" /><path d="M7.5 10v7" /><path d="M12 10v7" /><path d="M16.5 10v7" /></IconFrame>;
+    case '✈':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M21 5 3 12l7 2 2 7 9-16Z" /><path d="M10 14 21 5" /></IconFrame>;
+    case '📚':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M5.5 6.5A2.5 2.5 0 0 1 8 4h10.5v14H8a2.5 2.5 0 0 0-2.5 2.5" /><path d="M5.5 6.5V20" /><path d="M10 7.5h5.5" /><path d="M10 11h5.5" /></IconFrame>;
+    case '🚀':
+      return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M14.5 5.2c2.8-.4 4.8-.2 4.8-.2s.2 2-.2 4.8l-4.4 4.4-4.6-4.6Z" /><path d="m10.1 9.6-4.4 4.4s-.2-2 .2-4.8 4.8-.2 4.8-.2" /><path d="m14.8 14.3 3.5 3.5" /><path d="m9.7 19.4-5.1 1 1-5.1 2.4-2.4 3.7 3.7Z" /><circle cx="14.3" cy="9.7" r="1.3" /></IconFrame>;
     case '⏳':
       return <IconFrame token={token} size={size} stroke={stroke} style={style}><path d="M7 4h10" /><path d="M7 20h10" /><path d="M8 4c0 3 3.5 4.2 4 4.5.5-.3 4-1.5 4-4.5" /><path d="M8 20c0-3 3.5-4.2 4-4.5.5.3 4 1.5 4 4.5" /></IconFrame>;
     case '🔒':

@@ -5,7 +5,10 @@ export const users = sqliteTable('users', {
   id:           text('id').primaryKey(),
   name:         text('name').notNull(),
   email:        text('email').notNull().unique(),
+  role:         text('role', { enum: ['user', 'admin'] }).notNull().default('user'),
   passwordHash: text('password_hash').notNull(),
+  resetTokenHash: text('reset_token_hash'),
+  resetTokenExpiresAt: integer('reset_token_expires_at', { mode: 'timestamp' }),
   createdAt:    integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 

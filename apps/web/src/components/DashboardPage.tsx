@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FormVerseLogo } from './Logo';
+import { PremiumIcon } from './PremiumIcon';
 import { trpc } from '../trpc';
 import { copyText } from '../utils/clipboard';
 import { COUNTRIES } from '../globeData';
@@ -12,6 +13,7 @@ type Props = {
   onBack: () => void;
   onLogout: () => void;
   onViewForm: (slug: string) => void;
+  onAdmin?: () => void;
 };
 
 const C = {
@@ -85,7 +87,7 @@ function formatResponseValue(value: unknown): string {
   return String(value);
 }
 
-export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Props) {
+export function DashboardPage({ playerName, onBack, onLogout, onViewForm, onAdmin }: Props) {
   const [view, setView] = useState<View>('list');
   const [selectedForm, setSelectedForm] = useState<SelectedFormMeta | null>(null);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
@@ -98,10 +100,26 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
   const selectedFormTitle = selectedForm?.title ?? '';
   const selectedFormSlug = selectedForm?.slug ?? '';
 
+  const trpcUtils = trpc.useUtils();
   const { data: forms, isLoading, error: formsError, refetch } = trpc.forms.myForms.useQuery();
-  const publishMut = trpc.forms.setPublished.useMutation({ onSuccess: () => refetch() });
-  const visibilityMut = trpc.forms.update.useMutation({ onSuccess: () => refetch() });
-  const archiveMut = trpc.forms.update.useMutation({ onSuccess: () => refetch() });
+  const publishMut = trpc.forms.setPublished.useMutation({
+    onSuccess: async () => {
+      await refetch();
+      await trpcUtils.forms.listPublic.invalidate();
+    },
+  });
+  const visibilityMut = trpc.forms.update.useMutation({
+    onSuccess: async () => {
+      await refetch();
+      await trpcUtils.forms.listPublic.invalidate();
+    },
+  });
+  const archiveMut = trpc.forms.update.useMutation({
+    onSuccess: async () => {
+      await refetch();
+      await trpcUtils.forms.listPublic.invalidate();
+    },
+  });
   const cloneMut = trpc.forms.clone.useMutation({ onSuccess: () => refetch() });
   const deleteMut  = trpc.forms.delete.useMutation({ onSuccess: () => refetch() });
   const exportMut = trpc.responses.exportCsv.useQuery(
@@ -193,6 +211,9 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {onAdmin && (
+            <button onClick={onAdmin} style={{ background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.28)', borderRadius: 8, color: C.gold, fontSize: 12, fontWeight: 700, padding: '7px 14px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em', display: 'inline-flex', alignItems: 'center', gap: 8 }}><PremiumIcon token="🛠" size={14} />Admin</button>
+          )}
           <button onClick={onBack} style={{ background: 'transparent', border: '1px solid rgba(124,58,237,0.3)', borderRadius: 8, color: C.purpleL, fontSize: 12, fontWeight: 600, padding: '7px 14px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif" }}>← Back</button>
           <button onClick={onLogout} style={{ background: 'transparent', border: '1px solid rgba(255,100,100,0.3)', borderRadius: 8, color: 'rgba(255,120,120,0.7)', fontSize: 12, fontWeight: 600, padding: '7px 14px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif" }}>Sign Out</button>
         </div>
@@ -282,7 +303,7 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
                           )}
                           {/* Visibility badge */}
                           <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, background: form.visibility === 'public' ? 'rgba(0,229,255,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${form.visibility === 'public' ? 'rgba(0,229,255,0.25)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 6, padding: '2px 8px', color: form.visibility === 'public' ? C.cyan : 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>
-                            {form.visibility === 'public' ? '🌐 PUBLIC' : '🔗 UNLISTED'}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><PremiumIcon token={form.visibility === 'public' ? '🌐' : '🔗'} size={12} />{form.visibility === 'public' ? 'PUBLIC' : 'UNLISTED'}</span>
                           </span>
                         </div>
                         <div style={{ fontSize: 11, color: 'rgba(167,139,250,0.35)' }}>
@@ -295,19 +316,19 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
                         <button onClick={() => !form.archived && form.published && onViewForm(form.slug)}
                           disabled={form.archived || !form.published}
                           style={{ background: `${color}12`, border: `1px solid ${color}33`, borderRadius: 8, color: color, fontSize: 11, fontWeight: 700, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
-                          👁 View
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><PremiumIcon token="👁" size={13} />View</span>
                         </button>
                         <button onClick={() => openResponses(form.id, form.title, form.slug)}
                           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 600, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
-                          📥 Responses
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><PremiumIcon token="📥" size={13} />Responses</span>
                         </button>
                         <button onClick={() => openAnalytics(form.id, form.title, form.slug)}
                           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 600, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
-                          📊 Analytics
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><PremiumIcon token="📊" size={13} />Analytics</span>
                         </button>
                         <button onClick={() => handleCopyClick(form.slug)}
                           style={{ background: copiedSlug === form.slug ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.05)', border: `1px solid ${copiedSlug === form.slug ? '#22c55e44' : 'rgba(255,255,255,0.1)'}`, borderRadius: 8, color: copiedSlug === form.slug ? C.green : 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 600, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em', transition: 'all 0.2s' }}>
-                          {copiedSlug === form.slug ? '✓ Copied!' : '🔗 Copy Link'}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><PremiumIcon token={copiedSlug === form.slug ? '✓' : '🔗'} size={13} />{copiedSlug === form.slug ? 'Copied!' : 'Copy Link'}</span>
                         </button>
                         <button onClick={() => setQrSlug(form.slug)}
                           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 600, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>

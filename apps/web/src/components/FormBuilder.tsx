@@ -37,7 +37,7 @@ function defaultField(type: FieldType): FormField {
     label: type === 'section' ? 'New Section' : type === 'page_break' ? 'New Page' : label,
     placeholder: ['textarea'].includes(type) ? 'Enter your message...' : `Enter ${label.toLowerCase()}...`,
     required: false,
-    options: type === 'radio' || type === 'select' || type === 'checkbox' ? ['Option 1', 'Option 2', 'Option 3'] : [],
+    options: type === 'radio' || type === 'select' || type === 'checkbox' || type === 'multi_select' ? ['Option 1', 'Option 2', 'Option 3'] : [],
     min: type === 'range' ? 0 : type === 'rating' ? 1 : 0,
     max: type === 'range' ? 100 : type === 'rating' ? 5 : 100,
     helperText: '',
@@ -199,7 +199,7 @@ function FieldEditorPanel({ field, world, allFields, onChange }: { field: FormFi
   if (field.type === 'section' || field.type === 'page_break') return <SectionEditor field={field} world={world} onChange={onChange} />;
 
   const isText = ['text', 'textarea', 'email', 'password', 'url', 'phone'].includes(field.type);
-  const hasOptions = field.type === 'radio' || field.type === 'select' || field.type === 'checkbox';
+  const hasOptions = field.type === 'radio' || field.type === 'select' || field.type === 'checkbox' || field.type === 'multi_select';
   const hasMinMax = field.type === 'range' || field.type === 'rating' || field.type === 'number';
   const eligibleConditionFields = allFields.filter((candidate) => candidate.id !== field.id && candidate.type !== 'section' && candidate.type !== 'page_break');
   const tabs = [{ id: 'basic' as EditorTab, icon: '📝', label: 'Basic' }, { id: 'rules' as EditorTab, icon: '🛡', label: 'Rules' }, { id: 'display' as EditorTab, icon: '🎨', label: 'Display' }];
@@ -217,7 +217,7 @@ function FieldEditorPanel({ field, world, allFields, onChange }: { field: FormFi
       {tab === 'basic' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}>
           <div><EditorLabel world={world}>Field Label</EditorLabel><EditorInput world={world} value={field.label} onChange={(v) => onChange({ ...field, label: v })} /></div>
-          {!['checkbox', 'radio', 'select', 'rating', 'file'].includes(field.type) && (
+          {!['checkbox', 'radio', 'select', 'multi_select', 'rating', 'file'].includes(field.type) && (
             <div><EditorLabel world={world}>Placeholder</EditorLabel><EditorInput world={world} value={field.placeholder} onChange={(v) => onChange({ ...field, placeholder: v })} /></div>
           )}
           {(field.type === 'currency' || field.type === 'number') && (
@@ -427,6 +427,7 @@ function FieldPreview({ field, world }: { field: FormField; world: WorldTheme })
         </div>
       );
     case 'checkbox':
+    case 'multi_select':
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {(field.options?.length ? field.options : [field.label || 'Check this box']).slice(0, 3).map((o, i) => (
@@ -741,6 +742,7 @@ export function FormBuilder({
   const [accessPassword, setAccessPassword] = useState('');
   const [activeRibbonTab, setActiveRibbonTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
 
+  const trpcUtils = trpc.useUtils();
   const createMut  = trpc.forms.create.useMutation();
   const updateMut  = trpc.forms.update.useMutation();
   const publishMut = trpc.forms.setPublished.useMutation();
@@ -772,6 +774,7 @@ export function FormBuilder({
       });
       const next = !isPublished;
       await publishMut.mutateAsync({ id: fid, published: next });
+      await trpcUtils.forms.listPublic.invalidate();
       setIsPublished(next);
       setPublishMsg(next ? '✓ Published!' : '✓ Unpublished');
       setTimeout(() => setPublishMsg(''), 3000);
@@ -1001,7 +1004,7 @@ export function FormBuilder({
         <button onClick={onLogout} style={toolBtn(false, true)}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,60,60,0.18)'; (e.currentTarget as HTMLButtonElement).style.color = '#f87171'; }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,60,60,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,120,120,0.75)'; }}>
-          <PremiumIcon token="🚪" size={15} style={{ marginRight: 6 }} />Logout
+          <PremiumIcon token="🚪" size={15} style={{ marginRight: 6 }} />Sign Out
         </button>
       </div>
 

@@ -13,6 +13,8 @@ import { adminRouter } from './routers/admin';
 import {
   RegisterInput,
   LoginInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
   CreateFormInput,
   UpdateFormInput,
   PublishFormInput,
@@ -23,9 +25,45 @@ import {
 } from './schemas';
 
 const DEFAULT_ALLOWED_ORIGINS = [
+  'http://localhost:4173',
   'http://localhost:5173',
   'http://localhost:5174',
+  'http://127.0.0.1:4173',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
 ];
+
+const DOCS_FAVICON_SVG = `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ring" x1="6" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7c3aed" />
+      <stop offset="52%" stop-color="#00e5ff" />
+      <stop offset="100%" stop-color="#ff0080" />
+    </linearGradient>
+    <linearGradient id="sheet" x1="18" y1="10" x2="48" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1a0845" />
+      <stop offset="100%" stop-color="#021730" />
+    </linearGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="b" />
+      <feMerge>
+        <feMergeNode in="b" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="#060014" />
+  <ellipse cx="32" cy="31.5" rx="25" ry="10" stroke="url(#ring)" stroke-width="2.2" stroke-dasharray="5 4" opacity="0.72" transform="rotate(-28 32 31.5)" />
+  <rect x="18" y="12" width="28" height="38" rx="5" fill="url(#sheet)" stroke="url(#ring)" stroke-width="2.1" />
+  <line x1="24" y1="22" x2="40" y2="22" stroke="rgba(255,255,255,0.92)" stroke-width="2.4" stroke-linecap="round" />
+  <line x1="24" y1="30.5" x2="38" y2="30.5" stroke="rgba(255,255,255,0.58)" stroke-width="2" stroke-linecap="round" />
+  <line x1="24" y1="38" x2="33.5" y2="38" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round" />
+  <circle cx="48.5" cy="14.5" r="2.8" fill="#00e5ff" filter="url(#glow)" />
+  <circle cx="15" cy="46.5" r="3.2" fill="#a78bfa" filter="url(#glow)" />
+  <ellipse cx="15" cy="46.5" rx="7" ry="2.4" stroke="#a78bfa" stroke-width="1.1" opacity="0.45" />
+  <circle cx="54" cy="24" r="3.5" fill="url(#ring)" filter="url(#glow)" />
+  <circle cx="14.5" cy="18.5" r="1.5" fill="#ffd700" opacity="0.8" />
+</svg>`;
 
 const OPENAPI_TAGS = [
   {
@@ -97,6 +135,8 @@ function toOpenApiSchema(schema: Parameters<typeof zodToJsonSchema>[0]) {
 
 const REGISTER_INPUT_SCHEMA = toOpenApiSchema(RegisterInput);
 const LOGIN_INPUT_SCHEMA = toOpenApiSchema(LoginInput);
+const FORGOT_PASSWORD_INPUT_SCHEMA = toOpenApiSchema(ForgotPasswordInput);
+const RESET_PASSWORD_INPUT_SCHEMA = toOpenApiSchema(ResetPasswordInput);
 const CREATE_FORM_INPUT_SCHEMA = toOpenApiSchema(CreateFormInput);
 const UPDATE_FORM_INPUT_SCHEMA = toOpenApiSchema(UpdateFormInput);
 const PUBLISH_FORM_INPUT_SCHEMA = toOpenApiSchema(PublishFormInput);
@@ -114,6 +154,15 @@ const REGISTER_EXAMPLE = {
 const LOGIN_EXAMPLE = {
   email: 'ava@example.com',
   password: 'QuestRunner2026',
+};
+
+const FORGOT_PASSWORD_EXAMPLE = {
+  email: 'ava@example.com',
+};
+
+const RESET_PASSWORD_EXAMPLE = {
+  token: 'reset_token_from_email',
+  password: 'QuestRunner2027',
 };
 
 const CREATE_FORM_EXAMPLE = {
@@ -291,6 +340,16 @@ app.get('/openapi.json', (c) => {
           successDescription: 'Current user profile returned successfully.',
         }),
       },
+      '/trpc/auth.forgotPassword': {
+        post: operation('Request password reset', ['Auth'], 'Issues a password reset email when the account exists. Always returns a generic success payload.', {
+          requestBody: jsonRequestBody('Password reset request payload.', FORGOT_PASSWORD_INPUT_SCHEMA, FORGOT_PASSWORD_EXAMPLE),
+        }),
+      },
+      '/trpc/auth.resetPassword': {
+        post: operation('Reset password', ['Auth'], 'Resets the user password using a valid one-time reset token.', {
+          requestBody: jsonRequestBody('Password reset submission payload.', RESET_PASSWORD_INPUT_SCHEMA, RESET_PASSWORD_EXAMPLE),
+        }),
+      },
       '/trpc/forms.create': {
         post: operation('Create a form', ['Forms'], 'Creates a new form draft for the authenticated user.', {
           secured: true,
@@ -398,9 +457,17 @@ app.get('/openapi.json', (c) => {
   });
 });
 
+app.get('/favicon.svg', (c) => c.body(DOCS_FAVICON_SVG, 200, {
+  'content-type': 'image/svg+xml; charset=utf-8',
+  'cache-control': 'public, max-age=86400',
+}));
+
+app.get('/favicon.ico', (c) => c.redirect('/favicon.svg', 302));
+
 // Scalar interactive API docs
 app.get('/docs', apiReference({
   pageTitle: 'FormVerse API Reference',
+  favicon: '/favicon.svg',
   layout: 'modern',
   showSidebar: true,
   hideDownloadButton: false,

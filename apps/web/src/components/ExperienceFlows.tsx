@@ -443,7 +443,7 @@ function GlobePreviewScreen({ country, fields, title, onBack }: {
                       </label>
                     ))}
                   </div>
-                ) : field.type === 'checkbox' ? (
+                ) : field.type === 'checkbox' || field.type === 'multi_select' ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {field.options.map((option) => (
                       <label key={option} style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.7)', fontSize: 14, cursor: 'pointer' }}>
@@ -520,7 +520,7 @@ function LibraryPreviewScreen({ world, fields, title, onBack }: {
                       </label>
                     ))}
                   </div>
-                ) : field.type === 'checkbox' ? (
+                ) : field.type === 'checkbox' || field.type === 'multi_select' ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {field.options.map((option) => (
                       <label key={option} style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.7)', fontSize: 14, cursor: 'pointer' }}>

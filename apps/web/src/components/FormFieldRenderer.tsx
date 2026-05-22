@@ -112,6 +112,7 @@ export function ControlledFormField({ field, world, value, onChange }: { field: 
       input = <textarea placeholder={field.placeholder} style={{ ...inputBase, height: '90px', resize: 'vertical' }} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} onBlur={(e) => validate(e.target.value)} minLength={field.minLength || undefined} maxLength={field.maxLength || undefined} />;
       break;
     case 'checkbox':
+    case 'multi_select':
       input = (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {(field.options.length ? field.options : [field.placeholder || field.label]).map((option) => {

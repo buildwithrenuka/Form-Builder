@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { eq, and, desc, count } from 'drizzle-orm';
+import { eq, and, desc, count, like, or } from 'drizzle-orm';
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { router, publicProc, authProc } from '../trpc';
 import { forms, responses } from '../db/schema';
@@ -38,6 +38,87 @@ function verifyAccessPassword(password: string | undefined, storedHash: string, 
   const expected = hashAccessPassword(password, salt);
   return expected.length === storedHash.length
     && timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(storedHash, 'hex'));
+}
+
+const publicGalleryCategorySchema = z.enum([
+  'all',
+  'realm-runner',
+  'globe-explorer',
+  'the-library',
+  'registration',
+  'survey',
+  'quiz',
+]);
+
+const TEMPLE_WORLD_IDS = ['temple-run', 'jungle', 'snow', 'desert', 'space', 'underwater', 'volcano', 'heaven', 'hell', 'flower'];
+const GLOBE_WORLD_IDS = ['globe', 'india', 'usa', 'uk', 'japan', 'germany', 'brazil', 'uae', 'australia', 'china', 'france', 'canada', 'south-africa'];
+const LIBRARY_WORLD_IDS = ['library', 'mythology', 'history', 'scifi', 'fictional'];
+
+function matchWorldTheme(worldIds: string[]) {
+  return or(...worldIds.map((worldId) => eq(forms.worldTheme, worldId)));
+}
+
+function getPublicGalleryCategoryConditions(category: z.infer<typeof publicGalleryCategorySchema>) {
+  switch (category) {
+    case 'realm-runner':
+      return [matchWorldTheme(TEMPLE_WORLD_IDS)!];
+    case 'globe-explorer':
+      return [matchWorldTheme(GLOBE_WORLD_IDS)!];
+    case 'the-library':
+      return [matchWorldTheme(LIBRARY_WORLD_IDS)!];
+    case 'registration':
+      return [
+        or(
+          like(forms.title, '%registration%'),
+          like(forms.title, '%register%'),
+          like(forms.title, '%onboarding%'),
+          like(forms.title, '%application%'),
+          like(forms.description, '%registration%'),
+          like(forms.description, '%register%'),
+          like(forms.description, '%onboarding%'),
+          like(forms.description, '%application%'),
+        )!,
+      ];
+    case 'survey':
+      return [
+        or(
+          like(forms.title, '%survey%'),
+          like(forms.title, '%feedback%'),
+          like(forms.title, '%review%'),
+          like(forms.description, '%survey%'),
+          like(forms.description, '%feedback%'),
+          like(forms.description, '%review%'),
+        )!,
+      ];
+    case 'quiz':
+      return [
+        or(
+          like(forms.title, '%quiz%'),
+          like(forms.title, '%assessment%'),
+          like(forms.title, '%test%'),
+          like(forms.description, '%quiz%'),
+          like(forms.description, '%assessment%'),
+          like(forms.description, '%test%'),
+        )!,
+      ];
+    case 'all':
+    default:
+      return [];
+  }
+}
+
+function isLocalDevelopmentIp(ip: string | null): boolean {
+  if (!ip) return true;
+
+  const normalized = ip.trim().toLowerCase();
+  if (!normalized) return true;
+
+  return normalized === '127.0.0.1'
+    || normalized === '::1'
+    || normalized === 'localhost'
+    || normalized.startsWith('192.168.')
+    || normalized.startsWith('10.')
+    || /^172\.(1[6-9]|2\d|3[0-1])\./.test(normalized);
 }
 
 async function ensureUniqueSlug(slug: string, currentFormId: string | null, ctx: Parameters<typeof authProc.query>[0]['ctx'] | Parameters<typeof publicProc.query>[0]['ctx']) {
@@ -240,6 +321,15 @@ export const formsRouter = router({
       }
 
       const totalResponses = form.responseLimit ? await countResponsesForForm(ctx, form.id) : 0;
+      const clientIp = ctx.ip;
+      const hashedIp = clientIp ? createHash('sha256').update(clientIp + ctx.env.IP_SALT).digest('hex') : null;
+      const alreadySubmitted = hashedIp && !isLocalDevelopmentIp(clientIp)
+        ? Boolean(await ctx.db.query.responses.findFirst({
+          where: and(eq(responses.formId, form.id), eq(responses.ipHash, hashedIp)),
+          columns: { id: true },
+        }))
+        : false;
+
       return {
         access: 'available' as const,
         id:          form.id,
@@ -250,19 +340,61 @@ export const formsRouter = router({
         expiresAt:   form.expiresAt,
         responseLimit: form.responseLimit,
         remainingResponses: form.responseLimit ? Math.max(form.responseLimit - totalResponses, 0) : null,
+        alreadySubmitted,
         schema:      FormFieldsSchema.parse(JSON.parse(form.schema)),
       };
     }),
 
   // ── Public: list all public published forms (explore page) ─────────────
   listPublic: publicProc
-    .input(z.object({ limit: z.number().int().min(1).max(50).default(20) }))
+    .input(z.object({
+      limit: z.number().int().min(1).max(50).optional(),
+      query: z.string().trim().max(120).optional(),
+      category: publicGalleryCategorySchema.default('all'),
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(50).default(20),
+    }))
     .query(async ({ ctx, input }) => {
-      return ctx.db.query.forms.findMany({
-        where: and(eq(forms.published, true), eq(forms.visibility, 'public'), eq(forms.archived, false)),
-        orderBy: [desc(forms.createdAt)],
-        limit: input.limit,
-        columns: { id: true, title: true, description: true, slug: true, worldTheme: true, createdAt: true, expiresAt: true, responseLimit: true },
-      });
+      const query = input.query?.trim();
+      const effectivePageSize = input.limit ?? input.pageSize;
+      const searchConditions = query
+        ? [or(
+          like(forms.title, `%${query}%`),
+          like(forms.description, `%${query}%`),
+          like(forms.worldTheme, `%${query}%`),
+        )!]
+        : [];
+      const categoryConditions = getPublicGalleryCategoryConditions(input.category);
+      const whereClause = and(
+        eq(forms.published, true),
+        eq(forms.visibility, 'public'),
+        eq(forms.archived, false),
+        ...searchConditions,
+        ...categoryConditions,
+      );
+
+      const [items, totalRows] = await Promise.all([
+        ctx.db.query.forms.findMany({
+          where: whereClause,
+          orderBy: [desc(forms.createdAt)],
+          offset: (input.page - 1) * effectivePageSize,
+          limit: effectivePageSize,
+          columns: { id: true, title: true, description: true, slug: true, worldTheme: true, createdAt: true, expiresAt: true, responseLimit: true },
+        }),
+        ctx.db.select({ value: count() }).from(forms).where(whereClause),
+      ]);
+
+      const total = totalRows[0]?.value ?? 0;
+      const totalPages = Math.max(1, Math.ceil(total / effectivePageSize));
+
+      return {
+        items,
+        total,
+        page: input.page,
+        pageSize: effectivePageSize,
+        totalPages,
+        hasPreviousPage: input.page > 1,
+        hasNextPage: input.page < totalPages,
+      };
     }),
 });
