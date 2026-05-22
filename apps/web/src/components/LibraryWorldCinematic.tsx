@@ -4,9 +4,10 @@ import type { LibraryWorld } from '../libraryData';
 type Props = {
   world: LibraryWorld;
   onComplete: () => void;
+  onBack: () => void;
 };
 
-export function LibraryWorldCinematic({ world, onComplete }: Props) {
+export function LibraryWorldCinematic({ world, onComplete, onBack }: Props) {
   const [panel, setPanel] = useState(0);
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -46,6 +47,31 @@ export function LibraryWorldCinematic({ world, onComplete }: Props) {
       }}
       onClick={advance}
     >
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+          onBack();
+        }}
+        style={{
+          position: 'absolute',
+          top: 24,
+          left: 24,
+          zIndex: 6,
+          background: 'rgba(0,0,0,0.32)',
+          border: `1px solid ${world.color}44`,
+          borderRadius: 10,
+          color: '#fff',
+          padding: '9px 14px',
+          cursor: 'pointer',
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+        }}
+      >
+        ← Back
+      </button>
+
       {world.particles.map((item, index) => (
         <div
           key={`${item}-${index}`}

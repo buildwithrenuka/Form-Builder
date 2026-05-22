@@ -2,6 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { FormVerseLogo } from './Logo';
 import { TUTORIAL_PANELS } from './TutorialScreen';
 import { PricingSection } from './PricingSection';
+import { trpc } from '../trpc';
+import { COUNTRIES } from '../globeData';
+import { LIBRARY_WORLDS } from '../libraryData';
+import { AVATARS, WORLDS } from '../themes';
 
 export type HomeTheme = 'dark' | 'light' | 'rainbow' | 'firecracker' | 'jugnu';
 
@@ -10,13 +14,59 @@ type Props = {
   onLogin?: () => void;
   onRegister?: () => void;
   onTutorial: () => void;
+  onApiDocs?: () => void;
   onPricing?: () => void;
   onExplore?: () => void;
+  onViewForm?: (slug: string) => void;
   onDashboard?: () => void;
+  onAdmin?: () => void;
   playerName?: string;
   theme: HomeTheme;
   onThemeChange: (theme: HomeTheme) => void;
 };
+
+const TEMPLE_WORLD_IDS = new Set(WORLDS.map((world) => world.id));
+const GLOBE_COUNTRY_MAP = new Map(COUNTRIES.map((country) => [country.id, country]));
+const LIBRARY_WORLD_MAP = new Map(LIBRARY_WORLDS.map((world) => [world.id, world]));
+
+function getPublicFormMeta(worldTheme?: string | null) {
+  if (!worldTheme) {
+    return { color: '#a78bfa', emoji: '📋', label: 'General Form' };
+  }
+
+  if (TEMPLE_WORLD_IDS.has(worldTheme)) {
+    const world = WORLDS.find((entry) => entry.id === worldTheme);
+    return {
+      color: world?.accentColor ?? '#f97316',
+      emoji: world?.emoji ?? '🏛️',
+      label: world?.name ?? 'Realm Runner',
+    };
+  }
+
+  const country = GLOBE_COUNTRY_MAP.get(worldTheme);
+  if (country) {
+    return {
+      color: country.accentColor,
+      emoji: country.emoji,
+      label: `Globe · ${country.name}`,
+    };
+  }
+
+  const libraryWorld = LIBRARY_WORLD_MAP.get(worldTheme as (typeof LIBRARY_WORLDS)[number]['id']);
+  if (libraryWorld) {
+    return {
+      color: libraryWorld.accentColor,
+      emoji: libraryWorld.emoji,
+      label: `Library · ${libraryWorld.name}`,
+    };
+  }
+
+  if (worldTheme === 'temple-run') return { color: '#f97316', emoji: '🏛️', label: 'Realm Runner' };
+  if (worldTheme === 'globe') return { color: '#c9a84c', emoji: '✈️', label: 'Globe Explorer' };
+  if (worldTheme === 'library') return { color: '#a855f7', emoji: '📚', label: 'The Library' };
+
+  return { color: '#a78bfa', emoji: '📋', label: worldTheme };
+}
 
 const DARK = {
   bg:          'linear-gradient(160deg, #000508 0%, #000d12 45%, #020010 100%)',
@@ -348,12 +398,13 @@ const THEMES = { dark: DARK, light: LIGHT, rainbow: RAINBOW, firecracker: FIRECR
 const EXPERIENCES = [
   {
     id: 'temple', num: '01', emoji: '🏛️',
-    title: 'Temple Run', subtitle: 'Gamified Adventure',
-    desc: 'Build forms inside 9 legendary worlds. Pick your mission on an interactive map — fields scaffold automatically for your chosen purpose.',
+    title: 'Realm Runner', subtitle: 'Cinematic Adventure',
+    desc: `Build forms inside ${WORLDS.length} legendary worlds with ${AVATARS.length} playable runners. Pick your mission on an interactive map — fields scaffold automatically for your chosen purpose.`,
     color: '#ff6a00', glow: 'rgba(255,106,0,0.35)', border: 'rgba(255,106,0,0.6)',
     bg: 'radial-gradient(ellipse 120% 80% at 50% 0%, rgba(180,55,0,0.55) 0%, rgba(8,0,26,0.0) 70%)',
+    previewVideo: '/experience-previews/realm-runner.webm',
     formTypes: ['📋 Quest Registration','👤 Character Sheet','🎯 Mission Brief','🏆 Score Tracker','📝 Event Signup','🔐 Access Form','🗒️ Field Report','⚔️ Challenge Entry'],
-    chipsLabel: 'Form Templates', cta: '⚡ Preview Temple Run',
+    chipsLabel: 'Form Templates',
   },
   {
     id: 'globe', num: '02', emoji: '✈️',
@@ -361,8 +412,9 @@ const EXPERIENCES = [
     desc: 'Pre-built travel form templates for 12 countries — with locale-aware fields, currency symbols, and destination-specific presets.',
     color: '#ffe600', glow: 'rgba(255,230,0,0.32)', border: 'rgba(255,230,0,0.6)',
     bg: 'radial-gradient(ellipse 120% 80% at 50% 0%, rgba(120,90,0,0.55) 0%, rgba(8,0,26,0.0) 70%)',
+    previewVideo: '/experience-previews/globe-explorer.webm',
     formTypes: ['🗂️ Visa Application','🏨 Hotel Registration','📦 Customs Declaration','✈️ Travel Itinerary','👥 Group Travel Form','🚌 Transport Booking','💱 Currency-aware Fields','📍 Address Autocomplete'],
-    chipsLabel: 'Form Templates', cta: '🌍 Preview Globe Explorer',
+    chipsLabel: 'Form Templates',
   },
   {
     id: 'library', num: '03', emoji: '📚',
@@ -370,8 +422,9 @@ const EXPERIENCES = [
     desc: 'Hand-crafted field presets for mythology, history, sci-fi and fiction — build character sheets, lore entries, mission logs and records.',
     color: '#dd44ff', glow: 'rgba(221,68,255,0.35)', border: 'rgba(221,68,255,0.6)',
     bg: 'radial-gradient(ellipse 120% 80% at 50% 0%, rgba(100,0,160,0.55) 0%, rgba(8,0,26,0.0) 70%)',
+    previewVideo: '/experience-previews/the-library.webm',
     formTypes: ['⚡ Hero Registration','📜 Historical Record','🚀 Crew Mission Log','🧙 Character Sheet','🌍 World-Building Entry','🔮 Deity Profile','👾 Alien Species Form','📖 Lore Archive'],
-    chipsLabel: 'Form Templates', cta: '📚 Preview The Library',
+    chipsLabel: 'Form Templates',
   },
 ];
 
@@ -381,13 +434,14 @@ const FEATURES = [
   { icon: '📐', label: 'Flexible Layout',   desc: 'Half-width fields, section dividers, field groups — arrange your form exactly as you need it.' },
   { icon: '🎨', label: 'Per-field Styling', desc: 'Choose a colour palette per field. Validation badges, helper text, and placeholder text all customisable.' },
   { icon: '📋', label: 'Preset Templates',  desc: 'Jump-start with ready-made field groups for registrations, surveys, applications, and more.' },
-  { icon: '🔗', label: 'One-click Sharing', desc: 'Generate a public link instantly. Anyone fills your form in-browser — no account or install required.' },
+  { icon: '🔗', label: 'Controlled Sharing', desc: 'Publish with custom slugs, password gates, expiry windows, and response caps. Share publicly without losing control.' },
+  { icon: '🛡️', label: 'Protected Access',  desc: 'Lock sensitive forms behind an access password and keep public viewers informed when a form is limited or no longer accepting responses.' },
   { icon: '🕐', label: 'Version History',   desc: 'Name and save snapshots at any point. Browse the full timeline and restore any previous version in one click.' },
   { icon: '📦', label: 'Import & Export',   desc: 'Save your form as a .trform.json file or import any template. Take your work anywhere.' },
 ];
 
 const STEPS = [
-  { n: '1', icon: '🎮', title: 'Pick an Experience', desc: 'Temple Run, Globe Explorer or The Library.' },
+  { n: '1', icon: '🎮', title: 'Pick an Experience', desc: 'Realm Runner, Globe Explorer or The Library.' },
   { n: '2', icon: '🌍', title: 'Choose Your World',  desc: 'A world, country, or lore theme sets the scene.' },
   { n: '3', icon: '🔑', title: 'Sign In',            desc: 'Quick login — forms save to your account.' },
   { n: '4', icon: '🔨', title: 'Build & Share',      desc: 'Drag fields, set rules, copy the link.' },
@@ -622,20 +676,26 @@ function JugnuCanvas({ active }: { active: boolean }) {
   return <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, opacity: 0.92 }} />;
 }
 
-export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, onExplore, onDashboard, playerName, theme, onThemeChange }: Props) {
+export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, onPricing, onExplore, onViewForm, onDashboard, onAdmin, playerName, theme, onThemeChange }: Props) {
   const [heroIn,    setHeroIn]    = useState(false);
   const [hovExp,    setHovExp]    = useState<number | null>(null);
   const [hovFeat,   setHovFeat]   = useState<number | null>(null);
+  const [hovGallery,setHovGallery]= useState<string | null>(null);
   const [statsVis,  setStatsVis]  = useState(false);
   const [tagIdx,    setTagIdx]    = useState(0);
   const [tagVisible,setTagVisible]= useState(true);
   const [tutorialIdx, setTutorialIdx] = useState(0);
+  const [previewModalId, setPreviewModalId] = useState<string | null>(null);
+  const [canHover, setCanHover] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
+  const previewVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const T = THEMES[theme];
   const isDark = theme !== 'light';
   const rainbow     = theme === 'rainbow';
   const firecracker = theme === 'firecracker';
   const jugnu       = theme === 'jugnu';
+  const { data: publicForms, isLoading: publicFormsLoading } = trpc.forms.listPublic.useQuery({ limit: 30 }, { staleTime: 60_000 });
+  const previewModalExperience = EXPERIENCES.find((exp) => exp.id === previewModalId) ?? null;
 
   useEffect(() => { setTimeout(() => setHeroIn(true), 60); }, []);
 
@@ -668,6 +728,34 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, 
     return () => clearInterval(cycle);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const media = window.matchMedia('(hover: hover)');
+    const update = () => setCanHover(media.matches);
+    update();
+    media.addEventListener?.('change', update);
+    return () => media.removeEventListener?.('change', update);
+  }, []);
+
+  useEffect(() => {
+    if (!previewModalId) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setPreviewModalId(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [previewModalId]);
+
   const tutorialPanel = TUTORIAL_PANELS[tutorialIdx];
 
   const fade = (delay: string) => ({
@@ -690,6 +778,29 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, 
       return;
     }
     document.getElementById('tutorial-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const playPreviewVideo = (experienceId: string) => {
+    const video = previewVideoRefs.current[experienceId];
+    if (!video) return;
+    video.currentTime = 0;
+    void video.play().catch(() => {});
+  };
+
+  const pausePreviewVideo = (experienceId: string) => {
+    const video = previewVideoRefs.current[experienceId];
+    if (!video) return;
+    video.pause();
+    video.currentTime = 0;
+  };
+
+  const openPreviewModal = (experienceId: string) => {
+    pausePreviewVideo(experienceId);
+    setPreviewModalId(experienceId);
+  };
+
+  const closePreviewModal = () => {
+    setPreviewModalId(null);
   };
 
   return (
@@ -717,18 +828,32 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, 
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: T.navBg, backdropFilter: 'blur(32px)', borderBottom: `1px solid ${T.navBorder}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: T.navShadow, transition: 'background 0.3s, border-color 0.3s' }}>
         <FormVerseLogo key={`nav-logo-${theme}`} size={34} textSize={14} variant={theme} />
         <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          {([['#experiences','Experiences'],['#features','Features'],['#how','How it works']] as [string,string][]).map(([href, label]) => (
+          {([['#experiences','Experiences'],['#gallery','Gallery'],['#features','Features'],['#how','How it works']] as [string,string][]).map(([href, label]) => (
             <a key={href} href={href} style={{ fontSize: 12, color: T.navLinkColor, textDecoration: 'none', letterSpacing: '0.1em', padding: '6px 13px', borderRadius: 7, transition: 'all 0.18s', fontWeight: 700, textTransform: 'uppercase' }}
               onMouseEnter={e => { e.currentTarget.style.color = isDark ? '#fff' : '#000'; e.currentTarget.style.background = T.navLinkHoverBg; e.currentTarget.style.textShadow = T.navLinkHoverShadow; }}
               onMouseLeave={e => { e.currentTarget.style.color = T.navLinkColor; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.textShadow = 'none'; }}>
               {label}
             </a>
           ))}
+          {onApiDocs && (
+            <button onClick={onApiDocs} style={{ background: 'transparent', border: 'none', fontSize: 12, color: T.navLinkColor, letterSpacing: '0.1em', padding: '6px 13px', borderRadius: 7, transition: 'all 0.18s', fontWeight: 700, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}
+              onMouseEnter={e => { e.currentTarget.style.color = isDark ? '#fff' : '#000'; e.currentTarget.style.background = T.navLinkHoverBg; e.currentTarget.style.textShadow = T.navLinkHoverShadow; }}
+              onMouseLeave={e => { e.currentTarget.style.color = T.navLinkColor; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.textShadow = 'none'; }}>
+              API Docs
+            </button>
+          )}
           {playerName && onDashboard && (
             <button onClick={onDashboard} style={{ background: T.loginBg, border: `1px solid ${T.loginBorder}`, fontSize: 12, color: T.loginColor, letterSpacing: '0.1em', padding: '7px 14px', borderRadius: 8, transition: 'all 0.18s', fontWeight: 700, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}
               onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.05)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
               onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               Dashboard
+            </button>
+          )}
+          {playerName && onAdmin && (
+            <button onClick={onAdmin} style={{ background: T.tutorialBg, border: `1px solid ${T.tutorialBorder}`, fontSize: 12, color: T.tutorialColor, letterSpacing: '0.1em', padding: '7px 14px', borderRadius: 8, transition: 'all 0.18s', fontWeight: 700, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}
+              onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.05)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+              Admin
             </button>
           )}
           {!playerName && onLogin && (
@@ -801,6 +926,14 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, 
             onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; }}>
             {playerName ? 'Choose Your Experience' : 'Create Free Account'}
           </button>
+          {onApiDocs && (
+            <button onClick={onApiDocs}
+              style={{ background: isDark ? 'rgba(246, 196, 112, 0.08)' : 'rgba(53, 16, 0, 0.06)', border: `1px solid ${isDark ? 'rgba(246, 196, 112, 0.42)' : 'rgba(53, 16, 0, 0.16)'}`, borderRadius: 14, color: isDark ? '#f6d59b' : '#351000', fontSize: 16, fontWeight: 800, padding: '18px 30px', cursor: 'pointer', letterSpacing: '0.1em', fontFamily: "'Rajdhani', sans-serif", transition: 'all 0.2s', boxShadow: isDark ? '0 18px 40px rgba(0, 0, 0, 0.24)' : '0 16px 34px rgba(171, 81, 0, 0.12)' }}
+              onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+              Browse API Docs
+            </button>
+          )}
           <button onClick={() => document.getElementById('experiences')?.scrollIntoView({ behavior: 'smooth' })}
             style={{ background: T.tutorialBg, border: `1px solid ${T.tutorialBorder}`, borderRadius: 14, color: T.tutorialColor, fontSize: 16, fontWeight: 800, padding: '18px 32px', cursor: 'pointer', letterSpacing: '0.1em', fontFamily: "'Rajdhani', sans-serif", transition: 'all 0.2s' }}
             onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.15)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
@@ -814,7 +947,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, 
             '3 distinct builder experiences',
             '5 visual modes: Dark, Light, Rainbow, Firecracker, Jugnu',
             'Account setup in one screen',
-            'Publish and share instantly',
+            'Custom slugs, passwords, expiry, and response caps',
           ].map((item) => (
             <div key={item} style={{ background: T.expChipBg, border: `1px solid ${T.expChipBorder}`, borderRadius: 999, padding: '9px 14px', fontSize: 12, color: T.expChipColor, letterSpacing: '0.06em' }}>
               {item}
@@ -903,7 +1036,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, 
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: 10, textShadow: T.sectionLabelShadow }}>✦ The Toolkit</div>
             <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(22px, 3.5vw, 34px)', fontWeight: 900, color: isDark ? '#f7f4ff' : '#351000', background: T.h2Gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textShadow: isDark ? '0 0 16px rgba(8, 4, 26, 0.24)' : '0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(171, 81, 0, 0.14)', margin: '0 0 12px' }}>Everything You Need</h2>
-            <p style={{ fontSize: 14, color: T.subText, maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>A complete form builder — not just a pretty interface. Every tool you need, visually.</p>
+            <p style={{ fontSize: 14, color: T.subText, maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>A complete form builder with controlled publishing built in: design visually, then ship with custom links, password protection, expiry dates, and response limits.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
             {FEATURES.map((f, i) => {
@@ -957,6 +1090,51 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, 
                     <p style={{ fontSize: 13, color: T.expDesc, lineHeight: 1.7, margin: 0 }}>{exp.desc}</p>
                   </div>
                   <div style={{ padding: '22px 30px', flex: 1 }}>
+                    <div style={{ marginBottom: 18 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <div style={{ fontSize: 10, color: isH ? exp.color : T.expChipLabel, letterSpacing: '0.22em', textTransform: 'uppercase', transition: 'color 0.3s' }}>Preview footage</div>
+                        <div style={{ fontSize: 10, color: isDark ? 'rgba(255,255,255,0.26)' : 'rgba(0,0,0,0.3)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>{canHover ? 'Hover to play' : 'Tap to expand'}</div>
+                      </div>
+                      <div
+                        onMouseEnter={() => playPreviewVideo(exp.id)}
+                        onMouseLeave={() => pausePreviewVideo(exp.id)}
+                        onFocus={() => playPreviewVideo(exp.id)}
+                        onBlur={() => pausePreviewVideo(exp.id)}
+                        onClick={() => openPreviewModal(exp.id)}
+                        style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, border: `1px solid ${isH ? exp.border : exp.color + '22'}`, background: isDark ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.58)', boxShadow: isH ? `0 0 24px ${exp.glow}` : 'inset 0 1px 0 rgba(255,255,255,0.04)', aspectRatio: '16 / 9', cursor: 'pointer' }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Open ${exp.title} preview video`}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            openPreviewModal(exp.id);
+                          }
+                        }}
+                      >
+                        <video
+                          src={exp.previewVideo}
+                          muted
+                          loop
+                          playsInline
+                          preload="metadata"
+                          aria-label={`${exp.title} preview video`}
+                          ref={(node) => {
+                            previewVideoRefs.current[exp.id] = node;
+                          }}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: isH ? 'scale(1.03)' : 'scale(1)', transition: 'transform 0.45s ease', filter: isDark ? 'saturate(1.02) contrast(1.02)' : 'saturate(1.05) contrast(1.01)' }}
+                        />
+                        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${isDark ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)'} 0%, transparent 35%, ${isDark ? 'rgba(6,0,18,0.22)' : 'rgba(60,20,0,0.1)'} 100%)`, pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', top: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(0,0,0,0.45)', border: `1px solid ${exp.color}44`, borderRadius: 999, padding: '6px 10px', color: '#fff8ef', fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', backdropFilter: 'blur(12px)', pointerEvents: 'none' }}>
+                          <span style={{ width: 7, height: 7, borderRadius: '50%', background: exp.color, boxShadow: `0 0 12px ${exp.color}` }} />
+                          Experience preview
+                        </div>
+                        <div style={{ position: 'absolute', right: 12, bottom: 12, display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(8,8,14,0.5)', border: `1px solid ${exp.color}44`, borderRadius: 999, padding: '8px 12px', color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', boxShadow: isH ? `0 0 18px ${exp.glow}` : 'none', backdropFilter: 'blur(12px)', pointerEvents: 'none', opacity: isH ? 0.92 : 0.72, transition: 'opacity 0.22s ease, box-shadow 0.22s ease' }}>
+                          <span style={{ width: 22, height: 22, borderRadius: '50%', background: `linear-gradient(135deg, ${exp.color}, rgba(255,255,255,0.92))`, color: '#160014', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>▶</span>
+                          {canHover ? 'Hover to play' : 'Tap to preview'}
+                        </div>
+                      </div>
+                    </div>
                     <div style={{ fontSize: 10, color: T.expChipLabel, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 10 }}>{exp.chipsLabel}</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                       {exp.formTypes.map((w, wi) => (
@@ -965,17 +1143,84 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, 
                     </div>
                   </div>
 
-                  <div style={{ padding: '0 30px 26px' }}>
-                    <button onClick={handleExperienceStart}
-                      style={{ width: '100%', background: isH ? `linear-gradient(135deg, ${exp.color}, rgba(255,255,255,0.92))` : `${exp.color}16`, border: `1px solid ${isH ? exp.border : exp.color + '30'}`, borderRadius: 12, color: isH ? '#120014' : (isDark ? '#fff' : '#1a0800'), fontSize: 12, fontWeight: 800, padding: '13px 16px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.1em', transition: 'all 0.2s', boxShadow: isH ? `0 0 22px ${exp.glow}` : 'none' }}>
-                      {playerName ? `Open ${exp.title}` : exp.cta}
-                    </button>
-                  </div>
-
                 </div>
               );
             })}
           </div>
+        </div>
+      </section>
+
+      <section id="gallery" style={{ padding: '0 24px 100px', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: 10, textShadow: T.sectionLabelShadow }}>✦ Public Form Gallery</div>
+            <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(24px, 4vw, 38px)', fontWeight: 900, color: isDark ? '#f7f4ff' : '#351000', background: T.h2Gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textShadow: isDark ? '0 0 16px rgba(8, 4, 26, 0.24)' : '0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(171, 81, 0, 0.14)', margin: '0 0 12px' }}>Try Real Public Forms</h2>
+            <p style={{ fontSize: 14, color: T.subText, maxWidth: 720, margin: '0 auto', lineHeight: 1.7 }}>Browse public forms created for Realm Runner, Globe Explorer, and The Library. Open any card, submit it, and experience the respondent flow exactly as your users will.</p>
+          </div>
+
+          {publicFormsLoading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} style={{ minHeight: 210, borderRadius: 20, background: T.featCardBg, border: `1px solid ${T.featCardBorder}`, opacity: 0.7 }} />
+              ))}
+            </div>
+          ) : (publicForms?.length ?? 0) > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+              {publicForms?.map((form) => {
+                const meta = getPublicFormMeta(form.worldTheme);
+                const isH = hovGallery === form.id;
+                return (
+                  <button
+                    key={form.id}
+                    onClick={() => onViewForm?.(form.slug)}
+                    onMouseEnter={() => setHovGallery(form.id)}
+                    onMouseLeave={() => setHovGallery(null)}
+                    style={{
+                      textAlign: 'left',
+                      minHeight: 210,
+                      borderRadius: 20,
+                      padding: '22px 22px 20px',
+                      border: `1px solid ${isH ? `${meta.color}55` : T.featCardBorder}`,
+                      background: isH ? T.expCardBgHov(meta.color) : T.expCardBgIdle(meta.color),
+                      boxShadow: isH ? `0 18px 40px rgba(0,0,0,${isDark ? 0.45 : 0.14}), 0 0 20px ${meta.color}22` : 'none',
+                      transform: isH ? 'translateY(-4px)' : 'translateY(0)',
+                      transition: 'all 0.22s ease',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 12,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: meta.color, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>{meta.label}</div>
+                        <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 17, fontWeight: 900, color: T.expH3, lineHeight: 1.35 }}>{form.title}</div>
+                      </div>
+                      <div style={{ width: 42, height: 42, flexShrink: 0, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${meta.color}18`, border: `1px solid ${meta.color}33`, fontSize: 20 }}>{meta.emoji}</div>
+                    </div>
+
+                    <p style={{ fontSize: 12.5, lineHeight: 1.65, color: T.expDesc, margin: 0 }}>{form.description || 'Open this public form and test the live submission experience.'}</p>
+
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: T.expChipColor, background: T.expChipBg, border: `1px solid ${T.expChipBorder}`, borderRadius: 999, padding: '5px 10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Public</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: T.expChipColor, background: T.expChipBg, border: `1px solid ${T.expChipBorder}`, borderRadius: 999, padding: '5px 10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Live Submission</span>
+                    </div>
+
+                    <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'}` }}>
+                      <span style={{ fontSize: 11, color: T.featDescColor }}>No login required</span>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: meta.color, letterSpacing: '0.08em' }}>Try Form →</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', borderRadius: 22, background: T.featCardBg, border: `1px solid ${T.featCardBorder}`, padding: '38px 24px' }}>
+              <div style={{ fontSize: 42, marginBottom: 12 }}>🪄</div>
+              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 18, color: isDark ? '#fff' : '#351000', marginBottom: 8 }}>Gallery Seeds Loading Soon</div>
+              <p style={{ fontSize: 13, color: T.featDescColor, margin: 0 }}>No public forms are available yet. Seeded showcase forms will appear here once the database migrations are applied.</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -1003,6 +1248,63 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, 
       </section>
 
       <PricingSection sectionId="pricing" onEnter={handlePrimaryStart} embedded surface={theme === 'light' ? 'light' : 'dark'} />
+
+      {previewModalExperience && (
+        <div
+          onClick={closePreviewModal}
+          style={{ position: 'fixed', inset: 0, zIndex: 180, background: 'rgba(3,4,10,0.82)', backdropFilter: 'blur(18px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '28px 18px' }}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            style={{ width: 'min(1080px, 100%)', maxHeight: '100%', borderRadius: 28, overflow: 'hidden', background: isDark ? 'linear-gradient(180deg, rgba(10,10,18,0.98), rgba(4,4,10,0.98))' : 'linear-gradient(180deg, rgba(255,251,242,0.98), rgba(255,246,232,0.98))', border: `1px solid ${previewModalExperience.border}`, boxShadow: `0 36px 120px rgba(0,0,0,0.55), 0 0 60px ${previewModalExperience.glow}` }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '18px 20px', background: previewModalExperience.bg, borderBottom: `1px solid ${previewModalExperience.border}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 16, background: `${previewModalExperience.color}24`, border: `1px solid ${previewModalExperience.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, boxShadow: `0 0 22px ${previewModalExperience.glow}` }}>{previewModalExperience.emoji}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: previewModalExperience.color, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 6 }}>{previewModalExperience.subtitle}</div>
+                  <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 900, color: isDark ? '#fff8ef' : '#2c1100', lineHeight: 1.15 }}>{previewModalExperience.title}</div>
+                </div>
+              </div>
+              <button
+                onClick={closePreviewModal}
+                style={{ background: isDark ? 'rgba(0,0,0,0.36)' : 'rgba(255,255,255,0.55)', border: `1px solid ${previewModalExperience.border}`, color: isDark ? '#fff' : '#1f0b00', borderRadius: 12, padding: '10px 14px', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif" }}
+              >
+                Close
+              </button>
+            </div>
+
+            <div style={{ padding: 18 }}>
+              <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 22, border: `1px solid ${previewModalExperience.border}`, background: '#05070d', boxShadow: `0 0 28px ${previewModalExperience.glow}`, aspectRatio: '16 / 9' }}>
+                <video
+                  key={previewModalExperience.id}
+                  src={previewModalExperience.previewVideo}
+                  autoPlay
+                  muted
+                  controls
+                  loop
+                  playsInline
+                  preload="metadata"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', padding: '16px 4px 6px' }}>
+                <p style={{ margin: 0, maxWidth: 760, fontSize: 13.5, lineHeight: 1.7, color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(44,17,0,0.72)' }}>{previewModalExperience.desc}</p>
+                <button
+                  onClick={() => {
+                    closePreviewModal();
+                    handleExperienceStart();
+                  }}
+                  style={{ background: `linear-gradient(135deg, ${previewModalExperience.color}, rgba(255,255,255,0.92))`, border: `1px solid ${previewModalExperience.border}`, borderRadius: 14, color: '#120014', fontSize: 12, fontWeight: 900, padding: '13px 18px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.12em', textTransform: 'uppercase', boxShadow: `0 0 24px ${previewModalExperience.glow}` }}
+                >
+                  {playerName ? `Open ${previewModalExperience.title}` : `Enter ${previewModalExperience.title}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Stats bar ── */}
       <div ref={statsRef} style={{ background: T.statsBg, borderTop: `1px solid ${T.statsBorderT}`, borderBottom: `1px solid ${T.statsBorderB}`, padding: '52px 24px', position: 'relative', zIndex: 1 }}>
@@ -1034,7 +1336,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onPricing, 
       {/* ── Footer ── */}
       <footer style={{ padding: '28px 36px', background: T.footerBg, borderTop: '1px solid transparent', borderImage: `${T.footerBorder} 1`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, position: 'relative', zIndex: 1 }}>
         <FormVerseLogo key={`footer-logo-${theme}`} size={28} textSize={12} variant={theme} />
-        <span style={{ fontSize: 10, color: T.statsLabel, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Temple Run · Globe Explorer · The Library</span>
+        <span style={{ fontSize: 10, color: T.statsLabel, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Realm Runner · Globe Explorer · The Library</span>
         <span style={{ fontSize: 10, color: T.copyright, letterSpacing: '0.18em', textTransform: 'uppercase' }}>© 2026 FormVerse</span>
       </footer>
     </div>

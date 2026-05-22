@@ -23,7 +23,7 @@ export const AVATARS: Avatar[] = [
     emoji: '🦊',
     color: '#ff3355',
     bgGradient: 'radial-gradient(ellipse at 50% 0%, #cc1133 0%, #660011 45%, #140005 100%)',
-    description: 'Scientists documented three separate Scarletts during her last temple run — all moving simultaneously. None were caught. She leaves afterimages, not apologies.',
+    description: 'Scientists documented three separate Scarletts during her last realm sprint — all moving simultaneously. None were caught. She leaves afterimages, not apologies.',
     trait: 'FASTEST',
     ability: 'Afterburn Trail',
     abilityIcon: '💨',
@@ -416,6 +416,7 @@ export const PALETTE_CATEGORIES: PaletteCategory[] = [
     icon: '📐',
     fields: [
       { type: 'section', icon: '📐', label: 'Section Divider' },
+      { type: 'page_break', icon: '📄', label: 'Page Break' },
     ],
   },
 ];

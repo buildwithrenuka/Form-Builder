@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { trpc } from '../trpc';
 import { TemplatePickerModal } from './TemplatePickerModal';
 import { ALL_TEMPLATES, type FormTemplate } from '../formTemplates';
@@ -7,6 +7,7 @@ import { LIBRARY_PRESETS } from '../libraryData';
 import type { FormField, FieldType, FormVersion, ValidationPreset, WorldTheme } from '../types';
 import { PALETTE_CATEGORIES, VALIDATION_PRESETS, COLLECTIONS, FIELD_TYPES } from '../themes';
 import { ParticleBackground } from './ParticleBackground';
+import { PremiumIcon } from './PremiumIcon';
 import { VersionPanel } from './VersionPanel';
 import { copyText } from '../utils/clipboard';
 
@@ -15,6 +16,8 @@ type Props = {
   onBack: () => void;
   onLogout: () => void;
   onPreview: (fields: FormField[], title: string) => void;
+  initialFields?: FormField[];
+  initialTitle?: string;
 };
 
 // ── LibraryWorld → WorldTheme adapter ─────────────────────────────────────
@@ -49,7 +52,7 @@ function emptyField(type: FieldType, world: LibraryWorld): FormField {
   return {
     id: makeId(),
     type,
-    label: def?.label ?? type,
+    label: type === 'page_break' ? 'New Page' : def?.label ?? type,
     placeholder: `Enter ${(def?.label ?? type).toLowerCase()}...`,
     required: false,
     options: ['radio', 'select', 'checkbox'].includes(type) ? ['Option 1', 'Option 2', 'Option 3'] : [],
@@ -63,11 +66,22 @@ function emptyField(type: FieldType, world: LibraryWorld): FormField {
     errorMessage: '',
     fieldWidth: 'full',
     hidden: false,
+    conditionalParentId: '',
+    conditionalOperator: 'equals',
+    conditionalValue: '',
     prefix: '',
     suffix: '',
     sectionColor: world.color,
     sectionDescription: '',
   };
+}
+
+export function buildLibraryPresetFields(world: LibraryWorld, groupFields: LibraryPresetGroup['fields']): FormField[] {
+  return groupFields.map((presetField) => ({
+    ...emptyField(presetField.type as FieldType, world),
+    ...presetField,
+    id: makeId(),
+  })) as FormField[];
 }
 
 function getFieldIcon(type: FieldType) {
@@ -199,11 +213,13 @@ function OptionsEditor({ options, wt, onChange }: { options: string[]; wt: World
 // ── Section editor ─────────────────────────────────────────────────────────
 function SectionEditor({ field, wt, onChange }: { field: FormField; wt: WorldTheme; onChange: (f: FormField) => void }) {
   const COLORS = ['#ffd700', '#00e5ff', '#ff8c00', '#ff4757', '#00b894', '#a29bfe', '#74b9ff', '#fd79a8'];
+  const titleLabel = field.type === 'page_break' ? 'Page Title' : 'Section Title';
+  const descriptionLabel = field.type === 'page_break' ? 'Page Description' : 'Description';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-      <div><EditorLabel wt={wt}>Section Title</EditorLabel>
+      <div><EditorLabel wt={wt}>{titleLabel}</EditorLabel>
         <EditorInput wt={wt} value={field.label} onChange={v => onChange({ ...field, label: v })} /></div>
-      <div><EditorLabel wt={wt}>Description</EditorLabel>
+      <div><EditorLabel wt={wt}>{descriptionLabel}</EditorLabel>
         <EditorInput wt={wt} value={field.sectionDescription} placeholder="Brief description..."
           onChange={v => onChange({ ...field, sectionDescription: v })} /></div>
       <div><EditorLabel wt={wt}>Accent Colour</EditorLabel>
@@ -224,17 +240,18 @@ function SectionEditor({ field, wt, onChange }: { field: FormField; wt: WorldThe
 // ── Field editor panel (3-tab) ─────────────────────────────────────────────
 type EditorTab = 'basic' | 'rules' | 'display';
 
-function FieldEditorPanel({ field, wt, onChange }: {
-  field: FormField; wt: WorldTheme; onChange: (f: FormField) => void;
+function FieldEditorPanel({ field, wt, allFields, onChange }: {
+  field: FormField; wt: WorldTheme; allFields: FormField[]; onChange: (f: FormField) => void;
 }) {
   const [tab, setTab] = useState<EditorTab>('basic');
   const [optionsRaw, setOptionsRaw] = useState(field.options.join('\n'));
 
-  if (field.type === 'section') return <SectionEditor field={field} wt={wt} onChange={onChange} />;
+  if (field.type === 'section' || field.type === 'page_break') return <SectionEditor field={field} wt={wt} onChange={onChange} />;
 
   const isText   = ['text', 'textarea', 'email', 'password', 'url', 'phone'].includes(field.type);
   const hasOptions = ['radio', 'select', 'checkbox'].includes(field.type);
   const hasMinMax  = ['range', 'rating', 'number'].includes(field.type);
+  const eligibleConditionFields = allFields.filter(candidate => candidate.id !== field.id && candidate.type !== 'section' && candidate.type !== 'page_break');
   const TABS = [
     { id: 'basic' as EditorTab, icon: '📝', label: 'Basic' },
     { id: 'rules' as EditorTab, icon: '🛡', label: 'Rules' },
@@ -348,6 +365,35 @@ function FieldEditorPanel({ field, wt, onChange }: {
               )}
             </div>
           )}
+
+          <div>
+            <EditorLabel wt={wt}>Conditional Visibility</EditorLabel>
+            <select value={field.conditionalParentId} onChange={(e) => onChange({ ...field, conditionalParentId: e.target.value, conditionalValue: e.target.value ? field.conditionalValue : '' })}
+              style={{ width: '100%', background: wt.inputBg, border: `1px solid ${wt.borderColor}55`, borderRadius: 6, color: wt.textColor, fontFamily: 'system-ui, sans-serif', fontSize: 12, padding: '8px 10px', outline: 'none', cursor: 'pointer' }}>
+              <option value="" style={{ background: '#111' }}>Always show this field</option>
+              {eligibleConditionFields.map(candidate => <option key={candidate.id} value={candidate.id} style={{ background: '#111' }}>{candidate.label || candidate.type}</option>)}
+            </select>
+            {field.conditionalParentId && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
+                  <EditorLabel wt={wt}>Rule</EditorLabel>
+                  <select value={field.conditionalOperator} onChange={(e) => onChange({ ...field, conditionalOperator: e.target.value as FormField['conditionalOperator'] })}
+                    style={{ width: '100%', background: wt.inputBg, border: `1px solid ${wt.borderColor}55`, borderRadius: 6, color: wt.textColor, fontFamily: 'system-ui, sans-serif', fontSize: 12, padding: '8px 10px', outline: 'none', cursor: 'pointer' }}>
+                    <option value="equals" style={{ background: '#111' }}>Equals</option>
+                    <option value="not_equals" style={{ background: '#111' }}>Does not equal</option>
+                    <option value="contains" style={{ background: '#111' }}>Contains</option>
+                    <option value="greater_than" style={{ background: '#111' }}>Greater than</option>
+                    <option value="less_than" style={{ background: '#111' }}>Less than</option>
+                    <option value="is_empty" style={{ background: '#111' }}>Is empty</option>
+                    <option value="is_not_empty" style={{ background: '#111' }}>Is not empty</option>
+                  </select>
+                </div>
+                {!['is_empty', 'is_not_empty'].includes(field.conditionalOperator) && (
+                  <div style={{ flex: 1 }}><EditorLabel wt={wt}>Expected Value</EditorLabel><EditorInput wt={wt} value={field.conditionalValue} placeholder="Value that reveals this field" onChange={v => onChange({ ...field, conditionalValue: v })} /></div>
+                )}
+              </div>
+            )}
+          </div>
           {(isText || field.type === 'number' || field.type === 'phone') && (
             <div><EditorLabel wt={wt}>Validation Rule</EditorLabel>
               <select value={field.validationPreset}
@@ -575,7 +621,7 @@ function FieldCard({ field, index, total, wt, isEditing, onEdit, onDelete, onMov
           <div title="Drag to reorder" onClick={e => e.stopPropagation()} style={{ fontSize: 16, color: 'rgba(255,255,255,0.22)', cursor: 'grab', userSelect: 'none', flexShrink: 0, paddingTop: 2, letterSpacing: '-0.08em', opacity: hov ? 0.8 : 0.18, transition: 'opacity 0.18s' }}>⠿</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 17, lineHeight: 1, flexShrink: 0 }}>{icon}</span>
+              <PremiumIcon token={icon} size={17} />
               <span style={{ fontSize: 15, fontWeight: 700, color: field.label ? wt.textColor : `${wt.textColor}44`, wordBreak: 'break-word' as const }}>
                 {field.label || 'Untitled field'}
               </span>
@@ -633,156 +679,179 @@ function FieldCard({ field, index, total, wt, isEditing, onEdit, onDelete, onMov
 }
 
 // ── Palette sidebar ────────────────────────────────────────────────────────
-function PaletteSidebar({ wt, world, presets, onAddField, onAddCollection, onAddPresetGroup }: {
+function PaletteSidebar({ wt, world, presets, onAddField, onAddCollection, onAddPresetGroup, settingsPanel, settingsActive, onToggleSettings }: {
   wt: WorldTheme; world: LibraryWorld;
   presets: LibraryPresetGroup[];
   onAddField: (t: FieldType) => void;
   onAddCollection: (id: string) => void;
   onAddPresetGroup: (fields: LibraryPresetGroup['fields']) => void;
+  settingsPanel: React.ReactNode;
+  settingsActive: boolean;
+  onToggleSettings: () => void;
+  filePanel?: React.ReactNode;
+  historyPanel?: React.ReactNode;
+  reviewPanel?: React.ReactNode;
+  onActiveTabChange?: (tab: 'file' | 'history' | 'review' | 'design' | null) => void;
 }) {
-  const [openCats, setOpenCats] = useState<Set<string>>(new Set(['text', 'choice']));
-  const [collectionsOpen, setCollectionsOpen] = useState(false);
-  const [presetsOpen, setPresetsOpen] = useState(true);
-  const [hoverPreview, setHoverPreview] = useState<{ type: FieldType; y: number } | null>(null);
+  const [activeTab, setActiveTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
+  const [activeDesignTab, setActiveDesignTab] = useState<'fields' | 'presets' | 'collections'>('fields');
+  const [activeFieldCategory, setActiveFieldCategory] = useState<string | null>(null);
 
-  const toggleCat = (id: string) => setOpenCats(prev => {
-    const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
+  useEffect(() => {
+    onActiveTabChange?.(activeTab);
+  }, [activeTab, onActiveTabChange]);
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    display: 'inline-flex', alignItems: 'center', gap: 8, background: active ? `${wt.accentColor}14` : 'rgba(255,255,255,0.03)', border: `1px solid ${active ? wt.accentColor + '26' : 'rgba(255,255,255,0.05)'}`,
+    color: active ? '#f5f7fb' : 'rgba(255,255,255,0.68)', borderRadius: '999px', padding: '9px 14px', cursor: 'pointer', fontFamily: 'system-ui, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', transition: 'all 0.16s', boxShadow: active ? `0 4px 12px ${wt.glowColor}12` : 'none',
   });
-
-  const catBtnStyle = (open: boolean): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: 7, width: '100%',
-    background: open ? `${wt.accentColor}10` : 'rgba(255,255,255,0.03)',
-    border: `1px solid ${open ? wt.borderColor + '44' : 'rgba(255,255,255,0.07)'}`,
-    borderRadius: 6, color: open ? wt.accentColor : 'rgba(255,255,255,0.4)',
-    fontFamily: 'system-ui, sans-serif', fontSize: 10, fontWeight: 700,
-    letterSpacing: '0.12em', textTransform: 'uppercase', padding: '6px 8px',
-    cursor: 'pointer', transition: 'all 0.15s', marginBottom: 3,
+  const categoryTabStyle = (active: boolean): React.CSSProperties => ({
+    display: 'inline-flex', alignItems: 'center', gap: 9, minWidth: '142px', justifyContent: 'space-between', background: active ? `${wt.accentColor}12` : 'rgba(255,255,255,0.025)', border: `1px solid ${active ? wt.accentColor + '24' : 'rgba(255,255,255,0.05)'}`,
+    color: active ? '#f5f7fb' : 'rgba(255,255,255,0.72)', borderRadius: '16px', padding: '12px 14px', cursor: 'pointer', fontFamily: 'system-ui, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', transition: 'all 0.16s',
   });
-
-  const fieldBtnStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 7, width: '100%',
-    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 6, color: '#f0f0f0', fontFamily: 'system-ui, sans-serif',
-    fontSize: 12, fontWeight: 600, padding: '7px 8px', cursor: 'pointer',
-    transition: 'all 0.15s', textAlign: 'left',
-  };
+  const dropdownPanelStyle: React.CSSProperties = { position: 'relative', marginTop: '8px', width: '100%', background: 'rgba(255,255,255,0.02)', border: `1px solid ${wt.borderColor}16`, borderRadius: '16px', padding: '10px', boxShadow: 'none', backdropFilter: 'blur(12px)' };
+  const sectionTitleStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, color: wt.accentColor, fontFamily: 'system-ui, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' };
+  const tileGridStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 8 };
+  const fieldBtnStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 10, minHeight: '46px', background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, color: '#f5f7fb', fontFamily: 'system-ui, sans-serif', fontSize: 10, fontWeight: 700, padding: '10px 12px', cursor: 'pointer', transition: 'all 0.16s', textAlign: 'left', letterSpacing: '0.02em' };
+  const utilityBtn: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '11px 12px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.16s', width: '100%' };
 
   return (
-    <div className="tr-scroll" style={{ width: 200, flexShrink: 0, background: 'rgba(0,0,0,0.55)',
-      borderRight: `1px solid ${wt.borderColor}22`, padding: '12px 9px', overflowY: 'auto' }}>
-
-      {/* World presets */}
-      <button style={catBtnStyle(presetsOpen)} onClick={() => setPresetsOpen(o => !o)}>
-        <span style={{ fontSize: 14 }}>{world.emoji}</span>
-        <span style={{ flex: 1 }}>Presets</span>
-        <span style={{ fontSize: 9, opacity: 0.5 }}>{presets.length} · {presetsOpen ? '▲' : '▼'}</span>
-      </button>
-      {presetsOpen && (
-        <div style={{ paddingLeft: 4, paddingBottom: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {presets.map((preset, i) => (
-            <button key={i} onClick={() => onAddPresetGroup(preset.fields)}
-              style={{ display: 'block', width: '100%', textAlign: 'left',
-                background: `linear-gradient(135deg, ${wt.accentColor}18, rgba(0,0,0,0.3))`,
-                border: `1px solid ${wt.accentColor}33`, color: '#fff', borderRadius: 7,
-                padding: '8px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600, transition: 'all 0.2s' }}>
-              {preset.group}
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 400, marginLeft: 4 }}>+{preset.fields.length}</span>
+    <div className="tr-scroll" style={{ position: 'relative', width: '100%', flexShrink: 0, background: 'rgba(20,24,36,0.92)', backdropFilter: 'blur(18px)', borderBottom: `1px solid ${wt.borderColor}16`, padding: '12px 16px 16px 16px', overflow: 'visible', boxShadow: '0 8px 20px rgba(0,0,0,0.14)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="tr-scroll" style={{ overflowX: 'auto', overflowY: 'hidden' }}>
+          <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 8, minWidth: 'max-content', width: '100%', alignItems: 'center' }}>
+            <button style={tabStyle(activeTab === 'file')} onClick={() => setActiveTab((current) => current === 'file' ? null : 'file')}>
+              <PremiumIcon token="📁" size={15} />
+              <span>File</span>
             </button>
-          ))}
+            <button style={tabStyle(activeTab === 'history')} onClick={() => setActiveTab((current) => current === 'history' ? null : 'history')}>
+              <PremiumIcon token="🕘" size={15} />
+              <span>Share & History</span>
+            </button>
+            <button style={tabStyle(activeTab === 'review')} onClick={() => setActiveTab((current) => current === 'review' ? null : 'review')}>
+              <PremiumIcon token="✅" size={15} />
+              <span>Review & Publish</span>
+            </button>
+            <div style={{ flex: 1, minWidth: 24 }} />
+            <button style={tabStyle(settingsActive)} onClick={onToggleSettings}>
+              <PremiumIcon token="⚙" size={15} />
+              <span>Settings</span>
+            </button>
+            <button style={tabStyle(activeTab === 'design')} onClick={() => setActiveTab((current) => current === 'design' ? null : 'design')}>
+              <PremiumIcon token="✦" size={15} />
+              <span>Design</span>
+            </button>
+          </div>
         </div>
-      )}
 
-      <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${wt.borderColor}44, transparent)`, margin: '6px 0' }} />
-
-      {/* Field categories */}
-      {PALETTE_CATEGORIES.map(cat => (
-        <div key={cat.id} style={{ marginBottom: 3 }}>
-          <button style={catBtnStyle(openCats.has(cat.id))} onClick={() => toggleCat(cat.id)}>
-            <span style={{ fontSize: 14 }}>{cat.icon}</span>
-            <span style={{ flex: 1 }}>{cat.label}</span>
-            <span style={{ fontSize: 9, opacity: 0.5 }}>{openCats.has(cat.id) ? '▲' : '▼'}</span>
-          </button>
-          {openCats.has(cat.id) && (
-            <div style={{ paddingLeft: 6, paddingBottom: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {cat.fields.map(f => (
-                <button key={f.type} style={fieldBtnStyle} onClick={() => onAddField(f.type)}
-                  onMouseEnter={e => {
-                    const el = e.currentTarget as HTMLButtonElement;
-                    el.style.background = wt.cardBg; el.style.borderColor = wt.borderColor + '55';
-                    setHoverPreview({ type: f.type, y: e.currentTarget.getBoundingClientRect().top });
-                  }}
-                  onMouseLeave={e => {
-                    const el = e.currentTarget as HTMLButtonElement;
-                    el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'rgba(255,255,255,0.08)';
-                    setHoverPreview(null);
-                  }}>
-                  <span style={{ fontSize: 15 }}>{f.icon}</span>
-                  <span>{f.label}</span>
+        {activeTab === 'file' ? filePanel : activeTab === 'history' ? historyPanel : activeTab === 'review' ? reviewPanel : settingsActive ? (
+          <div style={{ position: 'absolute', top: 'calc(100% + 14px)', right: '16px', width: '304px', maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px', background: 'rgba(18,22,34,0.9)', border: `1px solid ${wt.borderColor}14`, borderRadius: '24px', boxShadow: '0 14px 30px rgba(0,0,0,0.18)', zIndex: 30 }}>
+            {settingsPanel}
+          </div>
+        ) : activeTab === 'design' ? (
+          <div style={{ position: 'absolute', top: 'calc(100% + 14px)', right: '16px', width: '212px', maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px', background: 'rgba(18,22,34,0.9)', border: `1px solid ${wt.borderColor}14`, borderRadius: '24px', boxShadow: '0 14px 30px rgba(0,0,0,0.18)', zIndex: 30 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: wt.accentColor, letterSpacing: '0.10em' }}>Design</span>
+              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.4 }}>Browse fields, presets, and collections.</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'stretch', width: '100%' }}>
+              <button style={{ ...tabStyle(activeDesignTab === 'fields'), width: '100%', justifyContent: 'space-between', borderRadius: '14px', padding: '11px 13px' }} onClick={() => setActiveDesignTab('fields')}>
+                <PremiumIcon token="🧩" size={15} />
+                <span>Fields</span>
+              </button>
+              <button style={{ ...tabStyle(activeDesignTab === 'presets'), width: '100%', justifyContent: 'space-between', borderRadius: '14px', padding: '11px 13px' }} onClick={() => setActiveDesignTab('presets')}>
+                <span>{world.emoji}</span>
+                <span>Presets</span>
+              </button>
+              <button style={{ ...tabStyle(activeDesignTab === 'collections'), width: '100%', justifyContent: 'space-between', borderRadius: '14px', padding: '11px 13px' }} onClick={() => setActiveDesignTab('collections')}>
+                <PremiumIcon token="📦" size={15} />
+                <span>Collections</span>
+              </button>
+            </div>
+            {activeDesignTab === 'fields' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'stretch', width: '100%' }}>
+              {PALETTE_CATEGORIES.map((cat) => (
+                <div key={cat.id} style={{ position: 'relative' }}>
+                  <button style={{ ...categoryTabStyle(activeFieldCategory === cat.id), width: '100%', minWidth: '100%', minHeight: '56px' }} onClick={() => setActiveFieldCategory((current) => current === cat.id ? null : cat.id)}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <PremiumIcon token={cat.icon} size={16} />
+                      <span>{cat.label}</span>
+                    </span>
+                    <span style={{ fontSize: 10, opacity: 0.72 }}>{activeFieldCategory === cat.id ? '▴' : '▾'}</span>
+                  </button>
+                  {activeFieldCategory === cat.id && (
+                    <div style={dropdownPanelStyle}>
+                      <div style={sectionTitleStyle}>
+                        <PremiumIcon token={cat.icon} size={14} />
+                        <span>{cat.label}</span>
+                      </div>
+                      <div style={tileGridStyle}>
+                        {cat.fields.map(f => (
+                          <button key={f.type} style={fieldBtnStyle} onClick={() => { onAddField(f.type); setActiveFieldCategory(null); }}
+                            onMouseEnter={e => {
+                              const el = e.currentTarget as HTMLButtonElement;
+                              el.style.background = wt.cardBg; el.style.borderColor = wt.borderColor + '40'; el.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={e => {
+                              const el = e.currentTarget as HTMLButtonElement;
+                              el.style.background = 'rgba(255,255,255,0.03)'; el.style.borderColor = 'rgba(255,255,255,0.06)'; el.style.transform = 'translateY(0)';
+                            }}>
+                            <PremiumIcon token={f.icon} size={16} />
+                            <span>{f.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            ) : activeDesignTab === 'presets' ? (
+          <div style={{ width: '100%' }}>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {presets.map((preset, i) => (
+                <button key={i} onClick={() => onAddPresetGroup(preset.fields)}
+                  style={{ ...utilityBtn, color: wt.accentColor, borderColor: `${wt.accentColor}22` }}
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = `${wt.accentColor}14`; el.style.borderColor = `${wt.accentColor}40`; el.style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = 'rgba(255,255,255,0.025)'; el.style.borderColor = `${wt.accentColor}22`; el.style.transform = 'translateY(0)'; }}>
+                  <div style={{ fontSize: 11, fontWeight: 700 }}>{preset.group}</div>
+                  <div style={{ fontSize: 10, color: `${wt.accentColor}88`, marginTop: 2 }}>+{preset.fields.length} fields</div>
                 </button>
               ))}
             </div>
-          )}
-        </div>
-      ))}
-
-      <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${wt.borderColor}44, transparent)`, margin: '6px 0' }} />
-
-      {/* Collections */}
-      <button style={catBtnStyle(collectionsOpen)} onClick={() => setCollectionsOpen(o => !o)}>
-        <span style={{ fontSize: 14 }}>📦</span>
-        <span style={{ flex: 1 }}>Collections</span>
-        <span style={{ fontSize: 9, opacity: 0.5 }}>{COLLECTIONS.length} · {collectionsOpen ? '▲' : '▼'}</span>
-      </button>
-      {collectionsOpen && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingLeft: 2 }}>
-          {COLLECTIONS.map(col => (
-            <button key={col.id} onClick={() => onAddCollection(col.id)}
-              style={{ background: `${col.accentColor}0d`, border: `1px solid ${col.accentColor}30`,
-                borderRadius: 8, color: col.accentColor, padding: '9px 10px',
-                cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', width: '100%' }}
-              onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = `${col.accentColor}22`; el.style.borderColor = `${col.accentColor}66`; }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = `${col.accentColor}0d`; el.style.borderColor = `${col.accentColor}30`; }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <span style={{ fontSize: 16 }}>{col.icon}</span>
-                <span style={{ fontSize: 12, fontWeight: 700 }}>{col.label}</span>
-              </div>
-              <div style={{ fontSize: 10, color: `${col.accentColor}88`, lineHeight: 1.3 }}>{col.description}</div>
-              <div style={{ fontSize: 9, color: `${col.accentColor}55`, marginTop: 4, letterSpacing: '0.1em' }}>+ {col.fields.length} fields</div>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {hoverPreview && (
-        <div style={{
-          position: 'fixed', left: 210,
-          top: Math.max(8, Math.min(hoverPreview.y - 10, (typeof window !== 'undefined' ? window.innerHeight : 600) - 220)),
-          zIndex: 300, background: wt.cardBg,
-          border: `1.5px solid ${wt.accentColor}55`, borderRadius: 12,
-          padding: '14px 16px', width: 220,
-          boxShadow: `0 12px 40px rgba(0,0,0,0.6), 0 0 24px ${wt.accentColor}18`,
-          pointerEvents: 'none',
-        }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: wt.accentColor, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>{FIELD_TYPES.find(f => f.type === hoverPreview.type)?.icon}</span>
-            <span>{FIELD_TYPES.find(f => f.type === hoverPreview.type)?.label}</span>
           </div>
-          <div style={{ pointerEvents: 'none' }}>
-            <FieldPreview field={emptyField(hoverPreview.type, world)} wt={wt} />
+        ) : (
+          <div style={{ width: '100%' }}>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {COLLECTIONS.map(col => (
+                <button key={col.id} onClick={() => onAddCollection(col.id)}
+                  style={{ ...utilityBtn, color: col.accentColor, borderColor: `${col.accentColor}22` }}
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = `${col.accentColor}14`; el.style.borderColor = `${col.accentColor}40`; el.style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = 'rgba(255,255,255,0.025)'; el.style.borderColor = `${col.accentColor}22`; el.style.transform = 'translateY(0)'; }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+                    <span style={{ fontSize: 14 }}>{col.icon}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700 }}>{col.label}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: `${col.accentColor}88`, lineHeight: 1.35 }}>{col.description}</div>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
 
 // ── Main component ─────────────────────────────────────────────────────────
-export function LibraryFormBuilder({ world, onBack, onLogout, onPreview }: Props) {
+export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initialFields, initialTitle }: Props) {
   const wt = libraryToWorld(world);
   const presets = LIBRARY_PRESETS[world.id];
 
-  const [fields, setFields]     = useState<FormField[]>([]);
-  const [title, setTitle]       = useState(`${world.name} Form`);
+  const [fields, setFields]     = useState<FormField[]>(() => initialFields ?? []);
+  const [title, setTitle]       = useState(() => initialTitle ?? `${world.name} Form`);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [versions, setVersions] = useState<FormVersion[]>([]);
   const [showVersions, setShowVersions] = useState(false);
@@ -793,6 +862,14 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview }: Props
   const [savedFormSlug, setSavedFormSlug] = useState<string | null>(null);
   const [isPublished, setIsPublished] = useState(false);
   const [publishMsg, setPublishMsg]   = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [formDescription, setFormDescription] = useState('');
+  const [formVisibility, setFormVisibility] = useState<'public' | 'unlisted'>('unlisted');
+  const [customSlug, setCustomSlug] = useState('');
+  const [expiresAt, setExpiresAt] = useState('');
+  const [responseLimit, setResponseLimit] = useState('');
+  const [accessPassword, setAccessPassword] = useState('');
+  const [activeRibbonTab, setActiveRibbonTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
 
   const createMut  = trpc.forms.create.useMutation();
   const updateMut  = trpc.forms.update.useMutation();
@@ -814,6 +891,12 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview }: Props
       await updateMut.mutateAsync({
         id: fid,
         title: title || `${world.name} Form`,
+        description: formDescription || undefined,
+        visibility: formVisibility,
+        slug: customSlug.trim() || undefined,
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+        responseLimit: responseLimit ? Number(responseLimit) : null,
+        accessPassword: accessPassword.trim() || null,
         worldTheme: world.id,
         schema: fields,
       });
@@ -850,11 +933,7 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview }: Props
   }
 
   function addPresetGroup(groupFields: LibraryPresetGroup['fields']) {
-    const newFields = groupFields.map(pf => ({
-      ...emptyField(pf.type as FieldType, world),
-      ...pf,
-      id: makeId(),
-    })) as FormField[];
+    const newFields = buildLibraryPresetFields(world, groupFields);
     setFields(prev => [...prev, ...newFields]);
   }
 
@@ -917,6 +996,12 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview }: Props
       await updateMut.mutateAsync({
         id: fid,
         title: title || `${world.name} Form`,
+        description: formDescription || undefined,
+        visibility: formVisibility,
+        slug: customSlug.trim() || undefined,
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+        responseLimit: responseLimit ? Number(responseLimit) : null,
+        accessPassword: accessPassword.trim() || null,
         worldTheme: world.id,
         schema: fields,
       });
@@ -981,13 +1066,23 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview }: Props
   }
 
   const toolBtn = (active = false, danger = false): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: 5,
-    background: active ? `${world.accentColor}18` : danger ? 'rgba(255,60,60,0.07)' : 'rgba(255,255,255,0.06)',
-    border: `1px solid ${active ? world.accentColor + '55' : danger ? 'rgba(255,80,80,0.25)' : 'rgba(255,255,255,0.1)'}`,
-    borderRadius: 7, padding: '6px 11px',
-    color: active ? world.accentColor : danger ? 'rgba(255,120,120,0.75)' : 'rgba(255,255,255,0.55)',
+    display: 'flex', alignItems: 'center', gap: 6,
+    background: danger ? 'rgba(255,91,91,0.10)' : active ? `${world.accentColor}16` : 'rgba(255,255,255,0.05)',
+    border: `1px solid ${danger ? 'rgba(255,91,91,0.22)' : active ? world.accentColor + '32' : 'rgba(255,255,255,0.06)'}`,
+    borderRadius: 999, padding: '8px 14px',
+    color: danger ? 'rgba(255,166,166,0.9)' : active ? '#f5f7fb' : 'rgba(255,255,255,0.74)',
     fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' as const,
   });
+  const ribbonGroup: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8, padding: '12px', background: 'rgba(255,255,255,0.05)', border: `1px solid ${world.color}12`, borderRadius: 18, minHeight: 90, justifyContent: 'space-between' };
+  const ribbonLabel: React.CSSProperties = { fontFamily: 'system-ui, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', color: 'rgba(255,255,255,0.5)', textAlign: 'left' };
+  const ribbonRow: React.CSSProperties = { display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' };
+  const ribbonBtn = (active = false, tone: 'default' | 'accent' | 'success' = 'default'): React.CSSProperties => ({
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: 74, minHeight: 50, padding: '9px 10px', borderRadius: 16,
+    background: tone === 'success' ? 'rgba(34,197,94,0.12)' : tone === 'accent' ? `${world.color}14` : active ? `${world.accentColor}12` : 'rgba(255,255,255,0.045)',
+    border: `1px solid ${tone === 'success' ? 'rgba(34,197,94,0.22)' : tone === 'accent' ? world.color + '28' : active ? world.accentColor + '28' : 'rgba(255,255,255,0.05)'}`,
+    color: tone === 'success' ? '#86efac' : tone === 'accent' ? '#f5f7fb' : active ? '#f5f7fb' : 'rgba(255,255,255,0.76)', fontSize: 10, fontWeight: 700, cursor: 'pointer', transition: 'all 0.18s', whiteSpace: 'nowrap' as const,
+  });
+  const primaryRibbonBtn: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, minWidth: 88, minHeight: 50, padding: '9px 12px', borderRadius: 16, background: `linear-gradient(135deg, ${world.color}, ${world.accentColor})`, border: 'none', color: '#000', fontSize: 10, fontWeight: 800, cursor: 'pointer', boxShadow: `0 10px 22px ${world.glowColor}22`, whiteSpace: 'nowrap' as const };
 
   return (
     <div style={{ position: 'fixed', inset: 0,
@@ -1026,126 +1121,199 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview }: Props
 
       {/* ── Row 1: Primary toolbar ── */}
       <div style={{ position: 'relative', zIndex: 10, flexShrink: 0,
-        background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(16px)',
-        borderBottom: `1px solid ${world.color}25`,
-        padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        background: 'rgba(20,24,36,0.94)', backdropFilter: 'blur(18px)',
+        borderBottom: `1px solid ${world.color}16`,
+        padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', boxShadow: '0 6px 16px rgba(0,0,0,0.12)' }}>
 
         <button onClick={onBack} style={{ ...toolBtn(), padding: '6px 12px', flexShrink: 0 }}>
           ← Library
         </button>
 
-        <span style={{ fontSize: 20, flexShrink: 0 }}>{world.emoji}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(255,255,255,0.05)', border: `1px solid ${world.color}14`, borderRadius: 999, padding: '6px 11px 6px 8px', flexShrink: 0 }}>
+          <span style={{ fontSize: 20, flexShrink: 0 }}>{world.emoji}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: `${world.accentColor}dd` }}>{world.name}</span>
+        </div>
 
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Untitled form…"
-          style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none',
-            borderBottom: `1px solid ${world.color}44`, color: '#fff',
-            fontSize: 15, fontWeight: 700, padding: '4px 2px', outline: 'none' }} />
+          style={{ flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.05)', border: `1px solid ${world.color}16`,
+            borderRadius: 16, color: '#fff', fontSize: 14, fontWeight: 700, padding: '10px 14px', outline: 'none' }} />
 
         {/* Stats pills */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           {[{ v: fieldCount, l: 'fields', c: fieldCount > 0 ? world.accentColor : 'rgba(255,255,255,0.22)' }, { v: reqCount, l: 'required', c: reqCount > 0 ? '#ff8888' : 'rgba(255,255,255,0.22)' }].map(({ v, l, c }) => (
-            <div key={l} style={{ background: `${c}12`, border: `1px solid ${c}33`,
-              borderRadius: 20, padding: '3px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontWeight: 700, fontSize: 13, color: c }}>{v}</span>
-              <span style={{ fontSize: 10, color: `${c}99` }}>{l}</span>
+            <div key={l} style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${c}18`,
+              borderRadius: 999, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontWeight: 700, fontSize: 12, color: c }}>{v}</span>
+              <span style={{ fontSize: 9, color: `${c}99` }}>{l}</span>
             </div>
           ))}
         </div>
 
-        {/* Preview CTA */}
-        <button onClick={() => onPreview(fields, title)} disabled={fieldCount === 0}
-          style={{ flexShrink: 0,
-            background: fieldCount > 0 ? `linear-gradient(135deg, ${world.color}, ${world.accentColor})` : 'rgba(255,255,255,0.05)',
-            border: 'none', borderRadius: 8, padding: '8px 18px',
-            color: fieldCount > 0 ? '#000' : 'rgba(255,255,255,0.2)',
-            fontSize: 13, fontWeight: 700, cursor: fieldCount > 0 ? 'pointer' : 'not-allowed',
-            boxShadow: fieldCount > 0 ? `0 0 16px ${world.glowColor}` : 'none',
-            transition: 'all 0.2s' }}>
-          Preview →
-        </button>
-
-        <button onClick={handlePublish} disabled={fieldCount === 0 || createMut.isPending || publishMut.isPending}
-          style={{ flexShrink: 0,
-            background: isPublished ? 'rgba(249,115,22,0.12)' : 'rgba(34,197,94,0.12)',
-            border: `1px solid ${isPublished ? 'rgba(249,115,22,0.4)' : 'rgba(34,197,94,0.4)'}`,
-            borderRadius: 8, padding: '8px 14px',
-            color: publishMsg.startsWith('⚠') ? '#f87171' : isPublished ? '#f97316' : '#4ade80',
-            fontSize: 12, fontWeight: 700, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer',
-            opacity: fieldCount === 0 ? 0.35 : 1,
-            fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em',
-            transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 4 }}>
-          {createMut.isPending || publishMut.isPending ? '⏳' : isPublished ? '🔒 Unpublish' : '🌐 Publish'}
-          {publishMsg && <span style={{ fontSize: 10 }}>{publishMsg}</span>}
-        </button>
-
         <button onClick={onLogout} style={{ ...toolBtn(false, true), flexShrink: 0, padding: '6px 10px' }}
-          title="Logout">🚪</button>
+          title="Logout"><PremiumIcon token="🚪" size={15} /></button>
       </div>
 
-      {/* ── Row 2: Action toolbar ── */}
-      <div style={{ position: 'relative', zIndex: 9, flexShrink: 0,
-        background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <PaletteSidebar wt={wt} world={world} presets={presets}
+        onAddField={addField} onAddCollection={addCollection} onAddPresetGroup={addPresetGroup}
+        settingsActive={showSettings}
+        onToggleSettings={() => setShowSettings(v => !v)}
+        onActiveTabChange={setActiveRibbonTab}
+        filePanel={(
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
 
-        <button onClick={exportTemplate} disabled={fieldCount === 0} title="Download .trform.json"
-          style={{ ...toolBtn(), opacity: fieldCount > 0 ? 1 : 0.35, cursor: fieldCount > 0 ? 'pointer' : 'not-allowed' }}>
-          📥 Export
-        </button>
-
-        <button onClick={importTemplate} title="Import .trform.json"
-          style={{ ...toolBtn(!!importMsg && !importMsg.startsWith('⚠')),
-            color: importMsg.startsWith('⚠') ? '#ff9977' : importMsg ? world.accentColor : 'rgba(255,255,255,0.55)',
-            borderColor: importMsg.startsWith('⚠') ? '#ff663355' : importMsg ? world.accentColor + '55' : 'rgba(255,255,255,0.1)' }}>
-          {importMsg ? (importMsg.startsWith('⚠') ? '⚠ Bad file' : '✓ Imported') : '📤 Import'}
-        </button>
-
-        <button onClick={copyShareLink} disabled={fieldCount === 0} title="Copy share link"
-          style={{ ...toolBtn(!!shareMsg), opacity: fieldCount > 0 ? 1 : 0.35,
-            cursor: fieldCount > 0 ? 'pointer' : 'not-allowed',
-            color: shareMsg ? world.accentColor : 'rgba(255,255,255,0.55)',
-            borderColor: shareMsg ? world.accentColor + '55' : 'rgba(255,255,255,0.1)' }}>
-          {shareMsg ? '✓ Copied' : '🔗 Share'}
-        </button>
-
-        <button onClick={() => setShowVersions(v => !v)} style={{ ...toolBtn(showVersions), position: 'relative' }}>
-          🕐 Versions
-          {versions.length > 0 && (
-            <span style={{ background: world.accentColor, color: '#000', borderRadius: '50%',
-              width: 14, height: 14, display: 'inline-flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: 8, fontWeight: 900, marginLeft: 2 }}>
-              {versions.length}
-            </span>
-          )}
-        </button>
-
-        <div style={{ flex: 1 }} />
-
-        {secCount > 0 && (
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
-            {secCount} section{secCount !== 1 ? 's' : ''}
-          </span>
+        <div style={ribbonGroup}>
+          <div style={ribbonRow}>
+            <button onClick={importTemplate} title="Import .trform.json"
+              style={{ ...ribbonBtn(!!importMsg && !importMsg.startsWith('⚠'), 'default'),
+                color: importMsg.startsWith('⚠') ? '#ffb4a0' : importMsg ? world.accentColor : 'rgba(255,255,255,0.72)',
+                border: `1px solid ${importMsg.startsWith('⚠') ? '#ff663355' : importMsg ? world.accentColor + '44' : 'rgba(255,255,255,0.07)'}` }}>
+              <PremiumIcon token={importMsg.startsWith('⚠') ? '⚠' : '📤'} size={16} />
+              <span>{importMsg ? (importMsg.startsWith('⚠') ? 'Bad File' : 'Imported') : 'Import'}</span>
+            </button>
+            <button onClick={exportTemplate} disabled={fieldCount === 0} title="Download .trform.json"
+              style={{ ...ribbonBtn(false, 'default'), opacity: fieldCount > 0 ? 1 : 0.35, cursor: fieldCount > 0 ? 'pointer' : 'not-allowed' }}>
+              <PremiumIcon token="📥" size={16} />
+              <span>Export</span>
+            </button>
+          </div>
+          <div style={ribbonLabel}>File</div>
+        </div>
+          </div>
         )}
+        historyPanel={(
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
+
+        <div style={ribbonGroup}>
+          <div style={ribbonRow}>
+            <button onClick={copyShareLink} disabled={fieldCount === 0} title="Copy share link"
+              style={{ ...ribbonBtn(!!shareMsg, 'default'), opacity: fieldCount > 0 ? 1 : 0.35, cursor: fieldCount > 0 ? 'pointer' : 'not-allowed' }}>
+              <PremiumIcon token={shareMsg ? '✓' : '🔗'} size={16} />
+              <span>{shareMsg ? 'Copied' : 'Share'}</span>
+            </button>
+            <button onClick={() => setShowVersions(v => !v)} style={{ ...ribbonBtn(showVersions, 'default'), position: 'relative' }}>
+              <PremiumIcon token="🕐" size={16} />
+              <span>Versions</span>
+              {versions.length > 0 && (
+                <span style={{ position: 'absolute', top: 6, right: 6, background: world.accentColor, color: '#000', borderRadius: '999px', minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, padding: '0 5px' }}>{versions.length}</span>
+              )}
+            </button>
+          </div>
+          <div style={ribbonLabel}>Share & History</div>
+        </div>
+          </div>
+        )}
+        reviewPanel={(
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
+        <div style={ribbonGroup}>
+          <div style={ribbonRow}>
+            <button onClick={handlePublish} disabled={fieldCount === 0 || createMut.isPending || publishMut.isPending}
+              style={{ ...ribbonBtn(isPublished, 'success'), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer', color: publishMsg.startsWith('⚠') ? '#fca5a5' : isPublished ? '#fb923c' : '#86efac', border: `1px solid ${isPublished ? 'rgba(249,115,22,0.35)' : 'rgba(34,197,94,0.28)'}`, background: isPublished ? 'rgba(249,115,22,0.12)' : 'rgba(34,197,94,0.12)' }}>
+              <PremiumIcon token={createMut.isPending || publishMut.isPending ? '⏳' : isPublished ? '🔒' : '🌐'} size={16} />
+              <span>{createMut.isPending || publishMut.isPending ? 'Working' : isPublished ? 'Unpublish' : 'Publish'}</span>
+            </button>
+            <button onClick={() => onPreview(fields, title)} disabled={fieldCount === 0}
+              style={{ ...primaryRibbonBtn, opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }}>
+              <PremiumIcon token="👁" size={16} />
+              <span>Preview</span>
+            </button>
+          </div>
+          <div style={ribbonLabel}>Review & Publish</div>
+        </div>
+
         {fields.length > 0 && (
-          <button onClick={() => { setFields([]); setEditingId(null); }}
-            style={{ ...toolBtn(false, true), fontSize: 11, padding: '4px 9px', opacity: 0.6 }}
-            title="Clear all fields">Clear all</button>
+          <div style={ribbonGroup}>
+            <div style={ribbonRow}>
+              <button onClick={() => { setFields([]); setEditingId(null); }}
+                style={{ ...ribbonBtn(false, 'default'), minWidth: 92, color: 'rgba(255,160,160,0.82)', border: '1px solid rgba(255,120,120,0.18)', background: 'rgba(255,80,80,0.06)' }}
+                title="Clear all fields">
+                <PremiumIcon token="🧹" size={16} />
+                <span>Clear All</span>
+              </button>
+            </div>
+            <div style={ribbonLabel}>{secCount} Section{secCount !== 1 ? 's' : ''}</div>
+          </div>
         )}
-      </div>
+          </div>
+        )} settingsPanel={(
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: wt.accentColor, letterSpacing: '0.10em' }}>Settings</span>
+              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.4 }}>Manage sharing, access, and response rules.</span>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${wt.borderColor}24`, borderRadius: 16, padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: wt.accentColor, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Sharing</div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.color}1d`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: wt.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Description</span>
+                    <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Shown on the public form header.</span>
+                  </span>
+                  <textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Short summary for public viewers" rows={3}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.color}33`, borderRadius: 10, color: '#fff', fontSize: 13, padding: '10px 12px', resize: 'vertical' }} />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.color}1d`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: wt.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Visibility</span>
+                    <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Choose whether anyone can discover it.</span>
+                  </span>
+                  <select value={formVisibility} onChange={(e) => setFormVisibility(e.target.value as 'public' | 'unlisted')}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.color}33`, borderRadius: 10, color: '#fff', fontSize: 13, padding: '10px 12px' }}>
+                    <option value="unlisted">Unlisted</option>
+                    <option value="public">Public</option>
+                  </select>
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.color}1d`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: wt.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Custom Slug</span>
+                    <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Optional short URL for sharing.</span>
+                  </span>
+                  <input value={customSlug} onChange={(e) => setCustomSlug(e.target.value)} placeholder="optional-custom-slug"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.color}33`, borderRadius: 10, color: '#fff', fontSize: 13, padding: '10px 12px' }} />
+                </label>
+              </div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${wt.borderColor}24`, borderRadius: 16, padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: wt.accentColor, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Access Control</div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.color}1d`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: wt.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Expiry</span>
+                    <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Disable submissions after a date.</span>
+                  </span>
+                  <input type="datetime-local" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.color}33`, borderRadius: 10, color: '#fff', fontSize: 13, padding: '10px 12px' }} />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.color}1d`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: wt.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Response Limit</span>
+                    <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Stop after a fixed number of responses.</span>
+                  </span>
+                  <input type="number" min="1" value={responseLimit} onChange={(e) => setResponseLimit(e.target.value)} placeholder="Unlimited"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.color}33`, borderRadius: 10, color: '#fff', fontSize: 13, padding: '10px 12px' }} />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.color}1d`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: wt.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Form Password</span>
+                    <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Require a password before opening the form.</span>
+                  </span>
+                  <input type="password" value={accessPassword} onChange={(e) => setAccessPassword(e.target.value)} placeholder="Optional access password"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.color}33`, borderRadius: 10, color: '#fff', fontSize: 13, padding: '10px 12px' }} />
+                </label>
+              </div>
+            </div>
+          </div>
+        )} />
 
       {/* ── Body ── */}
-      <div style={{ position: 'relative', zIndex: 5, flex: 1, display: 'flex', overflow: 'hidden' }}>
-        <PaletteSidebar wt={wt} world={world} presets={presets}
-          onAddField={addField} onAddCollection={addCollection} onAddPresetGroup={addPresetGroup} />
+      <div style={{ position: 'relative', zIndex: 5, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-        <div className="tr-scroll" style={{ flex: 1, overflowY: 'auto', background: 'rgba(255,255,255,0.018)', boxShadow: 'inset 1px 0 0 rgba(255,255,255,0.05)', padding: '20px 24px' }}>
+        <div className="tr-scroll" style={{ flex: 1, overflowY: 'auto', background: 'rgba(255,255,255,0.018)', padding: '20px 24px', paddingRight: showSettings ? '336px' : activeRibbonTab === 'design' ? '272px' : '24px' }}>
           <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-
             {/* ── Collections Quick-Add Strip ── */}
             {COLLECTIONS.length > 0 && (
               <div style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: world.accentColor }}>⚡ Quick Add</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: world.accentColor, display: 'inline-flex', alignItems: 'center', gap: 6 }}><PremiumIcon token="✦" size={12} />Quick Add</span>
                   <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${world.accentColor}33, transparent)` }} />
                 </div>
                 <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>

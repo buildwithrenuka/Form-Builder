@@ -245,7 +245,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
     submitTxt:     (m: string) => m === 'login' ? '\u{1F680} ENTER FORMVERSE' : '\u2728 START YOUR QUEST',
     loginTab:      '\u{1F511} LOGIN',
     registerTab:   '\u2728 REGISTER',
-    footer:        'TEMPLE RUN \u00b7 GLOBE EXPLORER \u00b7 THE LIBRARY',
+    footer:        'REALM RUNNER \u00b7 GLOBE EXPLORER \u00b7 THE LIBRARY',
     guestColor:    'rgba(167,139,250,0.65)',
     guestHover:    '#a78bfa',
     divider:       'rgba(124,58,237,0.45)',
@@ -481,7 +481,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
       {isLightTheme && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '110px', background: 'linear-gradient(0deg, rgba(255,214,150,0.44) 0%, rgba(255,245,224,0.28) 55%, transparent 100%)', zIndex: 1 }} />}
       {isRainbowTheme && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '110px', background: 'linear-gradient(0deg, rgba(18,0,46,0.9) 0%, rgba(58,15,79,0.46) 55%, transparent 100%)', zIndex: 1 }} />}
 
-      {/* Temple run — stone path + runner */}
+      {/* Realm Runner — stone path + runner */}
       {isTemple && <>
         <div style={{ position: 'absolute', bottom: '18px', left: 0, right: 0, height: '52px', display: 'flex', gap: '3px', overflow: 'hidden', zIndex: 2 }}>
           {Array.from({ length: 55 }, (_, i) => (
@@ -571,7 +571,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
           <>
             <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', padding: '9px 16px 10px', borderRadius: '16px', background: isLibrary ? 'linear-gradient(135deg, rgba(28, 6, 52, 0.74), rgba(16, 4, 30, 0.36))' : isGlobe ? 'linear-gradient(135deg, rgba(10, 20, 44, 0.76), rgba(10, 12, 24, 0.34))' : 'linear-gradient(135deg, rgba(40, 14, 0, 0.76), rgba(20, 8, 0, 0.34))', border: isLibrary ? '1px solid rgba(168,85,247,0.18)' : isGlobe ? '1px solid rgba(0,229,255,0.16)' : '1px solid rgba(255,170,80,0.18)', boxShadow: isLibrary ? '0 12px 28px rgba(18, 4, 32, 0.34)' : isGlobe ? '0 12px 28px rgba(4, 12, 30, 0.3)' : '0 12px 28px rgba(22, 8, 0, 0.32)', backdropFilter: 'blur(12px)' }}>
               <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(22px, 4.5vw, 48px)', fontWeight: 900, color: isLibrary ? '#e9d5ff' : isGlobe ? '#d8f7ff' : '#fff4dc', background: T.logoGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 4px 14px rgba(0,200,255,0.2))', animation: 'text-glow 3.5s ease-in-out infinite', textShadow: isLibrary ? '0 0 14px rgba(12, 4, 24, 0.34)' : isGlobe ? '0 0 14px rgba(6, 14, 24, 0.3)' : '0 0 14px rgba(22, 8, 0, 0.3)' }}>
-                {isLibrary ? '📚 FORMVERSE 📖' : isGlobe ? '🌍 GLOBE EXPLORER 🌎' : '⚡ FORM QUEST ⚡'}
+                {isLibrary ? '📚 FORMVERSE 📖' : isGlobe ? '🌍 GLOBE EXPLORER 🌎' : '⚡ REALM RUNNER ⚡'}
               </div>
             </div>
             <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(9px, 1.4vw, 15px)', fontWeight: 700, color: T.subtitleColor, letterSpacing: '0.38em', marginTop: '5px', textTransform: 'uppercase' }}>

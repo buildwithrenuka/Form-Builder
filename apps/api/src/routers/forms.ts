@@ -1,10 +1,10 @@
 import { TRPCError } from '@trpc/server';
-import { eq, and, desc } from 'drizzle-orm';
-import { randomBytes } from 'node:crypto';
+import { eq, and, desc, count } from 'drizzle-orm';
+import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { router, publicProc, authProc } from '../trpc';
-import { forms } from '../db/schema';
+import { forms, responses } from '../db/schema';
 import {
-  CreateFormInput, UpdateFormInput, PublishFormInput, FormFieldsSchema,
+  CreateFormInput, UpdateFormInput, PublishFormInput, FormFieldsSchema, CloneFormInput,
 } from '../schemas';
 import { z } from 'zod';
 
@@ -19,6 +19,60 @@ function slugify(title: string, id: string): string {
     + '-' + id.slice(0, 6);
 }
 
+function normalizeCustomSlug(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60);
+}
+
+function hashAccessPassword(password: string, salt: string): string {
+  return createHash('sha256').update(`${salt}:form:${password}`).digest('hex');
+}
+
+function verifyAccessPassword(password: string | undefined, storedHash: string, salt: string): boolean {
+  if (!password) return false;
+
+  const expected = hashAccessPassword(password, salt);
+  return expected.length === storedHash.length
+    && timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(storedHash, 'hex'));
+}
+
+async function ensureUniqueSlug(slug: string, currentFormId: string | null, ctx: Parameters<typeof authProc.query>[0]['ctx'] | Parameters<typeof publicProc.query>[0]['ctx']) {
+  const existing = await ctx.db.query.forms.findFirst({
+    where: eq(forms.slug, slug),
+    columns: { id: true },
+  });
+
+  if (existing && existing.id !== currentFormId) {
+    throw new TRPCError({ code: 'CONFLICT', message: 'That form slug is already in use.' });
+  }
+}
+
+async function countResponsesForForm(ctx: Parameters<typeof publicProc.query>[0]['ctx'], formId: string): Promise<number> {
+  const [result] = await ctx.db
+    .select({ total: count() })
+    .from(responses)
+    .where(eq(responses.formId, formId));
+
+  return result?.total ?? 0;
+}
+
+async function assertFormAcceptingResponses(ctx: Parameters<typeof publicProc.query>[0]['ctx'], form: typeof forms.$inferSelect) {
+  if (form.expiresAt && form.expiresAt.getTime() <= Date.now()) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form has expired.' });
+  }
+
+  if (form.responseLimit) {
+    const totalResponses = await countResponsesForForm(ctx, form.id);
+    if (totalResponses >= form.responseLimit) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form is no longer accepting responses.' });
+    }
+  }
+}
+
 export const formsRouter = router({
   // ── Creator: create form ────────────────────────────────────────────────
   create: authProc
@@ -28,11 +82,13 @@ export const formsRouter = router({
       const form = {
         id,
         creatorId:   ctx.userId,
+        clonedFromId: null,
         title:       input.title,
         description: input.description ?? null,
         slug:        slugify(input.title, id),
         visibility:  'unlisted' as const,
         published:   false,
+        archived:    false,
         schema:      '[]',
         worldTheme:  input.worldTheme ?? null,
         createdAt:   new Date(),
@@ -70,11 +126,30 @@ export const formsRouter = router({
       });
       if (!existing) throw new TRPCError({ code: 'NOT_FOUND' });
 
+      const nextSlug = input.slug !== undefined
+        ? normalizeCustomSlug(input.slug)
+        : undefined;
+
+      if (input.slug !== undefined && nextSlug.length < 3) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Slug must be at least 3 characters long.' });
+      }
+
+      if (nextSlug) {
+        await ensureUniqueSlug(nextSlug, existing.id, ctx);
+      }
+
       await ctx.db.update(forms)
         .set({
           ...(input.title       ? { title: input.title }              : {}),
           ...(input.description !== undefined ? { description: input.description } : {}),
           ...(input.visibility  ? { visibility: input.visibility }    : {}),
+          ...(input.archived !== undefined ? { archived: input.archived, published: input.archived ? false : existing.published } : {}),
+          ...(nextSlug ? { slug: nextSlug } : {}),
+          ...(input.expiresAt !== undefined ? { expiresAt: input.expiresAt ? new Date(input.expiresAt) : null } : {}),
+          ...(input.responseLimit !== undefined ? { responseLimit: input.responseLimit } : {}),
+          ...(input.accessPassword !== undefined ? {
+            accessPasswordHash: input.accessPassword ? hashAccessPassword(input.accessPassword, ctx.env.PASSWORD_SALT) : null,
+          } : {}),
           ...(input.schema      ? { schema: JSON.stringify(input.schema) } : {}),
           ...(input.worldTheme  ? { worldTheme: input.worldTheme }    : {}),
           updatedAt: new Date(),
@@ -91,11 +166,47 @@ export const formsRouter = router({
         where: and(eq(forms.id, input.id), eq(forms.creatorId, ctx.userId)),
       });
       if (!existing) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (existing.archived && input.published) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Archived forms must be restored before publishing.' });
+      }
 
       await ctx.db.update(forms)
         .set({ published: input.published, updatedAt: new Date() })
         .where(eq(forms.id, input.id));
       return { published: input.published };
+    }),
+
+  clone: authProc
+    .input(CloneFormInput)
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.query.forms.findFirst({
+        where: and(eq(forms.id, input.id), eq(forms.creatorId, ctx.userId)),
+      });
+      if (!existing) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      const id = uid();
+      const title = input.title ?? `${existing.title} Copy`;
+      const clone = {
+        id,
+        creatorId: ctx.userId,
+        clonedFromId: existing.id,
+        title,
+        description: existing.description,
+        slug: slugify(title, id),
+        visibility: 'unlisted' as const,
+        published: false,
+        archived: false,
+        expiresAt: existing.expiresAt,
+        responseLimit: existing.responseLimit,
+        accessPasswordHash: existing.accessPasswordHash,
+        schema: existing.schema,
+        worldTheme: existing.worldTheme,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await ctx.db.insert(forms).values(clone);
+      return { id: clone.id, slug: clone.slug, title: clone.title };
     }),
 
   // ── Creator: delete form ────────────────────────────────────────────────
@@ -109,17 +220,36 @@ export const formsRouter = router({
 
   // ── Public: get form by slug (for respondents) ─────────────────────────
   getBySlug: publicProc
-    .input(z.object({ slug: z.string() }))
+    .input(z.object({ slug: z.string(), accessPassword: z.string().max(128).optional() }))
     .query(async ({ ctx, input }) => {
       const form = await ctx.db.query.forms.findFirst({
-        where: and(eq(forms.slug, input.slug), eq(forms.published, true)),
+        where: and(eq(forms.slug, input.slug), eq(forms.published, true), eq(forms.archived, false)),
       });
       if (!form) throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found or not published.' });
+
+      await assertFormAcceptingResponses(ctx, form);
+
+      if (form.accessPasswordHash && !verifyAccessPassword(input.accessPassword, form.accessPasswordHash, ctx.env.PASSWORD_SALT)) {
+        return {
+          access: 'locked' as const,
+          title: form.title,
+          description: form.description,
+          worldTheme: form.worldTheme,
+          requiresPassword: true,
+        };
+      }
+
+      const totalResponses = form.responseLimit ? await countResponsesForForm(ctx, form.id) : 0;
       return {
+        access: 'available' as const,
         id:          form.id,
         title:       form.title,
         description: form.description,
         worldTheme:  form.worldTheme,
+        requiresPassword: false,
+        expiresAt:   form.expiresAt,
+        responseLimit: form.responseLimit,
+        remainingResponses: form.responseLimit ? Math.max(form.responseLimit - totalResponses, 0) : null,
         schema:      FormFieldsSchema.parse(JSON.parse(form.schema)),
       };
     }),
@@ -129,10 +259,10 @@ export const formsRouter = router({
     .input(z.object({ limit: z.number().int().min(1).max(50).default(20) }))
     .query(async ({ ctx, input }) => {
       return ctx.db.query.forms.findMany({
-        where: and(eq(forms.published, true), eq(forms.visibility, 'public')),
+        where: and(eq(forms.published, true), eq(forms.visibility, 'public'), eq(forms.archived, false)),
         orderBy: [desc(forms.createdAt)],
         limit: input.limit,
-        columns: { id: true, title: true, description: true, slug: true, worldTheme: true, createdAt: true },
+        columns: { id: true, title: true, description: true, slug: true, worldTheme: true, createdAt: true, expiresAt: true, responseLimit: true },
       });
     }),
 });

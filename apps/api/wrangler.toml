@@ -15,9 +15,12 @@ database_id   = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
 [vars]
 IP_SALT       = "formquest-ip-salt"
 PASSWORD_SALT = "formquest-pw-salt"
+APP_BASE_URL  = "https://formverse.app"
+RESEND_FROM_EMAIL = "FormVerse <onboarding@resend.dev>"
 
 # JWT_SECRET must be set as a secret, NOT here in plaintext:
 #   wrangler secret put JWT_SECRET
+
 
 # ── Local dev overrides ────────────────────────────────────────────────────
 [dev]

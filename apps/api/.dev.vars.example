@@ -10,10 +10,19 @@ IP_SALT=change-me-to-another-random-string
 # Salt used when hashing passwords
 PASSWORD_SALT=change-me-to-yet-another-random-string
 
+# Comma-separated browser origins allowed to call the API
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174
+
+# Public web app URL used in outbound emails
+APP_BASE_URL=http://localhost:5173
+
 # ── Email Notifications (Optional) ──────────────────────────────────────────
 # Get your key at https://resend.com — free tier: 3,000 emails/month
+# For local testing, keep the default sender below unless you have verified your own domain in Resend.
+# Resend's onboarding sender is suitable for development and debugging.
 # Leave blank to disable (form submissions still work without it)
 RESEND_API_KEY=re_your_resend_api_key_here
+RESEND_FROM_EMAIL=FormVerse <onboarding@resend.dev>
 
 # ── Demo credentials (seeded via migrations/0002_seed.sql) ──────────────────
 # Email:    demo@formverse.io

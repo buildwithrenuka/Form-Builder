@@ -1,14 +1,15 @@
 export type Screen =
   // shared
-  | 'home' | 'login' | 'shared' | 'tutorial' | 'experiencePicker' | 'explore'
+  | 'home' | 'login' | 'shared' | 'submissionConfirmed' | 'tutorial' | 'experiencePicker' | 'explore'
   // new pages
   | 'pricing' | 'dashboard'
-  // experience 1: temple run
+  | 'admin'
+  // experience 1: realm runner
   | 'story' | 'avatar' | 'world' | 'worldDoor' | 'worldCinematic' | 'mapPurpose' | 'builder' | 'preview'
   // experience 2: globe
-  | 'globeIntro' | 'globeSelector' | 'countryPortal' | 'countryCinematic' | 'globeBuilder' | 'globePreview'
+  | 'globeIntro' | 'globeSelector' | 'countryPortal' | 'countryCinematic' | 'globeMission' | 'globeBuilder' | 'globePreview'
   // experience 3: library
-  | 'libraryIntro' | 'librarySelector' | 'libraryPortal' | 'libraryCinematic' | 'libraryBuilder' | 'libraryPreview';
+  | 'libraryIntro' | 'librarySelector' | 'libraryPortal' | 'libraryCinematic' | 'libraryMission' | 'libraryBuilder' | 'libraryPreview';
 
 export type FormVersion = {
   id: string;
@@ -74,9 +75,19 @@ export type FieldType =
   | 'range'
   | 'rating'
   | 'file'
-  | 'section';
+  | 'section'
+  | 'page_break';
 
 export type FieldWidth = 'full' | 'half';
+
+export type ConditionalOperator =
+  | 'equals'
+  | 'not_equals'
+  | 'contains'
+  | 'greater_than'
+  | 'less_than'
+  | 'is_empty'
+  | 'is_not_empty';
 
 export type ValidationPreset = 'none' | 'letters-only' | 'numbers-only' | 'alphanumeric' | 'pan' | 'gst' | 'ifsc' | 'pincode' | 'custom';
 
@@ -99,6 +110,9 @@ export type FormField = {
   // Display
   fieldWidth: FieldWidth;
   hidden: boolean;
+  conditionalParentId: string;
+  conditionalOperator: ConditionalOperator;
+  conditionalValue: string;
   prefix: string;
   suffix: string;
   // Section

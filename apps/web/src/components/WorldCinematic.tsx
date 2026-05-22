@@ -242,9 +242,9 @@ const AVATAR_QUOTES: Record<string, Record<string, string>> = {
 const TYPING_SPEED = 26;
 const AUTO_ADVANCE_MS = 4800;
 
-type Props = { world: WorldTheme; avatar: Avatar; onComplete: () => void };
+type Props = { world: WorldTheme; avatar: Avatar; onComplete: () => void; onBack: () => void };
 
-export function WorldCinematic({ world, avatar, onComplete }: Props) {
+export function WorldCinematic({ world, avatar, onComplete, onBack }: Props) {
   const panels = WORLD_PANELS[world.id] ?? WORLD_PANELS.jungle;
   const [idx, setIdx] = useState(0);
   const [chars, setChars] = useState(0);
@@ -343,6 +343,12 @@ export function WorldCinematic({ world, avatar, onComplete }: Props) {
       {/* Top bar */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '64px', zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={e => { e.stopPropagation(); onBack(); }}
+            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '5px', color: 'rgba(255,255,255,0.72)', fontFamily: "'Rajdhani', sans-serif", fontSize: '10px', padding: '4px 12px', cursor: 'pointer', letterSpacing: '0.18em' }}
+          >
+            ← BACK
+          </button>
           <span style={{ fontSize: '24px', filter: `drop-shadow(0 0 10px ${world.glowColor})` }}>{world.emoji}</span>
           <span style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: '11px', color: world.accentColor, letterSpacing: '0.2em' }}>{world.name.toUpperCase()}</span>
         </div>

@@ -13,3 +13,13 @@ export const authProc = t.procedure.use(({ ctx, next }) => {
   }
   return next({ ctx: { ...ctx, userId: ctx.userId } });
 });
+
+export const adminProc = t.procedure.use(({ ctx, next }) => {
+  if (!ctx.userId) {
+    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'You must be logged in.' });
+  }
+  if (!ctx.isAdmin) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required.' });
+  }
+  return next({ ctx: { ...ctx, userId: ctx.userId, isAdmin: true } });
+});

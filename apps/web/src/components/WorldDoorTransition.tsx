@@ -76,9 +76,9 @@ const DOOR_SKIN: Record<string, {
   },
 };
 
-type Props = { world: WorldTheme; onComplete: () => void };
+type Props = { world: WorldTheme; onComplete: () => void; onBack: () => void };
 
-export function WorldDoorTransition({ world, onComplete }: Props) {
+export function WorldDoorTransition({ world, onComplete, onBack }: Props) {
   const [open, setOpen] = useState(false);
   const [labelVisible, setLabelVisible] = useState(false);
 
@@ -131,6 +131,28 @@ export function WorldDoorTransition({ world, onComplete }: Props) {
       overflow: 'hidden',
       background: world.bg,
     }}>
+      <button
+        onClick={onBack}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '24px',
+          zIndex: 30,
+          background: 'rgba(0,0,0,0.42)',
+          border: `1px solid ${skin.panelBorder}`,
+          borderRadius: '8px',
+          color: world.accentColor,
+          fontFamily: "'Rajdhani', sans-serif",
+          fontSize: '12px',
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          padding: '9px 14px',
+          cursor: 'pointer',
+          boxShadow: `0 0 18px ${skin.crackGlow}22`,
+        }}
+      >
+        ← Back
+      </button>
       {/* World revealed behind the doors */}
       <ParticleBackground particles={world.particles} count={18} />
 

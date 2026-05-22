@@ -11,9 +11,10 @@ type Props = {
   subtitle: string;
   particles?: string[];
   onComplete: () => void;
+  onBack: () => void;
 };
 
-export function ExperiencePortalTransition({ bg, accentColor, glowColor, emoji, title, subtitle, particles = [], onComplete }: Props) {
+export function ExperiencePortalTransition({ bg, accentColor, glowColor, emoji, title, subtitle, particles = [], onComplete, onBack }: Props) {
   const [open, setOpen] = useState(false);
   const [labelVisible, setLabelVisible] = useState(false);
 
@@ -33,6 +34,29 @@ export function ExperiencePortalTransition({ bg, accentColor, glowColor, emoji, 
 
   return (
     <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: bg }}>
+      <button
+        onClick={onBack}
+        style={{
+          position: 'absolute',
+          top: 24,
+          left: 24,
+          zIndex: 12,
+          background: 'rgba(0,0,0,0.34)',
+          border: `1px solid ${accentColor}55`,
+          borderRadius: 10,
+          color: '#fff',
+          padding: '9px 14px',
+          cursor: 'pointer',
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          boxShadow: `0 0 18px ${glowColor}22`,
+        }}
+      >
+        ← Back
+      </button>
+
       <ParticleBackground particles={particles} count={16} />
 
       <div style={{

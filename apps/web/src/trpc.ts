@@ -1,6 +1,7 @@
 import { createTRPCReact } from '@trpc/react-query';
 import { httpBatchLink } from '@trpc/client';
 import type { AppRouter } from '../../api/src/index';
+import { getToken } from './auth';
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -12,7 +13,7 @@ export function makeTrpcClient() {
       httpBatchLink({
         url: `${API_BASE}/trpc`,
         headers() {
-          const token = localStorage.getItem('fq_token');
+          const token = getToken();
           return token ? { Authorization: `Bearer ${token}` } : {};
         },
       }),

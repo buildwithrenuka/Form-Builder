@@ -4,9 +4,10 @@ import type { Country } from '../globeData';
 type Props = {
   country: Country;
   onComplete: () => void;
+  onBack: () => void;
 };
 
-export function CountryCinematic({ country, onComplete }: Props) {
+export function CountryCinematic({ country, onComplete, onBack }: Props) {
   const [panel, setPanel]   = useState(0);
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -43,6 +44,31 @@ export function CountryCinematic({ country, onComplete }: Props) {
       }}
       onClick={advance}
     >
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+          onBack();
+        }}
+        style={{
+          position: 'absolute',
+          top: 24,
+          left: 24,
+          zIndex: 6,
+          background: 'rgba(0,0,0,0.32)',
+          border: `1px solid ${country.color}44`,
+          borderRadius: 10,
+          color: '#fff',
+          padding: '9px 14px',
+          cursor: 'pointer',
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+        }}
+      >
+        ← Back
+      </button>
+
       {/* Radial glow */}
       <div style={{
         position: 'absolute', inset: 0,

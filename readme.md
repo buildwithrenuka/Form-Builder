@@ -1,146 +1,76 @@
-# FormVerse 🏛️✈️📚
+# FormVerse
 
-> A cinematic form builder with three radically different experiences — a gamified Temple Run adventure, a Globe Explorer travel experience, and a mystical Library world. Built as a Turborepo monorepo with React + Vite on the frontend and a Cloudflare Workers API on the backend.
+FormVerse is a cinematic full-stack form builder built in a Turborepo monorepo. It ships three themed creation flows, a public explore surface, a protected creator dashboard, Scalar API docs, and a Cloudflare D1-backed API with tRPC and Zod.
 
----
+## Demo
 
-## 🎯 Demo Credentials
+| Item | Value |
+|---|---|
+| Web | http://localhost:5173 |
+| API | http://localhost:3001 |
+| Scalar docs | http://localhost:3001/docs |
+| Demo email | `demo@formverse.io` |
+| Demo password | `Demo1234!` |
 
-| Field | Value |
-|-------|-------|
-| **URL** | http://localhost:5173 (local dev) |
-| **Demo Email** | `demo@formverse.io` |
-| **Demo Password** | `Demo1234!` |
-| **API Docs** | http://localhost:3001/docs |
+Seeded public forms are available in Explore, and the demo account can inspect them from the creator dashboard.
 
-> Pre-seeded demo forms available in **Explore** page (no login required to fill them).
+## Core Features
 
----
+- User registration, login, JWT sessions, and protected creator dashboard.
+- Create, edit, publish, unpublish, clone, archive, and delete forms.
+- Dynamic field schemas with required flags, validation rules, presets, helper text, hidden fields, and layout controls.
+- Public and unlisted visibility modes with proper public access checks.
+- Public response submission without login.
+- Password-protected forms, custom slugs, expiry windows, and response limits.
+- Response management with search, pagination, CSV export, copy-link, QR sharing, and analytics timeline cards.
+- Creator and respondent email notifications through Resend.
+- Landing page, pricing page, explore page, and creator dashboard.
+- Scalar OpenAPI docs at `/docs`.
 
-## What is FormVerse?
+## Experiences
 
-FormVerse is a full-stack cinematic form builder with three distinct experiences:
-
-| Experience | Vibe | Theme |
-|---|---|---|
-| 🏃 **Temple Run** | Gamified adventure | Choose an avatar runner, pick a legendary world, build forms with cinematic doors, ambient audio, and story intros |
-| ✈️ **Globe Explorer** | Classy travel | Choose a destination, get landmark cinematics, build visa/itinerary forms with local currency and locale presets |
-| 📚 **The Library** | Mystical academia | Scroll-lit aesthetics, knowledge archetypes, academic and research form templates |
-
----
+| Experience | Focus |
+|---|---|
+| Realm Runner | Adventure-styled cinematic builder with worlds, avatars, and story framing |
+| Globe Explorer | Country-themed travel and intake form creation |
+| The Library | Lore, archives, records, and world-building form creation |
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
+| Monorepo | Turborepo + npm workspaces |
 | Frontend | React 18 + Vite + TypeScript |
-| Styling | Inline styles — Cinzel Decorative, Rajdhani, Exo 2 fonts |
-| Backend | Hono + tRPC + Drizzle ORM on Cloudflare Workers |
-| Database | Cloudflare D1 (SQLite at the edge) |
-| Auth | JWT (via `jose`) |
-| Email | Resend (optional — email notifications on response submit) |
-| API Docs | Scalar UI at `/docs` (OpenAPI 3.1) |
-| Monorepo | Turborepo + npm Workspaces |
-
----
-
-## Pages
-
-| Route | Description |
-|-------|-------------|
-| `/` | Landing page with nav to all experiences |
-| `/?share=<encoded>` | Fill a shared form (encoded payload, no backend) |
-| `/?slug=<slug>` | Fill a published form via API (live responses saved to DB) |
-| Pricing page | Three-tier pricing: Explorer (free), Adventurer ($12/mo), Legend ($49/mo) |
-| Explore page | Public forms gallery — browse & fill community forms |
-| Dashboard | Creator hub — my forms, publish toggle, view responses, analytics |
-
----
+| Backend | Hono + tRPC |
+| Validation | Zod |
+| ORM | Drizzle ORM |
+| Database | Cloudflare D1 |
+| Auth | JWT |
+| Docs | Scalar + generated OpenAPI |
+| Email | Resend |
 
 ## Project Structure
 
-```
-Form-Builder/
-├── apps/
-│   ├── web/                    ← React + Vite frontend
-│   │   └── src/
-│   │       ├── App.tsx         ← Screen router + tRPC provider
-│   │       ├── trpc.ts         ← tRPC React client setup
-│   │       ├── auth.ts         ← Auth state helpers
-│   │       ├── globeData.ts    ← 12 travel destinations data
-│   │       ├── soundEngine.ts  ← Ambient audio synthesis
-│   │       ├── themes.ts       ← World colour themes
-│   │       ├── types.ts        ← Frontend types (Screen union)
-│   │       └── components/
-│   │           ├── HomePage.tsx          ← Landing page with nav
-│   │           ├── PricingPage.tsx        ← Pricing tiers (new)
-│   │           ├── ExplorePage.tsx        ← Public forms gallery (new)
-│   │           ├── DashboardPage.tsx      ← Creator responses/analytics (new)
-│   │           ├── SharedFormView.tsx     ← Fill form (encoded OR slug-based via API)
-│   │           ├── FormBuilder.tsx        ← Main builder (17 field types)
-│   │           ├── GlobeFormBuilder.tsx   ← Globe experience builder
-│   │           ├── LibraryFormBuilder.tsx ← Library experience builder
-│   │           └── ... (20+ other components)
-│   └── api/                    ← Cloudflare Workers backend
-│       ├── .dev.vars.example   ← Environment variable template
-│       ├── wrangler.toml       ← Workers config + D1 binding
-│       ├── migrations/
-│       │   ├── 0001_initial.sql← DB schema migration
-│       │   └── 0002_seed.sql   ← Demo data (3 themed forms + 28 responses)
-│       └── src/
-│           ├── index.ts        ← Hono app, tRPC mount, CORS, Scalar docs
-│           ├── email.ts        ← Resend email notification helper
-│           ├── trpc.ts         ← tRPC init + context
-│           ├── schemas.ts      ← Shared Zod schemas
-│           ├── auth/           ← register / login / me routes
-│           ├── routers/
-│           │   ├── forms.ts    ← CRUD, publish/unpublish, listPublic, getBySlug
-│           │   └── responses.ts← Submit (+email alert), list, analytics
-│           └── db/
-│               └── schema.ts   ← Drizzle schema (users, forms, responses, rateLimits)
-└── packages/
-    └── shared/src/index.ts     ← Shared types
+```text
+apps/
+    api/
+        migrations/
+        src/
+            auth/
+            db/
+            routers/
+            index.ts
+    web/
+        src/
+            components/
+            App.tsx
+            auth.ts
+            trpc.ts
+packages/
+    shared/
 ```
 
----
-
-## Features
-
-### 🏃 Temple Run Experience
-- 11 Avatar Runners · 9 Themed Worlds · Cinematic door transitions
-- Mission Map — scaffolds fields by purpose
-- Ambient audio synthesized per world
-- 17 field types, smart validation (PAN, GST, IFSC, pincode)
-- Version history (name & restore snapshots)
-- Import/Export `.trform.json`
-
-### ✈️ Globe Explorer Experience
-- 12 Travel Destinations with landmark cinematics
-- Locale-aware fields (SSN, IBAN, CPF, PAN, TFN…)
-- Country-specific regex validation
-- Currency symbols per destination
-
-### 📚 The Library Experience
-- 6 mystical library worlds with unique aesthetics
-- Academic form templates (research, character sheets, surveys)
-- Scroll/tome visual language
-
-### 🔐 Backend & API
-- JWT Auth (register / login / `/me`)
-- tRPC v11 — end-to-end type-safe, Zod-validated
-- Cloudflare D1 — SQLite at the edge via Drizzle ORM
-- Rate limiting — per-IP, per-form, max 5/hour (D1-backed)
-- OpenAPI 3.1 + Scalar docs at `/docs`
-- Email notifications via Resend (opt-in, best-effort)
-
-### 🌐 New Pages (Hackathon sprint)
-- **Pricing Page** — Explorer (free) / Adventurer ($12) / Legend ($49) with FAQ
-- **Explore Page** — public forms gallery, search + filter, fill without account
-- **Dashboard** — my forms list, publish toggle, copy share link, responses table, analytics
-
----
-
-## Running Locally
+## Local Setup
 
 ### 1. Install dependencies
 
@@ -148,116 +78,89 @@ Form-Builder/
 npm install
 ```
 
-### 2. Set up the API
+### 2. Configure API secrets
 
 ```bash
 cd apps/api
 cp .dev.vars.example .dev.vars
-# Edit .dev.vars — set JWT_SECRET, IP_SALT (required), RESEND_API_KEY (optional)
-
-# Apply DB migrations (creates local SQLite via Wrangler)
-npm run db:migrate:local
-
-# Apply seed data (demo user + 3 forms + 28 responses)
-npx wrangler d1 execute formquest-db --local --file=migrations/0002_seed.sql
-
-# Start API dev server
-npx wrangler dev
-# → http://localhost:3001
-# → http://localhost:3001/docs  (Scalar API explorer)
 ```
 
-### 3. Start the web app
+Set at least these values in `apps/api/.dev.vars`:
 
-```bash
-cd apps/web
-# Optional: create .env if API is not on default port
-echo "VITE_API_URL=http://localhost:8787" > .env
-
-npx vite
-# → http://localhost:5173
-```
-
----
-
-## Environment Variables
-
-**`apps/api/.dev.vars`** (local dev secrets — gitignored):
-
-```
+```env
 JWT_SECRET=change-me-to-a-long-random-secret
 IP_SALT=change-me-to-another-random-string
 PASSWORD_SALT=change-me-to-yet-another-random-string
-RESEND_API_KEY=re_your_key_here   # optional – enables email notifications
+RESEND_API_KEY=re_your_key_here
 ```
 
-**`apps/web/.env`** (optional):
+### 3. Run migrations and seed demo data
 
+```bash
+cd apps/api
+npm run db:migrate:local
+npx wrangler d1 execute formquest-db --local --file=migrations/0002_seed.sql
+npx wrangler d1 execute formquest-db --local --file=migrations/0003_gallery_seed.sql
 ```
-VITE_API_URL=http://localhost:3001
+
+### 4. Start the API
+
+```bash
+cd apps/api
+npx wrangler dev
 ```
 
----
+### 5. Start the web app
 
-## Demo Data
+```bash
+cd apps/web
+echo "VITE_API_URL=http://localhost:3001" > .env
+npm run dev
+```
 
-Three pre-seeded public forms (run `0002_seed.sql` migration):
+## Important Routes
 
-| Form | World | Fields | Responses |
-|------|-------|--------|-----------|
-| Temple Quest Registration | 🏛️ Temple Run | 8 | 10 |
-| Japan Visa Application | ✈️ Globe | 10 | 8 |
-| Hero Character Sheet | 📚 Library | 12 | 10 |
-
-Login with `demo@formverse.io` / `Demo1234!` to see them in the Dashboard.
-
----
-
-## API Reference
-
-Interactive docs: http://localhost:8787/docs
-
-Key endpoints (all via tRPC at `/trpc`):
-
-| Procedure | Auth | Description |
-|-----------|------|-------------|
-| `auth.register` | — | Create account |
-| `auth.login` | — | Get JWT token |
-| `auth.me` | ✓ | Get current user |
-| `forms.create` | ✓ | Create a form |
-| `forms.myForms` | ✓ | List my forms |
-| `forms.update` | ✓ | Update form schema |
-| `forms.setPublished` | ✓ | Publish / unpublish |
-| `forms.delete` | ✓ | Delete a form |
-| `forms.getBySlug` | — | Fetch published form (for respondents) |
-| `forms.listPublic` | — | Browse public forms (Explore page) |
-| `responses.submit` | — | Submit a response (rate-limited) |
-| `responses.list` | ✓ | List responses for own form |
-| `responses.analytics` | ✓ | Response counts + publish status |
-
----
-
-*Built with patience, caffeine, and a healthy love of over-engineered landing pages. 🏛️*
-
-
-
----
-
-## What is Form Quest?
-
-Form Quest is a full-stack cinematic form builder with two distinct experiences:
-
-| Experience | Vibe | Theme |
-|---|---|---|
-| 🏃 **Temple Run** | Gamified adventure | Choose an avatar runner, pick a legendary world (jungle, volcano, space…), build forms with cinematic doors, ambient audio, and story intros |
-| ✈️ **Globe Explorer** | Classy travel | Choose a destination, get landmark cinematics, build visa/itinerary/customs forms with local currency and locale presets |
-
----
-
-## Tech Stack
-
-| Layer | Technology |
+| Route | Purpose |
 |---|---|
+| `/` | Landing page |
+| `/?slug=<slug>` | Live published form view |
+| `/?share=<encoded>` | Encoded share payload form view |
+| `/docs` on API | Scalar API docs |
+
+## API Highlights
+
+All procedures are exposed through `/trpc`.
+
+| Procedure | Description |
+|---|---|
+| `auth.register` | Create an account |
+| `auth.login` | Login and receive session/token |
+| `auth.me` | Fetch current user |
+| `forms.create` | Create a draft form |
+| `forms.update` | Update metadata, schema, visibility, slug, limits, password, archive state |
+| `forms.clone` | Duplicate an existing form into a new draft |
+| `forms.setPublished` | Publish or unpublish a form |
+| `forms.myForms` | List creator-owned forms |
+| `forms.getBySlug` | Fetch a public/shared form |
+| `forms.listPublic` | List public explore forms |
+| `responses.submit` | Submit a public response |
+| `responses.list` | Search and paginate creator responses |
+| `responses.exportCsv` | Export responses as CSV |
+| `responses.analytics` | Get response analytics and timeline |
+
+## Validation Commands
+
+```bash
+cd apps/web && npm run build
+cd apps/web && npm test
+cd apps/web && npm run test:e2e
+```
+
+## Notes
+
+- Public APIs are rate limited.
+- Public/unlisted/unpublished/archived visibility checks are enforced on the backend.
+- Response notification emails are best-effort and depend on a valid `RESEND_API_KEY`.
 | Frontend | React 18 + Vite + TypeScript |
 | Styling | Inline styles — Cinzel Decorative, Rajdhani, Exo 2 fonts |
 | Backend | Hono + tRPC + Drizzle ORM on Cloudflare Workers |
@@ -284,10 +187,10 @@ Form-Builder/
 │   │       ├── index.css       ← Keyframe animations
 │   │       └── components/
 │   │           ├── HomePage.tsx          ← Landing page (dual experience showcase)
-│   │           ├── ExperienceSelector.tsx← Choose Temple Run or Globe Explorer
+│   │           ├── ExperienceSelector.tsx← Choose Realm Runner or Globe Explorer
 │   │           ├── LoginScreen.tsx       ← Dual-theme login (jungle vs travel)
-│   │           ├── AvatarSelector.tsx    ← Pick runner avatar (Temple Run)
-│   │           ├── WorldSelector.tsx     ← Pick one of 9 worlds (Temple Run)
+│   │           ├── AvatarSelector.tsx    ← Pick runner avatar (Realm Runner)
+│   │           ├── WorldSelector.tsx     ← Pick one of 9 worlds (Realm Runner)
 │   │           ├── WorldDoorTransition.tsx← Cinematic door opening animation
 │   │           ├── WorldCinematic.tsx    ← 3-panel story intro per world
 │   │           ├── StoryIntro.tsx        ← Avatar's story monologue
@@ -331,7 +234,7 @@ Form-Builder/
 
 ## Features Built
 
-### 🏃 Temple Run Experience
+### 🏃 Realm Runner Experience
 
 - **11 Avatar Runners** — each with unique name, emoji, colour, and world-entry quote
 - **9 Themed Worlds** — Jungle, Snow, Desert, Space, Underwater, Volcano, Heaven, Hell, Flower
@@ -370,7 +273,7 @@ Form-Builder/
 
 ### 🎨 UI & Visual Polish
 
-- **Dual-theme LoginScreen** — jungle/gold for Temple Run, starfield/travel for Globe
+- **Dual-theme LoginScreen** — jungle/gold for Realm Runner, starfield/travel for Globe
 - **Aurora background** — radial gradient blobs + grid overlay + shooting stars
 - **Runner bar** — animated 🏃 runner scrolls across the bottom of every page
 - **Glitch effect** — title glitches on hover and on an interval

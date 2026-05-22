@@ -17,7 +17,7 @@ const WORLD_COLORS: Record<string, string> = {
   library: '#a855f7',
 };
 
-const CATEGORIES = ['All', 'Temple Run', 'Globe Explorer', 'The Library', 'Registration', 'Survey', 'Quiz'];
+const CATEGORIES = ['All', 'Realm Runner', 'Globe Explorer', 'The Library', 'Registration', 'Survey', 'Quiz'];
 
 const STARTER_KEYWORDS: Record<string, string[]> = {
   Registration: ['registration', 'register', 'onboarding', 'application'],
@@ -30,7 +30,7 @@ const SAMPLE_FORMS = [
     id: 'sample-temple-feedback',
     templateId: 'customer-feedback',
     worldTheme: 'temple-run',
-    title: 'Temple Feedback Quest',
+    title: 'Realm Feedback Quest',
     description: 'A cinematic feedback form for events, experiences, onboarding, and community check-ins.',
     badge: 'Built-in Sample',
   },
@@ -92,7 +92,7 @@ export function ExplorePage({ onBack, onViewForm, onEnter }: Props) {
     const haystack = [f.title, f.description ?? '', f.worldTheme ?? ''].join(' ').toLowerCase();
     const matchSearch = !q || haystack.includes(q);
     const matchCat = category === 'All'
-      || (category === 'Temple Run' && (f.worldTheme ?? '').includes('temple'))
+      || (category === 'Realm Runner' && (f.worldTheme ?? '').includes('temple'))
       || (category === 'Globe Explorer' && (f.worldTheme ?? '').includes('globe'))
       || (category === 'The Library' && (f.worldTheme ?? '').includes('library'))
       || (STARTER_KEYWORDS[category]?.some((keyword) => haystack.includes(keyword)) ?? false);
@@ -112,7 +112,7 @@ export function ExplorePage({ onBack, onViewForm, onEnter }: Props) {
     const haystack = [sample.title, sample.description, sample.worldTheme, sample.category].join(' ').toLowerCase();
     const matchSearch = !q || haystack.includes(q);
     const matchCat = category === 'All'
-      || (category === 'Temple Run' && sample.worldTheme.includes('temple'))
+      || (category === 'Realm Runner' && sample.worldTheme.includes('temple'))
       || (category === 'Globe Explorer' && sample.worldTheme.includes('globe'))
       || (category === 'The Library' && sample.worldTheme.includes('library'))
       || (STARTER_KEYWORDS[category]?.some((keyword) => haystack.includes(keyword)) ?? false);

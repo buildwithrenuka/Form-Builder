@@ -1,10 +1,11 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { trpc } from '../trpc';
 import { TemplatePickerModal } from './TemplatePickerModal';
 import { ALL_TEMPLATES, type FormTemplate } from '../formTemplates';
 import { FormField, FieldType, WorldTheme, Avatar, ValidationPreset, FormVersion } from '../types';
 import { PALETTE_CATEGORIES, FIELD_TYPES, VALIDATION_PRESETS, COLLECTIONS } from '../themes';
 import { ParticleBackground } from './ParticleBackground';
+import { PremiumIcon } from './PremiumIcon';
 import { VersionPanel } from './VersionPanel';
 import { copyText } from '../utils/clipboard';
 
@@ -33,7 +34,7 @@ function defaultField(type: FieldType): FormField {
   return {
     id: makeId(),
     type,
-    label: type === 'section' ? 'New Section' : label,
+    label: type === 'section' ? 'New Section' : type === 'page_break' ? 'New Page' : label,
     placeholder: ['textarea'].includes(type) ? 'Enter your message...' : `Enter ${label.toLowerCase()}...`,
     required: false,
     options: type === 'radio' || type === 'select' || type === 'checkbox' ? ['Option 1', 'Option 2', 'Option 3'] : [],
@@ -175,10 +176,12 @@ type EditorTab = 'basic' | 'rules' | 'display';
 
 function SectionEditor({ field, world, onChange }: { field: FormField; world: WorldTheme; onChange: (f: FormField) => void }) {
   const COLORS = ['#ffd700', '#00e5ff', '#ff8c00', '#ff4757', '#00b894', '#a29bfe', '#74b9ff', '#fd79a8'];
+  const titleLabel = field.type === 'page_break' ? 'Page Title' : 'Section Title';
+  const descriptionLabel = field.type === 'page_break' ? 'Page Description' : 'Description';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}>
-      <div><EditorLabel world={world}>Section Title</EditorLabel><EditorInput world={world} value={field.label} onChange={(v) => onChange({ ...field, label: v })} /></div>
-      <div><EditorLabel world={world}>Description</EditorLabel><EditorInput world={world} value={field.sectionDescription} placeholder="Brief description..." onChange={(v) => onChange({ ...field, sectionDescription: v })} /></div>
+      <div><EditorLabel world={world}>{titleLabel}</EditorLabel><EditorInput world={world} value={field.label} onChange={(v) => onChange({ ...field, label: v })} /></div>
+      <div><EditorLabel world={world}>{descriptionLabel}</EditorLabel><EditorInput world={world} value={field.sectionDescription} placeholder="Brief description..." onChange={(v) => onChange({ ...field, sectionDescription: v })} /></div>
       <div>
         <EditorLabel world={world}>Accent Colour</EditorLabel>
         <div style={{ display: 'flex', gap: '7px', flexWrap: 'wrap', marginTop: '3px' }}>
@@ -191,13 +194,14 @@ function SectionEditor({ field, world, onChange }: { field: FormField; world: Wo
   );
 }
 
-function FieldEditorPanel({ field, world, onChange }: { field: FormField; world: WorldTheme; onChange: (f: FormField) => void }) {
+function FieldEditorPanel({ field, world, allFields, onChange }: { field: FormField; world: WorldTheme; allFields: FormField[]; onChange: (f: FormField) => void }) {
   const [tab, setTab] = useState<EditorTab>('basic');
-  if (field.type === 'section') return <SectionEditor field={field} world={world} onChange={onChange} />;
+  if (field.type === 'section' || field.type === 'page_break') return <SectionEditor field={field} world={world} onChange={onChange} />;
 
   const isText = ['text', 'textarea', 'email', 'password', 'url', 'phone'].includes(field.type);
   const hasOptions = field.type === 'radio' || field.type === 'select' || field.type === 'checkbox';
   const hasMinMax = field.type === 'range' || field.type === 'rating' || field.type === 'number';
+  const eligibleConditionFields = allFields.filter((candidate) => candidate.id !== field.id && candidate.type !== 'section' && candidate.type !== 'page_break');
   const tabs = [{ id: 'basic' as EditorTab, icon: '📝', label: 'Basic' }, { id: 'rules' as EditorTab, icon: '🛡', label: 'Rules' }, { id: 'display' as EditorTab, icon: '🎨', label: 'Display' }];
 
   return (
@@ -291,6 +295,40 @@ function FieldEditorPanel({ field, world, onChange }: { field: FormField; world:
               )}
             </div>
           )}
+
+          <div>
+            <EditorLabel world={world}>Conditional Visibility</EditorLabel>
+            <select value={field.conditionalParentId} onChange={(e) => onChange({ ...field, conditionalParentId: e.target.value, conditionalValue: e.target.value ? field.conditionalValue : '' })}
+              style={{ width: '100%', background: world.inputBg, border: `1px solid ${world.borderColor}55`, borderRadius: '6px', color: world.textColor, fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', padding: '8px 10px', outline: 'none', cursor: 'pointer' }}>
+              <option value="" style={{ background: '#111' }}>Always show this field</option>
+              {eligibleConditionFields.map((candidate) => (
+                <option key={candidate.id} value={candidate.id} style={{ background: '#111' }}>{candidate.label || candidate.type}</option>
+              ))}
+            </select>
+            {field.conditionalParentId && (
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
+                  <EditorLabel world={world}>Rule</EditorLabel>
+                  <select value={field.conditionalOperator} onChange={(e) => onChange({ ...field, conditionalOperator: e.target.value as FormField['conditionalOperator'] })}
+                    style={{ width: '100%', background: world.inputBg, border: `1px solid ${world.borderColor}55`, borderRadius: '6px', color: world.textColor, fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', padding: '8px 10px', outline: 'none', cursor: 'pointer' }}>
+                    <option value="equals" style={{ background: '#111' }}>Equals</option>
+                    <option value="not_equals" style={{ background: '#111' }}>Does not equal</option>
+                    <option value="contains" style={{ background: '#111' }}>Contains</option>
+                    <option value="greater_than" style={{ background: '#111' }}>Greater than</option>
+                    <option value="less_than" style={{ background: '#111' }}>Less than</option>
+                    <option value="is_empty" style={{ background: '#111' }}>Is empty</option>
+                    <option value="is_not_empty" style={{ background: '#111' }}>Is not empty</option>
+                  </select>
+                </div>
+                {!['is_empty', 'is_not_empty'].includes(field.conditionalOperator) && (
+                  <div style={{ flex: 1 }}>
+                    <EditorLabel world={world}>Expected Value</EditorLabel>
+                    <EditorInput world={world} value={field.conditionalValue} placeholder="Value that reveals this field" onChange={(v) => onChange({ ...field, conditionalValue: v })} />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div><EditorLabel world={world}>Custom Error Message</EditorLabel><EditorInput world={world} value={field.errorMessage} placeholder="e.g. Please enter a valid PAN number" onChange={(v) => onChange({ ...field, errorMessage: v })} /></div>
         </div>
@@ -452,7 +490,9 @@ function FieldPreview({ field, world }: { field: FormField; world: WorldTheme })
           {field.suffix && <span style={{ padding: '10px 14px', background: `${world.accentColor}12`, borderLeft: `1px solid ${world.borderColor}33`, color: `${world.accentColor}88`, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, flexShrink: 0 }}>{field.suffix}</span>}
         </div>
       );
-    case 'section': return null;
+    case 'section':
+    case 'page_break':
+      return null;
     default:
       return (
         <div style={{ position: 'relative' }}>
@@ -486,7 +526,7 @@ function FieldCard({ field, index, total, world, isEditing, onEdit, onDelete, on
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{icon}</span>
+              <PremiumIcon token={icon} size={18} />
               <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 16, fontWeight: 700, color: field.label ? world.textColor : `${world.textColor}44`, letterSpacing: '0.02em', wordBreak: 'break-word' as const }}>
                 {field.label || 'Untitled field'}
               </span>
@@ -515,7 +555,7 @@ function FieldCard({ field, index, total, world, isEditing, onEdit, onDelete, on
       {/* Expanded editor */}
       {isEditing && (
         <div style={{ borderTop: `1px solid ${world.borderColor}28`, padding: '16px 20px 20px' }}>
-          <FieldEditorPanel field={field} world={world} onChange={onChange} />
+          <FieldEditorPanel field={field} world={world} allFields={fields} onChange={onChange} />
           {/* Google Forms-style bottom bar */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 18, paddingTop: 14, borderTop: `1px solid ${world.borderColor}18` }}>
             <button onClick={() => onInsertBelow(field.type)}
@@ -539,109 +579,141 @@ function FieldCard({ field, index, total, world, isEditing, onEdit, onDelete, on
   );
 }
 
-function PaletteSidebar({ world, purposeId, onAddField, onAddCollection }: { world: WorldTheme; purposeId: string; onAddField: (t: FieldType) => void; onAddCollection: (id: string) => void; }) {
-  const [openCats, setOpenCats] = useState<Set<string>>(new Set(['text', 'choice']));
-  const [collectionsOpen, setCollectionsOpen] = useState(true);
-  const [hoverPreview, setHoverPreview] = useState<{ type: FieldType; y: number } | null>(null);
+function PaletteSidebar({ world, purposeId, onAddField, onAddCollection, filePanel, historyPanel, reviewPanel, settingsPanel, settingsActive, onToggleSettings, onActiveTabChange }: { world: WorldTheme; purposeId: string; onAddField: (t: FieldType) => void; onAddCollection: (id: string) => void; filePanel: React.ReactNode; historyPanel: React.ReactNode; reviewPanel: React.ReactNode; settingsPanel: React.ReactNode; settingsActive: boolean; onToggleSettings: () => void; onActiveTabChange?: (tab: 'file' | 'history' | 'review' | 'design' | null) => void; }) {
+  const [activeTab, setActiveTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
+  const [activeDesignTab, setActiveDesignTab] = useState<'fields' | 'collections'>('fields');
+  const [activeFieldCategory, setActiveFieldCategory] = useState<string | null>(null);
 
-  const toggleCat = (id: string) => setOpenCats(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  useEffect(() => {
+    onActiveTabChange?.(activeTab);
+  }, [activeTab, onActiveTabChange]);
 
   // Filter collections by purpose; if no purposes defined on collection = universal
   const visibleCollections = COLLECTIONS.filter(col => {
     if (!col.purposes || col.purposes.length === 0) return true;
     return col.purposes.includes(purposeId) || purposeId === '' || purposeId === 'scratch';
   });
-
-  const catBtn = (open: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'center', gap: '7px', width: '100%', background: open ? `${world.accentColor}10` : 'rgba(255,255,255,0.03)', border: `1px solid ${open ? world.borderColor + '44' : 'rgba(255,255,255,0.07)'}`, borderRadius: '6px', color: open ? world.accentColor : 'rgba(255,255,255,0.4)', fontFamily: "'Rajdhani', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '6px 8px', cursor: 'pointer', transition: 'all 0.15s', marginBottom: '3px' });
-  const fieldBtn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '7px', width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: world.textColor, fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', fontWeight: 600, padding: '7px 8px', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left' };
+  const tabStyle = (active: boolean): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: '8px', background: active ? `${world.accentColor}14` : 'rgba(255,255,255,0.03)', border: `1px solid ${active ? world.accentColor + '26' : 'rgba(255,255,255,0.05)'}`, color: active ? world.textColor : 'rgba(255,255,255,0.68)', borderRadius: '999px', padding: '9px 14px', cursor: 'pointer', fontFamily: "'Exo 2', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.05em', transition: 'all 0.16s', boxShadow: active ? `0 4px 12px ${world.glowColor}12` : 'none' });
+  const categoryTabStyle = (active: boolean): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: '9px', minWidth: '142px', justifyContent: 'space-between', background: active ? `${world.accentColor}12` : 'rgba(255,255,255,0.025)', border: `1px solid ${active ? world.accentColor + '24' : 'rgba(255,255,255,0.05)'}`, color: active ? world.textColor : 'rgba(255,255,255,0.72)', borderRadius: '16px', padding: '12px 14px', cursor: 'pointer', fontFamily: "'Exo 2', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.04em', transition: 'all 0.16s' });
+  const dropdownPanelStyle: React.CSSProperties = { position: 'relative', marginTop: '8px', width: '100%', background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.borderColor}16`, borderRadius: '16px', padding: '10px', boxShadow: 'none', backdropFilter: 'blur(12px)' };
+  const sectionTitleStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: world.accentColor, fontFamily: "'Exo 2', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em' };
+  const tileGridStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '8px' };
+  const fieldBtn: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '10px', minHeight: '46px', background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', color: world.textColor, fontFamily: "'Exo 2', sans-serif", fontSize: '10px', fontWeight: 700, padding: '10px 12px', cursor: 'pointer', transition: 'all 0.16s', textAlign: 'left', letterSpacing: '0.02em' };
+  const collectionBtn: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px', padding: '11px 12px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.16s', width: '100%' };
 
   return (
-    <div className="tr-scroll" style={{ width: '190px', flexShrink: 0, background: 'rgba(0,0,0,0.55)', borderRight: `1px solid ${world.borderColor}22`, padding: '12px 9px' }}>
-      {PALETTE_CATEGORIES.map((cat) => (
-        <div key={cat.id} style={{ marginBottom: '3px' }}>
-          <button style={catBtn(openCats.has(cat.id))} onClick={() => toggleCat(cat.id)}>
-            <span style={{ fontSize: '14px' }}>{cat.icon}</span>
-            <span style={{ flex: 1 }}>{cat.label}</span>
-            <span style={{ fontSize: '9px', opacity: 0.5 }}>{openCats.has(cat.id) ? '▲' : '▼'}</span>
-          </button>
-          {openCats.has(cat.id) && (
-            <div style={{ paddingLeft: '6px', paddingBottom: '4px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-              {cat.fields.map((f) => (
-                <button key={f.type} style={fieldBtn} onClick={() => onAddField(f.type)}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLButtonElement;
-                    el.style.background = world.cardBg; el.style.borderColor = world.borderColor + '55'; el.style.boxShadow = `0 0 8px ${world.glowColor}22`;
-                    setHoverPreview({ type: f.type, y: e.currentTarget.getBoundingClientRect().top });
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLButtonElement;
-                    el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'rgba(255,255,255,0.08)'; el.style.boxShadow = 'none';
-                    setHoverPreview(null);
-                  }}>
-                  <span style={{ fontSize: '15px' }}>{f.icon}</span>
-                  <span>{f.label}</span>
-                </button>
+    <div className="tr-scroll" style={{ position: 'relative', width: '100%', flexShrink: 0, background: 'rgba(20,24,36,0.92)', backdropFilter: 'blur(18px)', borderBottom: `1px solid ${world.borderColor}16`, padding: '12px 16px 16px 16px', overflow: 'visible', boxShadow: '0 8px 20px rgba(0,0,0,0.14)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="tr-scroll" style={{ overflowX: 'auto', overflowY: 'hidden' }}>
+          <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '8px', minWidth: 'max-content', width: '100%', alignItems: 'center' }}>
+            <button style={tabStyle(activeTab === 'file')} onClick={() => setActiveTab((current) => current === 'file' ? null : 'file')}>
+              <PremiumIcon token="📁" size={15} />
+              <span>File</span>
+            </button>
+            <button style={tabStyle(activeTab === 'history')} onClick={() => setActiveTab((current) => current === 'history' ? null : 'history')}>
+              <PremiumIcon token="🕘" size={15} />
+              <span>Share & History</span>
+            </button>
+            <button style={tabStyle(activeTab === 'review')} onClick={() => setActiveTab((current) => current === 'review' ? null : 'review')}>
+              <PremiumIcon token="✅" size={15} />
+              <span>Review & Publish</span>
+            </button>
+            <div style={{ flex: 1, minWidth: 24 }} />
+            <button style={tabStyle(settingsActive)} onClick={onToggleSettings}>
+              <PremiumIcon token="⚙" size={15} />
+              <span>Settings</span>
+            </button>
+            <button style={tabStyle(activeTab === 'design')} onClick={() => setActiveTab((current) => current === 'design' ? null : 'design')}>
+              <PremiumIcon token="✦" size={15} />
+              <span>Design</span>
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'file' ? filePanel : activeTab === 'history' ? historyPanel : activeTab === 'review' ? reviewPanel : settingsActive ? (
+          <div style={{ position: 'absolute', top: 'calc(100% + 14px)', right: '16px', width: '304px', maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px', background: 'rgba(18,22,34,0.9)', border: `1px solid ${world.borderColor}14`, borderRadius: '24px', boxShadow: '0 14px 30px rgba(0,0,0,0.18)', zIndex: 30 }}>
+            {settingsPanel}
+          </div>
+        ) : activeTab === 'design' ? (
+          <div style={{ position: 'absolute', top: 'calc(100% + 14px)', right: '16px', width: '212px', maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px', background: 'rgba(18,22,34,0.9)', border: `1px solid ${world.borderColor}14`, borderRadius: '24px', boxShadow: '0 14px 30px rgba(0,0,0,0.18)', zIndex: 30 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '11px', fontWeight: 700, color: world.accentColor, letterSpacing: '0.10em' }}>Design</span>
+              <span style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.4 }}>Add fields and ready-made groups.</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'stretch', width: '100%' }}>
+              <button style={{ ...tabStyle(activeDesignTab === 'fields'), width: '100%', justifyContent: 'space-between', borderRadius: '14px', padding: '11px 13px' }} onClick={() => setActiveDesignTab('fields')}>
+                <PremiumIcon token="🧩" size={15} />
+                <span>Fields</span>
+              </button>
+              <button style={{ ...tabStyle(activeDesignTab === 'collections'), width: '100%', justifyContent: 'space-between', borderRadius: '14px', padding: '11px 13px' }} onClick={() => setActiveDesignTab('collections')}>
+                <PremiumIcon token="📦" size={15} />
+                <span>Collections</span>
+              </button>
+            </div>
+            {activeDesignTab === 'fields' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'stretch', width: '100%' }}>
+              {PALETTE_CATEGORIES.map((cat) => (
+                <div key={cat.id} style={{ position: 'relative' }}>
+                  <button style={{ ...categoryTabStyle(activeFieldCategory === cat.id), width: '100%', minWidth: '100%', minHeight: '56px' }} onClick={() => setActiveFieldCategory((current) => current === cat.id ? null : cat.id)}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                      <PremiumIcon token={cat.icon} size={16} />
+                      <span>{cat.label}</span>
+                    </span>
+                    <span style={{ fontSize: '10px', opacity: 0.72 }}>{activeFieldCategory === cat.id ? '▴' : '▾'}</span>
+                  </button>
+                  {activeFieldCategory === cat.id && (
+                    <div style={dropdownPanelStyle}>
+                      <div style={sectionTitleStyle}>
+                        <PremiumIcon token={cat.icon} size={14} />
+                        <span>{cat.label}</span>
+                      </div>
+                      <div style={tileGridStyle}>
+                        {cat.fields.map((f) => (
+                          <button key={f.type} style={fieldBtn} onClick={() => { onAddField(f.type); setActiveFieldCategory(null); }}
+                            onMouseEnter={(e) => {
+                              const el = e.currentTarget as HTMLButtonElement;
+                              el.style.background = world.cardBg; el.style.borderColor = world.borderColor + '40'; el.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              const el = e.currentTarget as HTMLButtonElement;
+                              el.style.background = 'rgba(255,255,255,0.03)'; el.style.borderColor = 'rgba(255,255,255,0.06)'; el.style.transform = 'translateY(0)';
+                            }}>
+                            <PremiumIcon token={f.icon} size={16} />
+                            <span>{f.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
-          )}
-        </div>
-      ))}
-
-      <div style={{ height: '1px', background: `linear-gradient(90deg, transparent, ${world.borderColor}44, transparent)`, margin: '8px 0' }} />
-
-      <button style={catBtn(collectionsOpen)} onClick={() => setCollectionsOpen(o => !o)}>
-        <span style={{ fontSize: '14px' }}>📦</span>
-        <span style={{ flex: 1 }}>Collections</span>
-        <span style={{ fontSize: '9px', opacity: 0.5 }}>{visibleCollections.length} · {collectionsOpen ? '▲' : '▼'}</span>
-      </button>
-
-      {collectionsOpen && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingLeft: '2px' }}>
-          {visibleCollections.map((col) => (
-            <button key={col.id} onClick={() => onAddCollection(col.id)}
-              style={{ background: `${col.accentColor}0d`, border: `1px solid ${col.accentColor}30`, borderRadius: '8px', color: col.accentColor, padding: '9px 10px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', width: '100%' }}
-              onMouseEnter={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.background = `${col.accentColor}22`; el.style.borderColor = `${col.accentColor}66`; el.style.boxShadow = `0 0 10px ${col.accentColor}33`; }}
-              onMouseLeave={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.background = `${col.accentColor}0d`; el.style.borderColor = `${col.accentColor}30`; el.style.boxShadow = 'none'; }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                <span style={{ fontSize: '16px' }}>{col.icon}</span>
-                <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', fontWeight: 700 }}>{col.label}</span>
+            ) : (
+              <div style={{ width: '100%' }}>
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  {visibleCollections.map((col) => (
+                    <button key={col.id} onClick={() => onAddCollection(col.id)}
+                      style={{ ...collectionBtn, color: col.accentColor, borderColor: `${col.accentColor}22` }}
+                      onMouseEnter={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.background = `${col.accentColor}14`; el.style.borderColor = `${col.accentColor}40`; el.style.transform = 'translateY(-1px)'; }}
+                      onMouseLeave={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.background = 'rgba(255,255,255,0.025)'; el.style.borderColor = `${col.accentColor}22`; el.style.transform = 'translateY(0)'; }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '14px' }}>{col.icon}</span>
+                        <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', fontWeight: 700 }}>{col.label}</span>
+                      </div>
+                      <div style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '10px', color: `${col.accentColor}88`, lineHeight: 1.35 }}>{col.description}</div>
+                    </button>
+                  ))}
+                  {visibleCollections.length === 0 && (
+                    <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)', paddingTop: '10px', letterSpacing: '0.08em' }}>
+                      No collections for this mission type
+                    </div>
+                  )}
+                </div>
               </div>
-              <div style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '10px', color: `${col.accentColor}88`, lineHeight: 1.3 }}>{col.description}</div>
-              <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '9px', color: `${col.accentColor}55`, marginTop: '4px', letterSpacing: '0.1em' }}>+ {col.fields.length} fields</div>
-            </button>
-          ))}
-          {visibleCollections.length === 0 && (
-            <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)', textAlign: 'center', padding: '10px 0', letterSpacing: '0.1em' }}>
-              No collections for this mission type
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Hover field-type preview tooltip */}
-      {hoverPreview && (
-        <div style={{
-          position: 'fixed',
-          left: 200,
-          top: Math.max(8, Math.min(hoverPreview.y - 10, (typeof window !== 'undefined' ? window.innerHeight : 600) - 220)),
-          zIndex: 300,
-          background: world.cardBg,
-          border: `1.5px solid ${world.accentColor}55`,
-          borderRadius: 12,
-          padding: '14px 16px',
-          width: 220,
-          boxShadow: `0 12px 40px rgba(0,0,0,0.6), 0 0 24px ${world.accentColor}18`,
-          pointerEvents: 'none',
-        }}>
-          <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 11, fontWeight: 700, color: world.accentColor, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>{FIELD_TYPES.find(f => f.type === hoverPreview.type)?.icon}</span>
-            <span>{FIELD_TYPES.find(f => f.type === hoverPreview.type)?.label}</span>
+            )}
           </div>
-          <div style={{ pointerEvents: 'none' }}>
-            <FieldPreview field={defaultField(hoverPreview.type)} world={world} />
-          </div>
-        </div>
-      )}
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -660,6 +732,14 @@ export function FormBuilder({
   const [savedFormSlug, setSavedFormSlug] = useState<string | null>(null);
   const [isPublished, setIsPublished] = useState(false);
   const [publishMsg, setPublishMsg]   = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [formDescription, setFormDescription] = useState('');
+  const [formVisibility, setFormVisibility] = useState<'public' | 'unlisted'>('unlisted');
+  const [customSlug, setCustomSlug] = useState('');
+  const [expiresAt, setExpiresAt] = useState('');
+  const [responseLimit, setResponseLimit] = useState('');
+  const [accessPassword, setAccessPassword] = useState('');
+  const [activeRibbonTab, setActiveRibbonTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
 
   const createMut  = trpc.forms.create.useMutation();
   const updateMut  = trpc.forms.update.useMutation();
@@ -681,6 +761,12 @@ export function FormBuilder({
       await updateMut.mutateAsync({
         id: fid,
         title: formTitle || 'Untitled Form',
+        description: formDescription || undefined,
+        visibility: formVisibility,
+        slug: customSlug.trim() || undefined,
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+        responseLimit: responseLimit ? Number(responseLimit) : null,
+        accessPassword: accessPassword.trim() || null,
         worldTheme: world.id,
         schema: fields,
       });
@@ -739,9 +825,9 @@ export function FormBuilder({
     setEditingId(f.id);
   }, [fields, onFieldsChange]);
 
-  const fieldCount = fields.filter(f => f.type !== 'section').length;
-  const reqCount   = fields.filter(f => f.type !== 'section' && f.required).length;
-  const secCount   = fields.filter(f => f.type === 'section').length;
+  const fieldCount = fields.filter(f => !['section', 'page_break'].includes(f.type)).length;
+  const reqCount   = fields.filter(f => !['section', 'page_break'].includes(f.type) && f.required).length;
+  const secCount   = fields.filter(f => ['section', 'page_break'].includes(f.type)).length;
   const visibleCollections = COLLECTIONS.filter(col =>
     !col.purposes?.length || col.purposes.includes(purposeId) || !purposeId || purposeId === 'scratch'
   );
@@ -766,6 +852,12 @@ export function FormBuilder({
       await updateMut.mutateAsync({
         id: fid,
         title: formTitle || 'Untitled Form',
+        description: formDescription || undefined,
+        visibility: formVisibility,
+        slug: customSlug.trim() || undefined,
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+        responseLimit: responseLimit ? Number(responseLimit) : null,
+        accessPassword: accessPassword.trim() || null,
         worldTheme: world.id,
         schema: fields,
       });
@@ -821,15 +913,27 @@ export function FormBuilder({
 
   // ── Button style helpers ──────────────────────────────────────────────────
   const toolBtn = (active = false, danger = false): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: 5,
-    background: danger ? 'rgba(255,60,60,0.07)' : active ? `${world.accentColor}18` : 'rgba(255,255,255,0.05)',
-    border: `1px solid ${danger ? 'rgba(255,80,80,0.22)' : active ? world.accentColor + '44' : 'rgba(255,255,255,0.1)'}`,
-    borderRadius: 8,
-    color: danger ? 'rgba(255,120,120,0.75)' : active ? world.accentColor : 'rgba(255,255,255,0.5)',
-    fontFamily: "'Rajdhani', sans-serif", fontSize: 11, fontWeight: 700,
-    letterSpacing: '0.08em', padding: '7px 13px', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', gap: 6,
+    background: danger ? 'rgba(255,91,91,0.10)' : active ? `${world.accentColor}16` : 'rgba(255,255,255,0.05)',
+    border: `1px solid ${danger ? 'rgba(255,91,91,0.22)' : active ? world.accentColor + '32' : 'rgba(255,255,255,0.06)'}`,
+    borderRadius: 999,
+    color: danger ? 'rgba(255,166,166,0.9)' : active ? world.textColor : 'rgba(255,255,255,0.74)',
+    fontFamily: "'Exo 2', sans-serif", fontSize: 11, fontWeight: 700,
+    letterSpacing: '0.03em', padding: '8px 14px', cursor: 'pointer',
     transition: 'all 0.18s', flexShrink: 0, whiteSpace: 'nowrap' as const,
   });
+  const ribbonGroup: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8, padding: '12px', background: 'rgba(255,255,255,0.05)', border: `1px solid ${world.borderColor}12`, borderRadius: 18, minHeight: 90, justifyContent: 'space-between', minWidth: 0 };
+  const ribbonLabel: React.CSSProperties = { fontFamily: "'Exo 2', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.5)', textAlign: 'left' };
+  const ribbonRow: React.CSSProperties = { display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' };
+  const ribbonBtn = (active = false, tone: 'default' | 'accent' | 'success' = 'default'): React.CSSProperties => ({
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+    minWidth: 74, minHeight: 50, padding: '9px 10px', borderRadius: 16,
+    background: tone === 'success' ? 'rgba(34,197,94,0.12)' : tone === 'accent' ? `${world.accentColor}14` : active ? `${world.accentColor}12` : 'rgba(255,255,255,0.045)',
+    border: `1px solid ${tone === 'success' ? 'rgba(34,197,94,0.22)' : tone === 'accent' ? world.accentColor + '28' : active ? world.accentColor + '28' : 'rgba(255,255,255,0.05)'}`,
+    color: tone === 'success' ? '#86efac' : tone === 'accent' || active ? world.textColor : 'rgba(255,255,255,0.76)',
+    fontFamily: "'Exo 2', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer', transition: 'all 0.18s', whiteSpace: 'nowrap' as const,
+  });
+  const primaryRibbonBtn: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, minWidth: 88, minHeight: 50, padding: '9px 12px', borderRadius: 16, background: world.buttonGradient, border: 'none', color: world.buttonText, fontFamily: "'Exo 2', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '0.03em', cursor: 'pointer', boxShadow: `0 10px 22px ${world.glowColor}22`, whiteSpace: 'nowrap' as const };
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: world.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -854,7 +958,7 @@ export function FormBuilder({
       )}
 
       {/* ══ TOP NAV BAR ══ */}
-      <div style={{ position: 'relative', zIndex: 10, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(20px)', borderBottom: `1px solid ${world.borderColor}28`, padding: '0 16px', height: 56, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+      <div style={{ position: 'relative', zIndex: 10, background: 'rgba(20,24,36,0.94)', backdropFilter: 'blur(18px)', borderBottom: `1px solid ${world.borderColor}16`, padding: '10px 16px', minHeight: 60, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, flexWrap: 'wrap', boxShadow: '0 6px 16px rgba(0,0,0,0.12)' }}>
 
         {/* Left — back + identity */}
         <button onClick={onBack} style={toolBtn()}>← Back</button>
@@ -862,7 +966,7 @@ export function FormBuilder({
         <div style={{ width: 1, height: 24, background: `${world.borderColor}30`, flexShrink: 0 }} />
 
         {/* World + avatar badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: `${world.accentColor}10`, border: `1px solid ${world.accentColor}28`, borderRadius: 20, padding: '4px 12px 4px 8px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(255,255,255,0.05)', border: `1px solid ${world.borderColor}14`, borderRadius: 999, padding: '6px 11px 6px 8px', flexShrink: 0 }}>
           <span style={{ fontSize: 18 }}>{world.emoji}</span>
           <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: world.accentColor, fontWeight: 700, letterSpacing: '0.05em' }}>{world.name}</span>
           <span style={{ width: 1, height: 14, background: `${world.accentColor}30` }} />
@@ -875,7 +979,7 @@ export function FormBuilder({
           value={formTitle}
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder="Untitled Form..."
-          style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.borderColor}33`, borderRadius: 8, color: world.textColor, fontFamily: "'Cinzel Decorative', serif", fontSize: 13, fontWeight: 700, padding: '7px 14px', outline: 'none', letterSpacing: '0.04em', minWidth: 0, transition: 'border-color 0.18s' }}
+          style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: `1px solid ${world.borderColor}16`, borderRadius: 16, color: world.textColor, fontFamily: "'Exo 2', sans-serif", fontSize: 14, fontWeight: 700, padding: '10px 14px', outline: 'none', letterSpacing: '0.01em', minWidth: 0, transition: 'border-color 0.18s, background 0.18s' }}
           onFocus={e => { e.currentTarget.style.borderColor = `${world.accentColor}55`; e.currentTarget.style.background = `${world.accentColor}08`; }}
           onBlur={e  => { e.currentTarget.style.borderColor = `${world.borderColor}33`; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
         />
@@ -887,75 +991,158 @@ export function FormBuilder({
             { n: reqCount,   l: 'required', c: reqCount   > 0 ? '#f87171'         : 'rgba(255,255,255,0.22)' },
             { n: secCount,   l: 'sections', c: secCount   > 0 ? '#fbbf24'         : 'rgba(255,255,255,0.22)' },
           ].map(({ n, l, c }) => (
-            <div key={l} style={{ background: `${c}10`, border: `1px solid ${c}25`, borderRadius: 8, padding: '4px 10px', textAlign: 'center', minWidth: 44 }}>
-              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 14, fontWeight: 900, color: c, lineHeight: 1 }}>{n}</div>
-              <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 8, color: `${c}77`, letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 2 }}>{l}</div>
+            <div key={l} style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${c}18`, borderRadius: 999, padding: '6px 10px', textAlign: 'center', minWidth: 48 }}>
+              <div style={{ fontFamily: "'Exo 2', sans-serif", fontSize: 13, fontWeight: 800, color: c, lineHeight: 1 }}>{n}</div>
+              <div style={{ fontFamily: "'Exo 2', sans-serif", fontSize: 8, color: `${c}88`, letterSpacing: '0.04em', marginTop: 3 }}>{l}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ width: 1, height: 24, background: `${world.borderColor}30`, flexShrink: 0 }} />
-
-        {/* Action buttons */}
-        <button onClick={() => setShowTemplates(true)} style={{ ...toolBtn(showTemplates), background: showTemplates ? `${world.accentColor}22` : `${world.accentColor}10`, border: `1px solid ${world.accentColor}44`, color: world.accentColor, fontWeight: 700 }}>
-          📋 Templates
-        </button>
-        <button onClick={importTemplate} style={toolBtn(!!importMsg, false)} title="Import .trform.json">
-          📤 {importMsg || 'Import'}
-        </button>
-        <button onClick={exportTemplate} disabled={fieldCount === 0} style={{ ...toolBtn(), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }} title="Export .trform.json">
-          📥 Export
-        </button>
-        <button onClick={copyShareLink} disabled={fieldCount === 0} style={{ ...toolBtn(!!shareMsg), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }}>
-          🔗 {shareMsg || 'Share'}
-        </button>
-        <button onClick={() => setShowVersions(v => !v)} style={{ ...toolBtn(showVersions), position: 'relative' }}>
-          🕐 Versions
-          {versions.length > 0 && (
-            <span style={{ position: 'absolute', top: -6, right: -6, background: world.accentColor, color: '#000', borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 900, fontFamily: "'Rajdhani', sans-serif" }}>{versions.length}</span>
-          )}
-        </button>
-
-        <div style={{ width: 1, height: 24, background: `${world.borderColor}30`, flexShrink: 0 }} />
-
-        <button onClick={handlePublish} disabled={fieldCount === 0 || createMut.isPending || publishMut.isPending}
-          style={{ ...toolBtn(isPublished), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer',
-            background: isPublished ? 'rgba(249,115,22,0.12)' : 'rgba(34,197,94,0.12)',
-            border: `1px solid ${isPublished ? 'rgba(249,115,22,0.4)' : 'rgba(34,197,94,0.4)'}`,
-            color: publishMsg.startsWith('⚠') ? '#f87171' : isPublished ? '#f97316' : '#4ade80',
-            fontWeight: 700, flexShrink: 0 }}>
-          {createMut.isPending || publishMut.isPending ? '⏳' : isPublished ? '🔒 Unpublish' : '🌐 Publish'}
-          {publishMsg && <span style={{ marginLeft: 4, fontSize: 10 }}>{publishMsg}</span>}
-        </button>
-
-        <button onClick={onPreview} disabled={fieldCount === 0} style={{ display: 'flex', alignItems: 'center', gap: 6, background: fieldCount > 0 ? world.buttonGradient : 'rgba(255,255,255,0.04)', border: 'none', borderRadius: 8, color: fieldCount > 0 ? world.buttonText : 'rgba(255,255,255,0.2)', fontFamily: "'Rajdhani', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', padding: '9px 18px', cursor: fieldCount > 0 ? 'pointer' : 'not-allowed', boxShadow: fieldCount > 0 ? `0 0 18px ${world.glowColor}55` : 'none', transition: 'all 0.18s', flexShrink: 0 }}
-          onMouseEnter={e => { if (fieldCount > 0) e.currentTarget.style.filter = 'brightness(1.12)'; }}
-          onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; }}>
-          👁 Preview
-        </button>
-
         <button onClick={onLogout} style={toolBtn(false, true)}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,60,60,0.18)'; (e.currentTarget as HTMLButtonElement).style.color = '#f87171'; }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,60,60,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,120,120,0.75)'; }}>
-          🚪 Logout
+          <PremiumIcon token="🚪" size={15} style={{ marginRight: 6 }} />Logout
         </button>
       </div>
 
       {/* ══ MAIN CONTENT ══ */}
-      <div style={{ position: 'relative', zIndex: 5, flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', zIndex: 5, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-        {/* Left palette sidebar */}
-        <PaletteSidebar world={world} purposeId={purposeId} onAddField={addField} onAddCollection={addCollection} />
+        {/* Top ribbon */}
+        <PaletteSidebar world={world} purposeId={purposeId} onAddField={addField} onAddCollection={addCollection} settingsActive={showSettings} onToggleSettings={() => setShowSettings(v => !v)} onActiveTabChange={setActiveRibbonTab} filePanel={(
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
+        <div style={ribbonGroup}>
+          <div style={ribbonRow}>
+            <button onClick={() => setShowTemplates(true)} style={ribbonBtn(showTemplates, 'accent')}>
+              <PremiumIcon token="📋" size={16} />
+              <span>Templates</span>
+            </button>
+            <button onClick={importTemplate} style={ribbonBtn(!!importMsg, 'default')} title="Import .trform.json">
+              <PremiumIcon token={importMsg.startsWith('⚠') ? '⚠' : '📤'} size={16} />
+              <span>{importMsg ? (importMsg.startsWith('⚠') ? 'Bad File' : 'Imported') : 'Import'}</span>
+            </button>
+            <button onClick={exportTemplate} disabled={fieldCount === 0} style={{ ...ribbonBtn(false, 'default'), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }} title="Export .trform.json">
+              <PremiumIcon token="📥" size={16} />
+              <span>Export</span>
+            </button>
+          </div>
+          <div style={ribbonLabel}>File</div>
+        </div>
+          </div>
+        )} historyPanel={(
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
+        <div style={ribbonGroup}>
+          <div style={ribbonRow}>
+            <button onClick={copyShareLink} disabled={fieldCount === 0} style={{ ...ribbonBtn(!!shareMsg, 'default'), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }}>
+              <PremiumIcon token={shareMsg ? '✓' : '🔗'} size={16} />
+              <span>{shareMsg ? 'Copied' : 'Share'}</span>
+            </button>
+            <button onClick={() => setShowVersions(v => !v)} style={{ ...ribbonBtn(showVersions, 'default'), position: 'relative' }}>
+              <PremiumIcon token="🕐" size={16} />
+              <span>Versions</span>
+              {versions.length > 0 && (
+                <span style={{ position: 'absolute', top: 6, right: 6, background: world.accentColor, color: '#000', borderRadius: '999px', minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, padding: '0 5px' }}>{versions.length}</span>
+              )}
+            </button>
+          </div>
+          <div style={ribbonLabel}>Share & History</div>
+        </div>
+          </div>
+        )} reviewPanel={(
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
+        <div style={ribbonGroup}>
+          <div style={ribbonRow}>
+            <button onClick={handlePublish} disabled={fieldCount === 0 || createMut.isPending || publishMut.isPending}
+              style={{ ...ribbonBtn(isPublished, 'success'), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer', color: publishMsg.startsWith('⚠') ? '#fca5a5' : isPublished ? '#fb923c' : '#86efac', border: `1px solid ${isPublished ? 'rgba(249,115,22,0.35)' : 'rgba(34,197,94,0.28)'}`, background: isPublished ? 'rgba(249,115,22,0.12)' : 'rgba(34,197,94,0.12)' }}>
+              <PremiumIcon token={createMut.isPending || publishMut.isPending ? '⏳' : isPublished ? '🔒' : '🌐'} size={16} />
+              <span>{createMut.isPending || publishMut.isPending ? 'Working' : isPublished ? 'Unpublish' : 'Publish'}</span>
+            </button>
+            <button onClick={onPreview} disabled={fieldCount === 0} style={{ ...primaryRibbonBtn, opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }}>
+              <PremiumIcon token="👁" size={16} />
+              <span>Preview</span>
+            </button>
+          </div>
+          <div style={ribbonLabel}>Review & Publish</div>
+        </div>
+          </div>
+        )} settingsPanel={(
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '11px', fontWeight: 700, color: world.accentColor, letterSpacing: '0.10em' }}>Settings</span>
+              <span style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.4 }}>Manage sharing, access, and response rules.</span>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${world.borderColor}24`, borderRadius: 16, padding: 12 }}>
+              <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 11, fontWeight: 700, color: world.accentColor, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Sharing</div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.borderColor}1f`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: world.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Description</span>
+                    <span style={{ fontSize: 12, color: `${world.mutedColor}cc` }}>Shown on the public form header.</span>
+                  </span>
+                  <textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Short summary for public viewers" rows={3}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.borderColor}33`, borderRadius: 10, color: world.textColor, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, padding: '10px 12px', resize: 'vertical' }} />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.borderColor}1f`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: world.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Visibility</span>
+                    <span style={{ fontSize: 12, color: `${world.mutedColor}cc` }}>Choose whether anyone can discover it.</span>
+                  </span>
+                  <select value={formVisibility} onChange={(e) => setFormVisibility(e.target.value as 'public' | 'unlisted')}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.borderColor}33`, borderRadius: 10, color: world.textColor, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, padding: '10px 12px' }}>
+                    <option value="unlisted">Unlisted</option>
+                    <option value="public">Public</option>
+                  </select>
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.borderColor}1f`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: world.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Custom Slug</span>
+                    <span style={{ fontSize: 12, color: `${world.mutedColor}cc` }}>Optional short URL for sharing.</span>
+                  </span>
+                  <input value={customSlug} onChange={(e) => setCustomSlug(e.target.value)} placeholder="optional-custom-slug"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.borderColor}33`, borderRadius: 10, color: world.textColor, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, padding: '10px 12px' }} />
+                </label>
+              </div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${world.borderColor}24`, borderRadius: 16, padding: 12 }}>
+              <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 11, fontWeight: 700, color: world.accentColor, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Access Control</div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.borderColor}1f`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: world.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Expiry</span>
+                    <span style={{ fontSize: 12, color: `${world.mutedColor}cc` }}>Disable submissions after a date.</span>
+                  </span>
+                  <input type="datetime-local" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.borderColor}33`, borderRadius: 10, color: world.textColor, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, padding: '10px 12px' }} />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.borderColor}1f`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: world.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Response Limit</span>
+                    <span style={{ fontSize: 12, color: `${world.mutedColor}cc` }}>Stop after a fixed number of responses.</span>
+                  </span>
+                  <input type="number" min="1" value={responseLimit} onChange={(e) => setResponseLimit(e.target.value)} placeholder="Unlimited"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.borderColor}33`, borderRadius: 10, color: world.textColor, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, padding: '10px 12px' }} />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.borderColor}1f`, borderRadius: 12, padding: 12 }}>
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: world.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Form Password</span>
+                    <span style={{ fontSize: 12, color: `${world.mutedColor}cc` }}>Require a password before opening the form.</span>
+                  </span>
+                  <input type="password" value={accessPassword} onChange={(e) => setAccessPassword(e.target.value)} placeholder="Optional access password"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.borderColor}33`, borderRadius: 10, color: world.textColor, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, padding: '10px 12px' }} />
+                </label>
+              </div>
+            </div>
+          </div>
+        )} />
 
         {/* ── Canvas ── */}
-        <div className="tr-scroll" style={{ flex: 1, overflowY: 'auto', background: 'rgba(255,255,255,0.018)', boxShadow: 'inset 1px 0 0 rgba(255,255,255,0.05)' }}>
+        <div className="tr-scroll" style={{ flex: 1, overflowY: 'auto', background: 'rgba(255,255,255,0.018)', paddingRight: showSettings ? '336px' : activeRibbonTab === 'design' ? '248px' : 0 }}>
           <div style={{ maxWidth: 760, margin: '0 auto', padding: '28px 24px 80px' }}>
-
             {/* ── Collections Quick-Add Strip (always visible) ── */}
           {visibleCollections.length > 0 && (
             <div style={{ marginBottom: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: world.accentColor }}>⚡ Quick Add</span>
+                <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: world.accentColor, display: 'inline-flex', alignItems: 'center', gap: 6 }}><PremiumIcon token="✦" size={12} />Quick Add</span>
                 <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${world.accentColor}33, transparent)` }} />
               </div>
               <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
@@ -1014,7 +1201,7 @@ export function FormBuilder({
               <div style={{ border: `1.5px dashed ${world.borderColor}30`, borderRadius: 14, padding: '22px 24px', background: `${world.accentColor}03`, textAlign: 'center' }}>
                 <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.4 }}>⠿</div>
                 <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.28)', marginBottom: 14, letterSpacing: '0.05em' }}>
-                  Drag fields from the left panel — or click a type to add instantly:
+                  Use the top ribbon to add fields instantly:
                 </p>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
                   {(['text','email','phone','number','select','textarea','radio','rating'] as FieldType[]).map(t => {
@@ -1040,7 +1227,7 @@ export function FormBuilder({
                   <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 10, color: world.mutedColor, opacity: 0.5, letterSpacing: '0.12em' }}>Click a field to edit</span>
                 </div>
                 {fields.map((field, i) =>
-                  field.type === 'section'
+                  field.type === 'section' || field.type === 'page_break'
                     ? <SectionCard key={field.id} field={field} index={i} total={fields.length} world={world}
                         isEditing={editingId === field.id}
                         onEdit={() => setEditingId(editingId === field.id ? null : field.id)}

@@ -2,15 +2,18 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Country } from '../globeData';
 import type { LibraryWorld } from '../libraryData';
 import type { Avatar, FormField, FormVersion, Screen, WorldTheme } from '../types';
+import { LIBRARY_PRESETS } from '../libraryData';
 import { AvatarSelector } from './AvatarSelector';
 import { CountryCinematic } from './CountryCinematic';
 import { ExperiencePortalTransition } from './ExperiencePortalTransition';
 import { FormBuilder } from './FormBuilder';
 import { FormPreview } from './FormPreview';
-import { GlobeFormBuilder } from './GlobeFormBuilder';
+import { GlobeMissionScreen } from './GlobeMissionScreen';
+import { GlobeFormBuilder, LOCALE_PRESETS, buildGlobePresetFields } from './GlobeFormBuilder';
 import { GlobeIntro } from './GlobeIntro';
 import { GlobeSelector } from './GlobeSelector';
-import { LibraryFormBuilder } from './LibraryFormBuilder';
+import { LibraryMissionScreen } from './LibraryMissionScreen';
+import { LibraryFormBuilder, buildLibraryPresetFields } from './LibraryFormBuilder';
 import { LibraryIntro } from './LibraryIntro';
 import { LibrarySelector } from './LibrarySelector';
 import { LibraryWorldCinematic } from './LibraryWorldCinematic';
@@ -19,6 +22,16 @@ import { StoryIntro } from './StoryIntro';
 import { WorldCinematic } from './WorldCinematic';
 import { WorldDoorTransition } from './WorldDoorTransition';
 import { WorldSelector } from './WorldSelector';
+
+type MissionOption = {
+  id: string;
+  emoji: string;
+  name: string;
+  description: string;
+  fieldCount: number;
+  suggestedTitle: string;
+  buildFields: () => FormField[];
+};
 
 type TempleExperienceFlowProps = {
   screen: Screen;
@@ -83,11 +96,11 @@ export function TempleExperienceFlow({
       )}
 
       {screen === 'worldDoor' && world && (
-        <WorldDoorTransition world={world} onComplete={() => onScreenChange('worldCinematic')} />
+        <WorldDoorTransition world={world} onComplete={() => onScreenChange('worldCinematic')} onBack={() => onScreenChange('world')} />
       )}
 
       {screen === 'worldCinematic' && avatar && world && (
-        <WorldCinematic world={world} avatar={avatar} onComplete={() => onScreenChange('mapPurpose')} />
+        <WorldCinematic world={world} avatar={avatar} onComplete={() => onScreenChange('mapPurpose')} onBack={() => onScreenChange('world')} />
       )}
 
       {screen === 'mapPurpose' && avatar && world && (
@@ -135,10 +148,12 @@ type GlobeExperienceFlowProps = {
   country: Country | null;
   fields: FormField[];
   title: string;
+  purposeId: string;
   onScreenChange: (screen: Screen) => void;
   onCountryChange: (country: Country | null) => void;
   onFieldsChange: (fields: FormField[]) => void;
   onTitleChange: (title: string) => void;
+  onPurposeIdChange: (purposeId: string) => void;
   onLogout: () => void;
 };
 
@@ -147,12 +162,44 @@ export function GlobeExperienceFlow({
   country,
   fields,
   title,
+  purposeId,
   onScreenChange,
   onCountryChange,
   onFieldsChange,
   onTitleChange,
+  onPurposeIdChange,
   onLogout,
 }: GlobeExperienceFlowProps) {
+  const missionOptions: MissionOption[] = country
+    ? [
+        ...((LOCALE_PRESETS[country.fieldPreset] ?? LOCALE_PRESETS.usa).map((preset, index) => {
+          const [emoji, ...rest] = preset.group.split(' ');
+          const cleanName = rest.join(' ') || preset.group;
+          const labels = preset.fields.slice(0, 3).map((field) => field.label).join(', ');
+          return {
+            id: `globe-${country.id}-${index}`,
+            emoji: rest.length > 0 ? emoji : '📋',
+            name: cleanName,
+            description: `${cleanName} tuned for ${country.name}. Includes ${labels}${preset.fields.length > 3 ? ', and more.' : '.'}`,
+            fieldCount: preset.fields.length,
+            suggestedTitle: `${country.name} · ${cleanName}`,
+            buildFields: () => buildGlobePresetFields(country, preset.fields),
+          };
+        })),
+        {
+          id: `globe-${country.id}-scratch`,
+          emoji: '✨',
+          name: 'Start from Scratch',
+          description: `Begin with an empty ${country.name} form and design every field yourself.`,
+          fieldCount: 0,
+          suggestedTitle: `${country.name} Form`,
+          buildFields: () => [],
+        },
+      ]
+    : [];
+
+  const missionPanel = country?.cinematic.find((panel) => panel.title.toLowerCase().includes('mission')) ?? country?.cinematic[country.cinematic.length - 1];
+
   return (
     <>
       {screen === 'globeIntro' && <GlobeIntro onComplete={() => onScreenChange('globeSelector')} onBack={() => onScreenChange('experiencePicker')} />}
@@ -172,18 +219,41 @@ export function GlobeExperienceFlow({
           emoji={country.emoji}
           title={country.name}
           subtitle="The world opens"
+          onBack={() => onScreenChange('globeSelector')}
           onComplete={() => onScreenChange('countryCinematic')}
         />
       )}
 
       {screen === 'countryCinematic' && country && (
-        <CountryCinematic country={country} onComplete={() => onScreenChange('globeBuilder')} />
+        <CountryCinematic country={country} onComplete={() => onScreenChange('globeMission')} onBack={() => onScreenChange('globeSelector')} />
+      )}
+
+      {screen === 'globeMission' && country && missionPanel && (
+        <GlobeMissionScreen
+          destinationLabel={country.name}
+          accentColor={country.accentColor}
+          glowColor={country.glowColor}
+          background={country.bgGradient}
+          missionTitle={missionPanel.title}
+          missionText={missionPanel.text}
+          currentMissionId={purposeId}
+          options={missionOptions}
+          onSelect={(nextFields, nextTitle, nextPurposeId) => {
+            onFieldsChange(nextFields);
+            onTitleChange(nextTitle);
+            onPurposeIdChange(nextPurposeId);
+            onScreenChange('globeBuilder');
+          }}
+          onBack={() => onScreenChange('globeSelector')}
+        />
       )}
 
       {screen === 'globeBuilder' && country && (
         <GlobeFormBuilder
           country={country}
-          onBack={() => onScreenChange('globeSelector')}
+          initialFields={fields}
+          initialTitle={title}
+          onBack={() => onScreenChange('globeMission')}
           onLogout={onLogout}
           onPreview={(nextFields, nextTitle) => {
             onFieldsChange(nextFields);
@@ -205,10 +275,12 @@ type LibraryExperienceFlowProps = {
   world: LibraryWorld | null;
   fields: FormField[];
   title: string;
+  purposeId: string;
   onScreenChange: (screen: Screen) => void;
   onWorldChange: (world: LibraryWorld | null) => void;
   onFieldsChange: (fields: FormField[]) => void;
   onTitleChange: (title: string) => void;
+  onPurposeIdChange: (purposeId: string) => void;
   onLogout: () => void;
 };
 
@@ -217,12 +289,44 @@ export function LibraryExperienceFlow({
   world,
   fields,
   title,
+  purposeId,
   onScreenChange,
   onWorldChange,
   onFieldsChange,
   onTitleChange,
+  onPurposeIdChange,
   onLogout,
 }: LibraryExperienceFlowProps) {
+  const missionOptions: MissionOption[] = world
+    ? [
+        ...LIBRARY_PRESETS[world.id].map((preset, index) => {
+          const [emoji, ...rest] = preset.group.split(' ');
+          const cleanName = rest.join(' ') || preset.group;
+          const labels = preset.fields.slice(0, 3).map((field) => field.label).join(', ');
+          return {
+            id: `library-${world.id}-${index}`,
+            emoji: rest.length > 0 ? emoji : '📚',
+            name: cleanName,
+            description: `${cleanName} for the ${world.name} shelves. Includes ${labels}${preset.fields.length > 3 ? ', and more.' : '.'}`,
+            fieldCount: preset.fields.length,
+            suggestedTitle: `${world.name} · ${cleanName}`,
+            buildFields: () => buildLibraryPresetFields(world, preset.fields),
+          };
+        }),
+        {
+          id: `library-${world.id}-scratch`,
+          emoji: '✨',
+          name: 'Start from Scratch',
+          description: `Open a blank manuscript for ${world.name} and author the form structure yourself.`,
+          fieldCount: 0,
+          suggestedTitle: `${world.name} Form`,
+          buildFields: () => [],
+        },
+      ]
+    : [];
+
+  const missionPanel = world?.cinematic.find((panel) => panel.title.toLowerCase().includes('mission') || panel.title.toLowerCase().includes('quest')) ?? world?.cinematic[world.cinematic.length - 1];
+
   return (
     <>
       {screen === 'libraryIntro' && <LibraryIntro onComplete={() => onScreenChange('librarySelector')} onBack={() => onScreenChange('experiencePicker')} />}
@@ -243,18 +347,41 @@ export function LibraryExperienceFlow({
           title={world.name}
           subtitle="Enter the archive"
           particles={world.particles}
+          onBack={() => onScreenChange('librarySelector')}
           onComplete={() => onScreenChange('libraryCinematic')}
         />
       )}
 
       {screen === 'libraryCinematic' && world && (
-        <LibraryWorldCinematic world={world} onComplete={() => onScreenChange('libraryBuilder')} />
+        <LibraryWorldCinematic world={world} onComplete={() => onScreenChange('libraryMission')} onBack={() => onScreenChange('librarySelector')} />
+      )}
+
+      {screen === 'libraryMission' && world && missionPanel && (
+        <LibraryMissionScreen
+          destinationLabel={world.name}
+          accentColor={world.accentColor}
+          glowColor={world.glowColor}
+          background={world.bgGradient}
+          missionTitle={missionPanel.title}
+          missionText={missionPanel.text}
+          currentMissionId={purposeId}
+          options={missionOptions}
+          onSelect={(nextFields, nextTitle, nextPurposeId) => {
+            onFieldsChange(nextFields);
+            onTitleChange(nextTitle);
+            onPurposeIdChange(nextPurposeId);
+            onScreenChange('libraryBuilder');
+          }}
+          onBack={() => onScreenChange('librarySelector')}
+        />
       )}
 
       {screen === 'libraryBuilder' && world && (
         <LibraryFormBuilder
           world={world}
-          onBack={() => onScreenChange('librarySelector')}
+          initialFields={fields}
+          initialTitle={title}
+          onBack={() => onScreenChange('libraryMission')}
           onLogout={onLogout}
           onPreview={(nextFields, nextTitle) => {
             onFieldsChange(nextFields);

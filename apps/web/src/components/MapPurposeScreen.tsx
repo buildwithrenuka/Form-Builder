@@ -132,7 +132,7 @@ const PURPOSES: Purpose[] = [
       halfField('select', 'Skill Level', '', true, {
         options: ['Rookie Explorer', 'Seasoned Runner', 'Temple Legend', 'Demon Slayer'],
       }),
-      field('radio', 'Favourite Form Quest World', '', true, {
+      field('radio', 'Favourite Realm Runner World', '', true, {
         options: ['🌴 Jungle World', '❄️ Snow World', '🏜️ Desert World', '🚀 Space World', '🌊 Underwater World', '🌋 Volcano World', '☁️ Heaven World', '😈 Hell World'],
       }),
       section('The Challenge', '#bf360c', 'Now prove your worth'),
@@ -318,7 +318,7 @@ const WORLD_PROMPTS: Record<string, string> = {
 const MAP_NODES: { id: string; emoji: string; x: number; y: number }[] = [
   { id: 'onboarding',   emoji: '🚀', x: 6,  y: 55 },
   { id: 'survey',       emoji: '📊', x: 16, y: 28 },
-  { id: 'quiz',         emoji: '🎯', x: 27, y: 60 },
+  { id: 'fun',          emoji: '🎯', x: 27, y: 60 },
   { id: 'registration', emoji: '📋', x: 37, y: 35 },
   { id: 'job',          emoji: '💼', x: 48, y: 65 },
   { id: 'contact',      emoji: '📬', x: 57, y: 25 },

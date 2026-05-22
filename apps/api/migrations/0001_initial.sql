@@ -1,4 +1,4 @@
--- Form Quest — initial schema for Cloudflare D1
+-- FormVerse — initial schema for Cloudflare D1
 -- Apply with: wrangler d1 migrations apply formquest-db
 
 CREATE TABLE IF NOT EXISTS users (

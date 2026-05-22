@@ -1,13 +1,22 @@
 import type { Context as HonoCtx } from 'hono';
+import { eq } from 'drizzle-orm';
 import { verifyToken } from './auth/jwt';
 import { getDb, type Env, type AppDB } from './db';
+import { users } from './db/schema';
 
 export type Context = {
   userId: string | null;
+  userEmail: string | null;
+  isAdmin: boolean;
   db:     AppDB;
   env:    Env;
   ip:     string | null;
 };
+
+function getAdminEmails(env: Env): Set<string> {
+  const configured = env.ADMIN_EMAILS?.split(',').map((value) => value.trim().toLowerCase()).filter(Boolean) ?? [];
+  return new Set(configured.length ? configured : ['demo@formverse.io']);
+}
 
 function getClientIp(c: HonoCtx<{ Bindings: Env }>): string | null {
   const forwardedFor = c.req.header('x-forwarded-for');
@@ -27,11 +36,21 @@ export async function createContext(c: HonoCtx<{ Bindings: Env }>): Promise<Cont
   const ip    = getClientIp(c);
   const auth  = c.req.header('authorization') ?? '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (!token) return { userId: null, db, env: c.env, ip };
+  if (!token) return { userId: null, userEmail: null, isAdmin: false, db, env: c.env, ip };
   try {
     const payload = await verifyToken(token, c.env.JWT_SECRET);
-    return { userId: payload.sub ?? null, db, env: c.env, ip };
+    const userId = payload.sub ?? null;
+    if (!userId) return { userId: null, userEmail: null, isAdmin: false, db, env: c.env, ip };
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { email: true },
+    });
+    const userEmail = user?.email ?? null;
+    const isAdmin = userEmail ? getAdminEmails(c.env).has(userEmail.toLowerCase()) : false;
+
+    return { userId, userEmail, isAdmin, db, env: c.env, ip };
   } catch {
-    return { userId: null, db, env: c.env, ip };
+    return { userId: null, userEmail: null, isAdmin: false, db, env: c.env, ip };
   }
 }

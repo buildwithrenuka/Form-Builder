@@ -38,7 +38,7 @@ function getFormThemeMeta(worldTheme?: string | null) {
     return {
       color: world?.accentColor ?? '#f97316',
       emoji: world?.emoji ?? WORLD_EMOJI.temple,
-      label: world?.name ?? 'Temple Run',
+      label: world?.name ?? 'Realm Runner',
     };
   }
 
@@ -71,6 +71,12 @@ type ResponseDetail = {
   submittedAt: string | Date;
 };
 
+type SelectedFormMeta = {
+  id: string;
+  title: string;
+  slug: string;
+};
+
 function formatResponseValue(value: unknown): string {
   if (Array.isArray(value)) return value.join(', ');
   if (value === null || value === undefined || value === '') return '—';
@@ -81,19 +87,30 @@ function formatResponseValue(value: unknown): string {
 
 export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Props) {
   const [view, setView] = useState<View>('list');
-  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
-  const [selectedFormTitle, setSelectedFormTitle] = useState('');
+  const [selectedForm, setSelectedForm] = useState<SelectedFormMeta | null>(null);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [selectedResponse, setSelectedResponse] = useState<ResponseDetail | null>(null);
+  const [responseQuery, setResponseQuery] = useState('');
+  const [responsePage, setResponsePage] = useState(1);
+  const [qrSlug, setQrSlug] = useState<string | null>(null);
   const sessionEmail = getSessionEmail();
+  const selectedFormId = selectedForm?.id ?? null;
+  const selectedFormTitle = selectedForm?.title ?? '';
+  const selectedFormSlug = selectedForm?.slug ?? '';
 
   const { data: forms, isLoading, error: formsError, refetch } = trpc.forms.myForms.useQuery();
   const publishMut = trpc.forms.setPublished.useMutation({ onSuccess: () => refetch() });
   const visibilityMut = trpc.forms.update.useMutation({ onSuccess: () => refetch() });
+  const archiveMut = trpc.forms.update.useMutation({ onSuccess: () => refetch() });
+  const cloneMut = trpc.forms.clone.useMutation({ onSuccess: () => refetch() });
   const deleteMut  = trpc.forms.delete.useMutation({ onSuccess: () => refetch() });
+  const exportMut = trpc.responses.exportCsv.useQuery(
+    { formId: selectedFormId ?? '', query: responseQuery || undefined },
+    { enabled: false, staleTime: 0 }
+  );
 
   const { data: responses, isLoading: respLoading, error: responsesError } = trpc.responses.list.useQuery(
-    { formId: selectedFormId! },
+    { formId: selectedFormId!, query: responseQuery || undefined, page: responsePage, pageSize: 12 },
     { enabled: !!selectedFormId && view === 'responses' }
   );
 
@@ -102,16 +119,16 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
     { enabled: !!selectedFormId && view === 'analytics' }
   );
 
-  function openResponses(formId: string, title: string) {
-    setSelectedFormId(formId);
-    setSelectedFormTitle(title);
+  function openResponses(formId: string, title: string, slug: string) {
+    setSelectedForm({ id: formId, title, slug });
     setSelectedResponse(null);
+    setResponseQuery('');
+    setResponsePage(1);
     setView('responses');
   }
 
-  function openAnalytics(formId: string, title: string) {
-    setSelectedFormId(formId);
-    setSelectedFormTitle(title);
+  function openAnalytics(formId: string, title: string, slug: string) {
+    setSelectedForm({ id: formId, title, slug });
     setSelectedResponse(null);
     setView('analytics');
   }
@@ -127,6 +144,34 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
   async function toggleVisibility(id: string, visibility: 'public' | 'unlisted') {
     await visibilityMut.mutateAsync({ id, visibility: visibility === 'public' ? 'unlisted' : 'public' });
   }
+
+  async function toggleArchive(id: string, archived: boolean) {
+    await archiveMut.mutateAsync({ id, archived: !archived });
+  }
+
+  async function cloneForm(id: string, title: string) {
+    await cloneMut.mutateAsync({ id, title: `${title} Copy` });
+  }
+
+  async function exportResponses() {
+    if (!selectedFormId) return;
+    const result = await exportMut.refetch();
+    if (!result.data) return;
+
+    const blob = new Blob([result.data.csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = result.data.fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const activeForms = forms?.filter((form) => !form.archived) ?? [];
+  const archivedForms = forms?.filter((form) => form.archived) ?? [];
+  const visibleForms = [...activeForms, ...archivedForms];
+  const qrUrl = qrSlug ? `${window.location.origin}?slug=${qrSlug}` : '';
+  const qrImageUrl = qrSlug ? `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(qrUrl)}` : '';
 
   function handleCopyClick(slug: string) {
     void copyFormLink(slug);
@@ -176,7 +221,7 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
               <div>
                 <h1 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(20px, 3vw, 28px)', fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>My Forms</h1>
-                <p style={{ fontSize: 13, color: 'rgba(167,139,250,0.4)', margin: 0 }}>{forms?.length ?? 0} form{forms?.length !== 1 ? 's' : ''} in your collection</p>
+                <p style={{ fontSize: 13, color: 'rgba(167,139,250,0.4)', margin: 0 }}>{forms?.length ?? 0} form{forms?.length !== 1 ? 's' : ''} in your collection · {activeForms.length} active · {archivedForms.length} archived</p>
               </div>
             </div>
 
@@ -210,7 +255,7 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
 
             {forms && forms.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {forms.map((form: (typeof forms)[0]) => {
+                {visibleForms.map((form: (typeof forms)[0]) => {
                   const themeMeta = getFormThemeMeta(form.worldTheme);
                   const color = themeMeta.color;
                   const emoji = themeMeta.emoji;
@@ -230,6 +275,11 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
                           <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, background: form.published ? '#22c55e18' : 'rgba(255,255,255,0.06)', border: `1px solid ${form.published ? '#22c55e44' : 'rgba(255,255,255,0.1)'}`, borderRadius: 6, padding: '2px 8px', color: form.published ? C.green : 'rgba(255,255,255,0.35)', letterSpacing: '0.1em' }}>
                             {form.published ? 'PUBLISHED' : 'DRAFT'}
                           </span>
+                          {form.archived && (
+                            <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.3)', borderRadius: 6, padding: '2px 8px', color: '#f97316', letterSpacing: '0.1em' }}>
+                              ARCHIVED
+                            </span>
+                          )}
                           {/* Visibility badge */}
                           <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, background: form.visibility === 'public' ? 'rgba(0,229,255,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${form.visibility === 'public' ? 'rgba(0,229,255,0.25)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 6, padding: '2px 8px', color: form.visibility === 'public' ? C.cyan : 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>
                             {form.visibility === 'public' ? '🌐 PUBLIC' : '🔗 UNLISTED'}
@@ -242,15 +292,16 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
 
                       {/* Actions */}
                       <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                        <button onClick={() => onViewForm(form.slug)}
+                        <button onClick={() => !form.archived && form.published && onViewForm(form.slug)}
+                          disabled={form.archived || !form.published}
                           style={{ background: `${color}12`, border: `1px solid ${color}33`, borderRadius: 8, color: color, fontSize: 11, fontWeight: 700, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
                           👁 View
                         </button>
-                        <button onClick={() => openResponses(form.id, form.title)}
+                        <button onClick={() => openResponses(form.id, form.title, form.slug)}
                           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 600, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
                           📥 Responses
                         </button>
-                        <button onClick={() => openAnalytics(form.id, form.title)}
+                        <button onClick={() => openAnalytics(form.id, form.title, form.slug)}
                           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 600, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
                           📊 Analytics
                         </button>
@@ -258,15 +309,29 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
                           style={{ background: copiedSlug === form.slug ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.05)', border: `1px solid ${copiedSlug === form.slug ? '#22c55e44' : 'rgba(255,255,255,0.1)'}`, borderRadius: 8, color: copiedSlug === form.slug ? C.green : 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 600, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em', transition: 'all 0.2s' }}>
                           {copiedSlug === form.slug ? '✓ Copied!' : '🔗 Copy Link'}
                         </button>
+                        <button onClick={() => setQrSlug(form.slug)}
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 600, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
+                          ▦ QR
+                        </button>
+                        <button onClick={() => void cloneForm(form.id, form.title)}
+                          disabled={cloneMut.isPending}
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 600, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
+                          ⧉ Clone
+                        </button>
                         <button onClick={() => void toggleVisibility(form.id, form.visibility)}
-                          disabled={visibilityMut.isPending}
+                          disabled={visibilityMut.isPending || form.archived}
                           style={{ background: form.visibility === 'public' ? 'rgba(0,229,255,0.08)' : 'rgba(124,58,237,0.12)', border: `1px solid ${form.visibility === 'public' ? 'rgba(0,229,255,0.28)' : 'rgba(124,58,237,0.35)'}`, borderRadius: 8, color: form.visibility === 'public' ? C.cyan : C.purpleL, fontSize: 11, fontWeight: 700, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
                           {form.visibility === 'public' ? 'Make Unlisted' : 'Make Public'}
                         </button>
                         <button onClick={() => publishMut.mutate({ id: form.id, published: !form.published })}
-                          disabled={publishMut.isPending}
+                          disabled={publishMut.isPending || form.archived}
                           style={{ background: form.published ? 'rgba(249,115,22,0.1)' : 'rgba(34,197,94,0.1)', border: `1px solid ${form.published ? 'rgba(249,115,22,0.3)' : 'rgba(34,197,94,0.3)'}`, borderRadius: 8, color: form.published ? '#f97316' : C.green, fontSize: 11, fontWeight: 700, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
                           {form.published ? 'Unpublish' : 'Publish'}
+                        </button>
+                        <button onClick={() => void toggleArchive(form.id, form.archived)}
+                          disabled={archiveMut.isPending}
+                          style={{ background: form.archived ? 'rgba(34,197,94,0.1)' : 'rgba(249,115,22,0.1)', border: `1px solid ${form.archived ? 'rgba(34,197,94,0.3)' : 'rgba(249,115,22,0.3)'}`, borderRadius: 8, color: form.archived ? C.green : '#f97316', fontSize: 11, fontWeight: 700, padding: '7px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em' }}>
+                          {form.archived ? 'Restore' : 'Archive'}
                         </button>
                         <button onClick={() => { if (confirm('Delete this form? This cannot be undone.')) deleteMut.mutate({ id: form.id }); }}
                           disabled={deleteMut.isPending}
@@ -285,7 +350,21 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
         {/* ── RESPONSES ── */}
         {view === 'responses' && (
           <>
-            <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 20, fontWeight: 900, color: '#fff', margin: '0 0 24px' }}>Responses</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+              <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 20, fontWeight: 900, color: '#fff', margin: 0 }}>Responses</h2>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <input
+                  value={responseQuery}
+                  onChange={(event) => { setResponseQuery(event.target.value); setResponsePage(1); }}
+                  placeholder="Search responses..."
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 10, color: '#fff', fontSize: 13, padding: '9px 12px', fontFamily: "'Rajdhani', sans-serif" }}
+                />
+                <button onClick={() => void exportResponses()}
+                  style={{ background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.25)', borderRadius: 8, color: C.cyan, fontSize: 11, fontWeight: 700, padding: '9px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em' }}>
+                  ⬇ Export CSV
+                </button>
+              </div>
+            </div>
 
             {respLoading && <div style={{ color: 'rgba(167,139,250,0.5)', fontSize: 14 }}>Loading responses...</div>}
 
@@ -295,7 +374,7 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
               </div>
             )}
 
-            {!respLoading && !responsesError && responses && responses.length === 0 && (
+            {!respLoading && !responsesError && responses && responses.items.length === 0 && (
               <div style={{ textAlign: 'center', padding: '60px 24px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(124,58,237,0.15)', borderRadius: 14 }}>
                 <span style={{ fontSize: 44, display: 'block', marginBottom: 12 }}>📭</span>
                 <p style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 16, color: '#fff', marginBottom: 6 }}>No responses yet</p>
@@ -303,9 +382,9 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
               </div>
             )}
 
-            {responses && responses.length > 0 && (
+            {responses && responses.items.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {responses.map((resp: (typeof responses)[0], i: number) => {
+                {responses.items.map((resp, i: number) => {
                   return (
                     <div
                       key={resp.id}
@@ -313,7 +392,7 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
                       style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '16px 20px', cursor: 'pointer' }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                        <span style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 11, color: C.purpleL }}>Response #{i + 1}</span>
+                        <span style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 11, color: C.purpleL }}>Response #{(responses.page - 1) * responses.pageSize + i + 1}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                           <span style={{ fontSize: 11, color: 'rgba(167,139,250,0.35)' }}>{new Date(resp.submittedAt).toLocaleString()}</span>
                           <span style={{ fontSize: 11, color: C.cyan, letterSpacing: '0.08em' }}>Open →</span>
@@ -331,6 +410,25 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
                     </div>
                   );
                 })}
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: 12, color: 'rgba(167,139,250,0.48)' }}>
+                    Showing {responses.items.length} of {responses.total} matching responses
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button onClick={() => setResponsePage((page) => Math.max(1, page - 1))}
+                      disabled={responses.page <= 1}
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 700, padding: '8px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif" }}>
+                      ← Prev
+                    </button>
+                    <span style={{ fontSize: 12, color: 'rgba(167,139,250,0.48)' }}>Page {responses.page} / {responses.totalPages}</span>
+                    <button onClick={() => setResponsePage((page) => Math.min(responses.totalPages, page + 1))}
+                      disabled={responses.page >= responses.totalPages}
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(200,185,255,0.7)', fontSize: 11, fontWeight: 700, padding: '8px 12px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif" }}>
+                      Next →
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </>
@@ -356,6 +454,8 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
                   { icon: analytics.published ? '✅' : '🚫', label: 'Status', value: analytics.published ? 'Published' : 'Draft', color: analytics.published ? C.green : '#f97316' },
                   { icon: analytics.visibility === 'public' ? '🌐' : '🔗', label: 'Visibility', value: analytics.visibility === 'public' ? 'Public' : 'Unlisted', color: analytics.visibility === 'public' ? C.cyan : C.purpleL },
                   { icon: '📅', label: 'Created', value: new Date(analytics.createdAt).toLocaleDateString(), color: C.gold },
+                  { icon: analytics.archived ? '📦' : '🟢', label: 'Workflow', value: analytics.archived ? 'Archived' : 'Active', color: analytics.archived ? '#f97316' : C.green },
+                  { icon: '⏳', label: 'Expiry / Limit', value: analytics.expiresAt ? new Date(analytics.expiresAt).toLocaleDateString() : analytics.responseLimit ? `${analytics.responseLimit} max` : 'Open', color: C.purpleL },
                 ].map((stat, i) => (
                   <div key={i} style={{ background: `${stat.color}08`, border: `1px solid ${stat.color}25`, borderRadius: 14, padding: '20px', textAlign: 'center' }}>
                     <div style={{ fontSize: 28, marginBottom: 8 }}>{stat.icon}</div>
@@ -366,10 +466,43 @@ export function DashboardPage({ playerName, onBack, onLogout, onViewForm }: Prop
               </div>
             )}
 
-            {/* Field breakdown removed - not in basic analytics */}
+            {!analyticsLoading && !analyticsError && analytics && analytics.timeline.length > 0 && (
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '20px 22px' }}>
+                <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 16, color: '#fff', marginBottom: 18 }}>Response Timeline</div>
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${analytics.timeline.length}, minmax(0, 1fr))`, gap: 10, alignItems: 'end', minHeight: 180 }}>
+                  {analytics.timeline.map((point) => {
+                    const peak = Math.max(...analytics.timeline.map((entry) => entry.count), 1);
+                    const height = `${Math.max((point.count / peak) * 100, 12)}%`;
+                    return (
+                      <div key={point.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                        <div style={{ fontSize: 11, color: C.cyan, fontWeight: 700 }}>{point.count}</div>
+                        <div style={{ width: '100%', maxWidth: 42, height: 120, display: 'flex', alignItems: 'end' }}>
+                          <div style={{ width: '100%', height, borderRadius: 12, background: 'linear-gradient(180deg, rgba(0,229,255,0.92), rgba(124,58,237,0.52))', boxShadow: '0 0 18px rgba(0,229,255,0.16)' }} />
+                        </div>
+                        <div style={{ fontSize: 10, color: 'rgba(167,139,250,0.42)', letterSpacing: '0.06em' }}>{point.date.slice(5)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
+
+      {qrSlug && (
+        <div onClick={() => setQrSlug(null)} style={{ position: 'fixed', inset: 0, zIndex: 210, background: 'rgba(2,0,10,0.78)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div onClick={(event) => event.stopPropagation()} style={{ width: 'min(420px, 100%)', background: 'linear-gradient(160deg, rgba(14,10,30,0.98), rgba(6,0,20,0.98))', border: '1px solid rgba(124,58,237,0.28)', borderRadius: 18, boxShadow: '0 24px 80px rgba(0,0,0,0.6)', padding: '22px 22px 18px', textAlign: 'center' }}>
+            <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>Share QR Code</div>
+            <div style={{ fontSize: 12, color: 'rgba(167,139,250,0.52)', marginBottom: 18 }}>{qrUrl}</div>
+            <img src={qrImageUrl} alt="Form QR code" style={{ width: 280, height: 280, maxWidth: '100%', borderRadius: 14, border: '1px solid rgba(255,255,255,0.08)', background: '#fff', padding: 12, marginBottom: 16 }} />
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button onClick={() => void copyFormLink(qrSlug)} style={{ background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.25)', borderRadius: 8, color: C.cyan, fontSize: 12, fontWeight: 700, padding: '9px 14px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif" }}>Copy Link</button>
+              <button onClick={() => setQrSlug(null)} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, padding: '9px 14px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif" }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedResponse && (
         <div

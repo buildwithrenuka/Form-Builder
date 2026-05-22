@@ -22,7 +22,7 @@ export const TUTORIAL_PANELS: Panel[] = [
     icon: '✨',
     title: 'FORMVERSE',
     text: 'Build forms in three distinct worlds instead of one generic dashboard.',
-    subtext: 'FormVerse combines Temple Run, Globe Explorer, and The Library into one cinematic builder with live preview, version history, and instant sharing.',
+    subtext: 'FormVerse combines Realm Runner, Globe Explorer, and The Library into one cinematic builder with live preview, version history, and instant sharing.',
     hint: 'CLICK ANYWHERE TO ADVANCE',
     bg: 'radial-gradient(ellipse at 50% 20%, #120020 0%, #0a0618 50%, #04040a 100%)',
     accent: '#c084fc',
@@ -34,7 +34,7 @@ export const TUTORIAL_PANELS: Panel[] = [
     icon: '🎭',
     title: 'STEP 1: PICK YOUR EXPERIENCE',
     text: 'Start with the vibe that matches the form you want to create.',
-    subtext: 'Temple Run is mission-led and dramatic. Globe Explorer is travel-ready and locale-aware. The Library is built for lore, archives, and world-building.',
+    subtext: 'Realm Runner is mission-led and dramatic. Globe Explorer is travel-ready and locale-aware. The Library is built for lore, archives, and world-building.',
     hint: '3 EXPERIENCES → GAMIFIED · TRAVEL · LORE',
     bg: 'radial-gradient(ellipse at 30% 40%, #12002c 0%, #080018 55%, #040012 100%)',
     accent: '#b39ddb',
@@ -107,9 +107,9 @@ export const TUTORIAL_PANELS: Panel[] = [
 const TYPING_SPEED = 20;
 const AUTO_ADVANCE = 5200;
 
-type Props = { onComplete: () => void };
+type Props = { onComplete: () => void; onBack: () => void };
 
-export function TutorialScreen({ onComplete }: Props) {
+export function TutorialScreen({ onComplete, onBack }: Props) {
   const [idx, setIdx] = useState(0);
   const [chars, setChars] = useState(0);
   const [showSub, setShowSub] = useState(false);
@@ -200,7 +200,15 @@ export function TutorialScreen({ onComplete }: Props) {
 
       {/* Top bar */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '60px', zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px' }}>
-        <span style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: '10px', color: 'rgba(255,215,0,0.38)', letterSpacing: '0.22em' }}>⚡ FORM QUEST · HOW TO RUN</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={e => { e.stopPropagation(); playClick(); onBack(); }}
+            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '5px', color: 'rgba(255,255,255,0.7)', fontFamily: "'Rajdhani', sans-serif", fontSize: '11px', padding: '4px 14px', cursor: 'pointer', letterSpacing: '0.15em' }}
+          >
+            ← BACK
+          </button>
+          <span style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: '10px', color: 'rgba(255,215,0,0.38)', letterSpacing: '0.22em' }}>⚡ FORMVERSE · HOW TO RUN</span>
+        </div>
         <button
           onClick={e => { e.stopPropagation(); playClick(); onComplete(); }}
           style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '5px', color: 'rgba(255,255,255,0.32)', fontFamily: "'Rajdhani', sans-serif", fontSize: '11px', padding: '4px 14px', cursor: 'pointer', letterSpacing: '0.15em' }}

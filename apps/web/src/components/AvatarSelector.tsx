@@ -67,7 +67,7 @@ function AvatarCard({
           : '0 4px 20px rgba(0,0,0,0.4)',
         transition: 'all 0.25s ease',
         transform: selected ? 'scale(1.02)' : hovered ? 'scale(1.01)' : 'scale(1)',
-        minHeight: '430px',
+        minHeight: '520px',
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -107,7 +107,7 @@ function AvatarCard({
         </div>
       )}
 
-      <div style={{ position: 'relative', zIndex: 1, padding: '52px 18px 18px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <div style={{ position: 'relative', zIndex: 1, padding: '52px 18px 18px', display: 'flex', flexDirection: 'column', flex: 1, gap: '12px' }}>
 
         {/* Glow ring + emoji */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
@@ -130,12 +130,12 @@ function AvatarCard({
         <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: '14px', fontWeight: 700, color: active ? '#fff' : '#ddd', marginBottom: '2px', textAlign: 'center', lineHeight: 1.2 }}>
           {avatar.name}
         </div>
-        <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '10px', fontWeight: 700, color: avatar.color, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px', textAlign: 'center' }}>
+        <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '10px', fontWeight: 700, color: avatar.color, letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center' }}>
           {avatar.title}
         </div>
 
         {/* Description */}
-        <p style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.68)', lineHeight: 1.58, marginBottom: '14px', textAlign: 'left', flex: 1 }}>
+        <p style={{ fontFamily: "'Exo 2', sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.68)', lineHeight: 1.58, margin: 0, textAlign: 'left', flex: 1 }}>
           {avatar.description}
         </p>
 
@@ -143,7 +143,7 @@ function AvatarCard({
         <div style={{
           background: `${avatar.color}12`,
           border: `1px solid ${avatar.color}33`,
-          borderRadius: '7px', padding: '8px 12px', marginBottom: '14px',
+          borderRadius: '7px', padding: '8px 12px',
           display: 'flex', alignItems: 'flex-start', gap: '8px',
         }}>
           <span style={{ fontSize: '16px' }}>{avatar.abilityIcon}</span>
@@ -217,7 +217,7 @@ export function AvatarSelector({ currentAvatar = null, onSelect, onBack }: Props
             Choose Your Runner
           </div>
           <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.22em', marginTop: '3px' }}>
-            6 LEGENDARY CHARACTERS · SELECT ONE
+            {AVATARS.length} LEGENDARY CHARACTERS · SELECT ONE
           </div>
         </div>
 
@@ -234,7 +234,7 @@ export function AvatarSelector({ currentAvatar = null, onSelect, onBack }: Props
       {/* Grid */}
       <div
         className="tr-scroll"
-        style={{ position: 'relative', zIndex: 5, flex: 1, padding: '20px 28px 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px', alignContent: 'start', overflow: 'auto' }}
+        style={{ position: 'relative', zIndex: 5, flex: 1, padding: '20px 28px 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', alignContent: 'start', overflow: 'auto' }}
       >
         {AVATARS.map((avatar, i) => (
           <AvatarCard

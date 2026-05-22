@@ -7,6 +7,7 @@ type Props = {
   onSelectLibrary:   () => void;
   onLogout:          () => void;
   onDashboard?:      () => void;
+  onAdmin?:          () => void;
   theme?:            HomeTheme;
 };
 
@@ -96,7 +97,7 @@ const SURFACES: Record<HomeTheme, {
   },
 };
 
-export function ExperienceSelector({ onSelectTempleRun, onSelectGlobe, onSelectLibrary, onLogout, onDashboard, theme = 'dark' }: Props) {
+export function ExperienceSelector({ onSelectTempleRun, onSelectGlobe, onSelectLibrary, onLogout, onDashboard, onAdmin, theme = 'dark' }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [entered, setEntered] = useState(false);
   const T = SURFACES[theme];
@@ -157,6 +158,13 @@ export function ExperienceSelector({ onSelectTempleRun, onSelectGlobe, onSelectL
             📊 Dashboard
           </button>
         )}
+        {onAdmin && (
+          <button onClick={onAdmin} style={{ background: T.backBg, border: `1px solid ${T.backBorder}`, color: T.backColor, borderRadius: 10, padding: '8px 18px', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em', transition: 'all 0.18s' }}
+            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.08)'; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; }}>
+            🛠 Admin
+          </button>
+        )}
         <button onClick={onLogout} style={{ background: T.backBg, border: `1px solid ${T.backBorder}`, color: T.backColor, borderRadius: 10, padding: '8px 18px', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'system-ui, sans-serif', transition: 'all 0.18s' }}
           onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.08)'; }}
           onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; }}>
@@ -168,7 +176,7 @@ export function ExperienceSelector({ onSelectTempleRun, onSelectGlobe, onSelectL
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 40px 40px', position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 680 }}>
 
-          {/* ── TEMPLE RUN ── */}
+          {/* ── REALM RUNNER ── */}
           <div
             onClick={onSelectTempleRun}
             onMouseEnter={() => setHovered('temple')}
@@ -186,7 +194,7 @@ export function ExperienceSelector({ onSelectTempleRun, onSelectGlobe, onSelectL
             <div style={{ fontSize: 44, lineHeight: 1, filter: tHov ? 'drop-shadow(0 0 16px rgba(255,140,0,0.8))' : 'none', transition: 'filter 0.25s', flexShrink: 0 }}>🏃</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                <h3 style={{ fontFamily: "'Cinzel Decorative', serif", color: isLight ? '#111111' : isJugnu ? '#fff7d6' : '#fff', fontSize: 18, fontWeight: 900, margin: 0, lineHeight: 1, textShadow: isRainbow ? '0 0 12px rgba(255,79,216,0.16)' : isFirecracker ? '0 0 12px rgba(255,122,0,0.16)' : isJugnu ? '0 0 10px rgba(255,214,92,0.12)' : 'none' }}>Temple Run</h3>
+                <h3 style={{ fontFamily: "'Cinzel Decorative', serif", color: isLight ? '#111111' : isJugnu ? '#fff7d6' : '#fff', fontSize: 18, fontWeight: 900, margin: 0, lineHeight: 1, textShadow: isRainbow ? '0 0 12px rgba(255,79,216,0.16)' : isFirecracker ? '0 0 12px rgba(255,122,0,0.16)' : isJugnu ? '0 0 10px rgba(255,214,92,0.12)' : 'none' }}>Realm Runner</h3>
                 <span style={{ fontFamily: "'Rajdhani', sans-serif", color: '#ffd700', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', background: 'rgba(255,140,0,0.12)', border: '1px solid rgba(255,140,0,0.3)', borderRadius: 20, padding: '2px 8px', textTransform: 'uppercase' }}>Gamified</span>
               </div>
               <p style={{ fontFamily: "'Rajdhani', sans-serif", color: isLight ? 'rgba(17,17,17,0.62)' : isFirecracker ? 'rgba(255,225,190,0.62)' : isJugnu ? 'rgba(255,238,190,0.62)' : 'rgba(255,240,200,0.55)', fontSize: 13, lineHeight: 1.5, margin: 0 }}>

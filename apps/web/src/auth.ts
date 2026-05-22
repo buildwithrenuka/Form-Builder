@@ -7,12 +7,35 @@ type SessionRecord = {
   email: string;
 };
 
+function migrateLegacyAuthState() {
+  const legacySession = localStorage.getItem(SESSION_KEY);
+  const legacyToken = localStorage.getItem(TOKEN_KEY);
+
+  if (sessionStorage.getItem(SESSION_KEY) || sessionStorage.getItem(TOKEN_KEY)) {
+    if (legacySession) localStorage.removeItem(SESSION_KEY);
+    if (legacyToken) localStorage.removeItem(TOKEN_KEY);
+    return;
+  }
+
+  if (legacySession && legacyToken) {
+    sessionStorage.setItem(SESSION_KEY, legacySession);
+    sessionStorage.setItem(TOKEN_KEY, legacyToken);
+  }
+
+  if (legacySession) localStorage.removeItem(SESSION_KEY);
+  if (legacyToken) localStorage.removeItem(TOKEN_KEY);
+}
+
 export function saveSession(session: SessionRecord, token: string) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  localStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  sessionStorage.setItem(TOKEN_KEY, token);
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(TOKEN_KEY);
 }
 
 export function clearSession() {
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(TOKEN_KEY);
 }
@@ -23,9 +46,11 @@ export function logout() {
 
 export function getSession(): string | null {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
+    migrateLegacyAuthState();
+
+    const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    if (!localStorage.getItem(TOKEN_KEY)) {
+    if (!sessionStorage.getItem(TOKEN_KEY)) {
       clearSession();
       return null;
     }
@@ -43,9 +68,11 @@ export function getSession(): string | null {
 
 export function getSessionEmail(): string | null {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
+    migrateLegacyAuthState();
+
+    const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    if (!localStorage.getItem(TOKEN_KEY)) {
+    if (!sessionStorage.getItem(TOKEN_KEY)) {
       clearSession();
       return null;
     }
@@ -62,5 +89,6 @@ export function getSessionEmail(): string | null {
 }
 
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  migrateLegacyAuthState();
+  return sessionStorage.getItem(TOKEN_KEY);
 }

@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "wrangler d1 execute formquest-db --local --file=migrations/0001_initial.sql && wrangler dev",
+    "dev": "wrangler d1 migrations apply formquest-db --local && wrangler dev",
     "deploy": "wrangler deploy",
     "db:create": "wrangler d1 create formquest-db",
-    "db:migrate:local": "wrangler d1 execute formquest-db --local --file=migrations/0001_initial.sql",
+    "db:migrate:local": "wrangler d1 migrations apply formquest-db --local",
     "db:migrate": "wrangler d1 migrations apply formquest-db",
     "db:migrate:prod": "wrangler d1 migrations apply formquest-db --env production"
   },

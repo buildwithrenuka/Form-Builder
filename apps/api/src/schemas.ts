@@ -5,7 +5,7 @@ export const FieldTypeEnum = z.enum([
   'text', 'email', 'password', 'phone', 'number',
   'date', 'time', 'url', 'currency', 'textarea',
   'checkbox', 'radio', 'select', 'range', 'rating',
-  'file', 'section',
+  'file', 'section', 'page_break',
   // Legacy/backward-compatible types
   'section_divider', 'scale', 'pan', 'gst', 'ifsc', 'pincode',
 ]);
@@ -14,6 +14,10 @@ export type FieldType = z.infer<typeof FieldTypeEnum>;
 // ── Validation Preset ──────────────────────────────────────────────────────
 export const ValidationPresetEnum = z.enum([
   'none', 'letters-only', 'numbers-only', 'alphanumeric', 'pan', 'gst', 'ifsc', 'pincode', 'email', 'phone', 'url', 'custom',
+]);
+
+export const ConditionalOperatorEnum = z.enum([
+  'equals', 'not_equals', 'contains', 'greater_than', 'less_than', 'is_empty', 'is_not_empty',
 ]);
 
 const FieldWidthEnum = z.enum(['full', 'half']);
@@ -38,6 +42,9 @@ export const FieldSchema = z.object({
   helpText:        z.string().max(500).optional(),
   fieldWidth:      FieldWidthEnum.optional().default('full'),
   hidden:          z.boolean().optional().default(false),
+  conditionalParentId: z.string().optional().default(''),
+  conditionalOperator: ConditionalOperatorEnum.optional().default('equals'),
+  conditionalValue: z.string().max(200).optional().default(''),
   prefix:          z.string().max(20).optional().default(''),
   suffix:          z.string().max(20).optional().default(''),
   sectionColor:    z.string().max(50).optional().default(''),
@@ -50,6 +57,9 @@ export const FieldSchema = z.object({
   helperText: field.helperText ?? field.helpText ?? '',
   fieldWidth: field.fieldWidth ?? (field.halfWidth ? 'half' : 'full'),
   customPattern: field.customPattern ?? field.customRegex ?? '',
+  conditionalParentId: field.conditionalParentId ?? '',
+  conditionalOperator: field.conditionalOperator ?? 'equals',
+  conditionalValue: field.conditionalValue ?? '',
 }));
 export type FieldSchema = z.infer<typeof FieldSchema>;
 
@@ -60,12 +70,17 @@ export const FormFieldsSchema = z.array(FieldSchema);
 export const RegisterInput = z.object({
   name:     z.string().min(2).max(60).trim(),
   email:    z.string().email().toLowerCase(),
-  password: z.string().min(6).max(128),
+  password: z.string()
+    .min(10, 'Password must be at least 10 characters long.')
+    .max(128)
+    .regex(/[a-z]/, 'Password must include a lowercase letter.')
+    .regex(/[A-Z]/, 'Password must include an uppercase letter.')
+    .regex(/\d/, 'Password must include a number.'),
 });
 
 export const LoginInput = z.object({
   email:    z.string().email().toLowerCase(),
-  password: z.string().min(1),
+  password: z.string().min(1).max(128),
 });
 
 // ── Form CRUD ──────────────────────────────────────────────────────────────
@@ -80,6 +95,11 @@ export const UpdateFormInput = z.object({
   title:       z.string().min(1).max(200).trim().optional(),
   description: z.string().max(1000).optional(),
   visibility:  z.enum(['public', 'unlisted']).optional(),
+  archived:    z.boolean().optional(),
+  slug:        z.string().min(3).max(60).optional(),
+  expiresAt:   z.string().datetime().nullable().optional(),
+  responseLimit: z.number().int().min(1).max(100000).nullable().optional(),
+  accessPassword: z.string().min(4).max(128).nullable().optional(),
   schema:      FormFieldsSchema.optional(),
   worldTheme:  z.string().max(50).optional(),
 });
@@ -92,5 +112,23 @@ export const PublishFormInput = z.object({
 // ── Response Submission ────────────────────────────────────────────────────
 export const SubmitResponseInput = z.object({
   formId: z.string(),
+  accessPassword: z.string().max(128).optional(),
   data:   z.record(z.string(), z.unknown()),
+});
+
+export const CloneFormInput = z.object({
+  id: z.string(),
+  title: z.string().min(1).max(200).trim().optional(),
+});
+
+export const ResponseListInput = z.object({
+  formId: z.string(),
+  query: z.string().trim().max(120).optional(),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(25),
+});
+
+export const ResponseExportInput = z.object({
+  formId: z.string(),
+  query: z.string().trim().max(120).optional(),
 });

@@ -13,12 +13,17 @@ export const users = sqliteTable('users', {
 export const forms = sqliteTable('forms', {
   id:          text('id').primaryKey(),
   creatorId:   text('creator_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  clonedFromId: text('cloned_from_id'),
   title:       text('title').notNull(),
   description: text('description'),
   slug:        text('slug').notNull().unique(),
   // 'public' | 'unlisted'
   visibility:  text('visibility', { enum: ['public', 'unlisted'] }).notNull().default('unlisted'),
   published:   integer('published', { mode: 'boolean' }).notNull().default(false),
+  archived:    integer('archived', { mode: 'boolean' }).notNull().default(false),
+  expiresAt:   integer('expires_at', { mode: 'timestamp' }),
+  responseLimit: integer('response_limit'),
+  accessPasswordHash: text('access_password_hash'),
   // JSON array of FieldSchema
   schema:      text('schema').notNull().default('[]'),
   worldTheme:  text('world_theme'),
