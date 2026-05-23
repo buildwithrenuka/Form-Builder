@@ -127,6 +127,100 @@ function loadHomeTheme(): HomeTheme {
   return 'dark';
 }
 
+function buildThemeFavicon(theme: HomeTheme) {
+  const palettes: Record<HomeTheme, { rim: [string, string, string, string]; shell: [string, string]; field: [string, string]; bg: string; sparkA: string; sparkB: string }> = {
+    dark: {
+      rim: ['#fff1c4', '#ffca6e', '#d86e88', '#7c3248'],
+      shell: ['#1b1218', '#0f0b12'],
+      field: ['#fff9ec', '#fff0d7'],
+      bg: '#08070d',
+      sparkA: '#ffca6e',
+      sparkB: '#d86e88',
+    },
+    light: {
+      rim: ['#fff7d6', '#e3b74f', '#d6814f', '#9f5b39'],
+      shell: ['#fffdf7', '#f2e7d3'],
+      field: ['#8a5a00', '#b7791f'],
+      bg: '#f7efdf',
+      sparkA: '#f0bf5a',
+      sparkB: '#d28b61',
+    },
+    rainbow: {
+      rim: ['#ff4d6d', '#ffb703', '#00d1ff', '#7b61ff'],
+      shell: ['#16102a', '#0c091a'],
+      field: ['#fff7ff', '#ffe9f6'],
+      bg: '#090814',
+      sparkA: '#00d1ff',
+      sparkB: '#ff4d6d',
+    },
+    firecracker: {
+      rim: ['#fff4b0', '#ff9f1c', '#ff4d6d', '#781c68'],
+      shell: ['#231011', '#13090b'],
+      field: ['#fff5e7', '#ffd7ad'],
+      bg: '#0d0608',
+      sparkA: '#ff9f1c',
+      sparkB: '#ff4d6d',
+    },
+    jugnu: {
+      rim: ['#f8ffb0', '#d6f56b', '#78dba9', '#24544a'],
+      shell: ['#132019', '#0c1511'],
+      field: ['#f8ffe0', '#dff4a0'],
+      bg: '#07110c',
+      sparkA: '#d6f56b',
+      sparkB: '#78dba9',
+    },
+  };
+
+  const palette = palettes[theme];
+
+  return [
+    '<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">',
+    '  <defs>',
+    '    <linearGradient id="fv-rim" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">',
+    `      <stop offset="0%" stop-color="${palette.rim[0]}" />`,
+    `      <stop offset="30%" stop-color="${palette.rim[1]}" />`,
+    `      <stop offset="68%" stop-color="${palette.rim[2]}" />`,
+    `      <stop offset="100%" stop-color="${palette.rim[3]}" />`,
+    '    </linearGradient>',
+    '    <linearGradient id="fv-shell" x1="18" y1="12" x2="46" y2="52" gradientUnits="userSpaceOnUse">',
+    `      <stop offset="0%" stop-color="${palette.shell[0]}" />`,
+    `      <stop offset="100%" stop-color="${palette.shell[1]}" />`,
+    '    </linearGradient>',
+    '    <linearGradient id="fv-field" x1="24" y1="20" x2="39" y2="35" gradientUnits="userSpaceOnUse">',
+    `      <stop offset="0%" stop-color="${palette.field[0]}" />`,
+    `      <stop offset="100%" stop-color="${palette.field[1]}" />`,
+    '    </linearGradient>',
+    '  </defs>',
+    `  <rect width="64" height="64" rx="18" fill="${palette.bg}" />`,
+    '  <rect x="17" y="10" width="30" height="44" rx="8" fill="url(#fv-shell)" stroke="url(#fv-rim)" stroke-width="2.4" />',
+    '  <path d="M39 10V22H47" stroke="url(#fv-rim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />',
+    '  <path d="M39 10L47 18" stroke="url(#fv-rim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />',
+    '  <rect x="23" y="20" width="17" height="5.5" rx="2.75" fill="url(#fv-field)" />',
+    `  <rect x="23" y="30" width="14" height="3.4" rx="1.7" fill="${palette.rim[1]}" opacity="0.75" />`,
+    `  <rect x="23" y="37" width="11" height="3.4" rx="1.7" fill="${palette.rim[2]}" opacity="0.72" />`,
+    `  <circle cx="50" cy="16" r="2.5" fill="${palette.sparkA}" opacity="0.9" />`,
+    `  <circle cx="14.5" cy="45.5" r="2.2" fill="${palette.sparkB}" opacity="0.85" />`,
+    '</svg>',
+  ].join('\n');
+}
+
+function applyThemeFavicon(theme: HomeTheme) {
+  if (typeof document === 'undefined') return;
+
+  const svg = buildThemeFavicon(theme);
+  const href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  let icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+
+  if (!icon) {
+    icon = document.createElement('link');
+    icon.rel = 'icon';
+    document.head.appendChild(icon);
+  }
+
+  icon.type = 'image/svg+xml';
+  icon.href = href;
+}
+
 function App() {
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const [persistedAppState] = useState<PersistedAppState | null>(() => loadAppState());
@@ -200,6 +294,9 @@ function App() {
   useEffect(() => { persistVersions(versions); }, [versions]);
   useEffect(() => {
     localStorage.setItem(HOME_THEME_KEY, homeTheme);
+  }, [homeTheme]);
+  useEffect(() => {
+    applyThemeFavicon(homeTheme);
   }, [homeTheme]);
   useEffect(() => {
     persistAppState({
