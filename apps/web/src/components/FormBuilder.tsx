@@ -556,7 +556,7 @@ function FieldCard({ field, index, total, world, isEditing, onEdit, onDelete, on
       {/* Expanded editor */}
       {isEditing && (
         <div style={{ borderTop: `1px solid ${world.borderColor}28`, padding: '16px 20px 20px' }}>
-          <FieldEditorPanel field={field} world={world} allFields={fields} onChange={onChange} />
+          <FieldEditorPanel field={field} world={world} allFields={allFields} onChange={onChange} />
           {/* Google Forms-style bottom bar */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 18, paddingTop: 14, borderTop: `1px solid ${world.borderColor}18` }}>
             <button onClick={() => onInsertBelow(field.type)}
@@ -742,6 +742,21 @@ export function FormBuilder({
   const [accessPassword, setAccessPassword] = useState('');
   const [allowResponseEdits, setAllowResponseEdits] = useState(false);
   const [activeRibbonTab, setActiveRibbonTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
+
+  const handleToggleSettings = useCallback(() => {
+    const next = !showSettings;
+    setShowSettings(next);
+    if (next) {
+      setActiveRibbonTab(null);
+    }
+  }, [showSettings]);
+
+  const handleActiveRibbonTabChange = useCallback((tab: 'file' | 'history' | 'review' | 'design' | null) => {
+    setActiveRibbonTab(tab);
+    if (tab) {
+      setShowSettings(false);
+    }
+  }, []);
 
   const trpcUtils = trpc.useUtils();
   const createMut  = trpc.forms.create.useMutation();
@@ -1015,7 +1030,7 @@ export function FormBuilder({
       <div style={{ position: 'relative', zIndex: 5, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Top ribbon */}
-        <PaletteSidebar world={world} purposeId={purposeId} onAddField={addField} onAddCollection={addCollection} settingsActive={showSettings} onToggleSettings={() => setShowSettings(v => !v)} onActiveTabChange={setActiveRibbonTab} filePanel={(
+        <PaletteSidebar world={world} purposeId={purposeId} onAddField={addField} onAddCollection={addCollection} settingsActive={showSettings} onToggleSettings={handleToggleSettings} onActiveTabChange={handleActiveRibbonTabChange} filePanel={(
           <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
         <div style={ribbonGroup}>
           <div style={ribbonRow}>

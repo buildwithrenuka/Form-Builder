@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { trpc } from '../trpc';
 import { TemplatePickerModal } from './TemplatePickerModal';
 import { ALL_TEMPLATES, type FormTemplate } from '../formTemplates';
@@ -879,6 +879,21 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
   const [allowResponseEdits, setAllowResponseEdits] = useState(false);
   const [activeRibbonTab, setActiveRibbonTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
 
+  const handleToggleSettings = useCallback(() => {
+    const next = !showSettings;
+    setShowSettings(next);
+    if (next) {
+      setActiveRibbonTab(null);
+    }
+  }, [showSettings]);
+
+  const handleActiveRibbonTabChange = useCallback((tab: 'file' | 'history' | 'review' | 'design' | null) => {
+    setActiveRibbonTab(tab);
+    if (tab) {
+      setShowSettings(false);
+    }
+  }, []);
+
   const trpcUtils = trpc.useUtils();
   const createMut  = trpc.forms.create.useMutation();
   const updateMut  = trpc.forms.update.useMutation();
@@ -1168,8 +1183,8 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
       <PaletteSidebar wt={wt} world={world} presets={presets}
         onAddField={addField} onAddCollection={addCollection} onAddPresetGroup={addPresetGroup}
         settingsActive={showSettings}
-        onToggleSettings={() => setShowSettings(v => !v)}
-        onActiveTabChange={setActiveRibbonTab}
+        onToggleSettings={handleToggleSettings}
+        onActiveTabChange={handleActiveRibbonTabChange}
         filePanel={(
           <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
 
