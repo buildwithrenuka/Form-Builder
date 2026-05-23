@@ -271,6 +271,38 @@ function getAllowedOrigins(rawOrigins?: string): Set<string> {
   return new Set(values?.length ? values : DEFAULT_ALLOWED_ORIGINS);
 }
 
+function isAllowedOrigin(origin: string, allowedOrigins: Set<string>): boolean {
+  if (allowedOrigins.has(origin)) return true;
+
+  let incoming: URL;
+  try {
+    incoming = new URL(origin);
+  } catch {
+    return false;
+  }
+
+  for (const allowedOrigin of allowedOrigins) {
+    let allowed: URL;
+    try {
+      allowed = new URL(allowedOrigin);
+    } catch {
+      continue;
+    }
+
+    if (allowed.protocol !== incoming.protocol) continue;
+
+    // Cloudflare Pages preview deployments use <hash>.<project>.pages.dev.
+    if (
+      allowed.hostname.endsWith('.pages.dev')
+      && incoming.hostname.endsWith(`.${allowed.hostname}`)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // ── Root tRPC router ───────────────────────────────────────────────────────
 export const appRouter = router({
   auth:      authRouter,
@@ -296,7 +328,7 @@ app.use('*', cors({
   origin: (origin, c) => {
     if (!origin) return '';
     const allowedOrigins = getAllowedOrigins(c.env.ALLOWED_ORIGINS);
-    return allowedOrigins.has(origin) ? origin : '';
+    return isAllowedOrigin(origin, allowedOrigins) ? origin : '';
   },
   allowHeaders: ['Content-Type', 'Authorization'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
