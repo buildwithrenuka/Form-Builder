@@ -35,6 +35,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'http://127.0.0.1:5174',
 ];
 
+const DOCS_FAVICON_PATH = '/docs-favicon-v2.svg';
+
 const DOCS_FAVICON_SVG = `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="fv-rim" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
@@ -492,12 +494,17 @@ app.get('/favicon.svg', (c) => c.body(DOCS_FAVICON_SVG, 200, {
   'cache-control': 'public, max-age=86400',
 }));
 
+app.get(DOCS_FAVICON_PATH, (c) => c.body(DOCS_FAVICON_SVG, 200, {
+  'content-type': 'image/svg+xml; charset=utf-8',
+  'cache-control': 'public, max-age=86400',
+}));
+
 app.get('/favicon.ico', (c) => c.redirect('/favicon.svg', 302));
 
 // Scalar interactive API docs
 app.get('/docs', apiReference({
   pageTitle: 'FormVerse API Reference',
-  favicon: '/favicon.svg',
+  favicon: DOCS_FAVICON_PATH,
   layout: 'modern',
   showSidebar: true,
   hideDownloadButton: false,
