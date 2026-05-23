@@ -189,14 +189,14 @@ export const authRouter = router({
   register: publicProc
     .input(RegisterInput)
     .mutation(async ({ ctx, input }) => {
-      await enforceAuthRateLimit(ctx, 'register', input.email);
-
       const existing = await ctx.db.query.users.findFirst({
         where: eq(users.email, input.email),
       });
       if (existing) {
         throw new TRPCError({ code: 'CONFLICT', message: 'Email already registered.' });
       }
+
+      await enforceAuthRateLimit(ctx, 'register', input.email);
 
       const user = {
         id:           uid(),
