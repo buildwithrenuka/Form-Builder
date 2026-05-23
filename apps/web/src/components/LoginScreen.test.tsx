@@ -3,9 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LoginScreen } from './LoginScreen';
 
+const passwordPlaceholder = /secret (passcode|temple code|cipher)/i;
+
 const mocks = vi.hoisted(() => ({
   loginMutateAsync: vi.fn(),
   registerMutateAsync: vi.fn(),
+  forgotPasswordMutateAsync: vi.fn(),
+  resetPasswordMutateAsync: vi.fn(),
   saveSession: vi.fn(),
 }));
 
@@ -22,6 +26,12 @@ vi.mock('../trpc', () => ({
       register: {
         useMutation: () => ({ mutateAsync: mocks.registerMutateAsync, isPending: false }),
       },
+      forgotPassword: {
+        useMutation: () => ({ mutateAsync: mocks.forgotPasswordMutateAsync, isPending: false }),
+      },
+      resetPassword: {
+        useMutation: () => ({ mutateAsync: mocks.resetPasswordMutateAsync, isPending: false }),
+      },
     },
   },
 }));
@@ -30,6 +40,8 @@ describe('LoginScreen', () => {
   beforeEach(() => {
     mocks.loginMutateAsync.mockReset();
     mocks.registerMutateAsync.mockReset();
+    mocks.forgotPasswordMutateAsync.mockReset();
+    mocks.resetPasswordMutateAsync.mockReset();
     mocks.saveSession.mockReset();
   });
 
@@ -44,7 +56,7 @@ describe('LoginScreen', () => {
     render(<LoginScreen theme="formverse" onLogin={onLogin} onBack={() => {}} />);
 
     await user.type(screen.getByPlaceholderText('Your email address...'), 'ava@example.com');
-    await user.type(screen.getByPlaceholderText('Secret temple code...'), 'hunter2');
+    await user.type(screen.getByPlaceholderText(passwordPlaceholder), 'hunter2');
     await user.click(screen.getByRole('button', { name: /authenticating|quest|enter|authenticate|unlock|launch/i }));
 
     await waitFor(() => {
@@ -63,7 +75,7 @@ describe('LoginScreen', () => {
 
     await user.type(screen.getByPlaceholderText('Your explorer name...'), 'Ava');
     await user.type(screen.getByPlaceholderText('Your email address...'), 'ava@example.com');
-    await user.type(screen.getByPlaceholderText('Secret temple code...'), 'hunter2');
+    await user.type(screen.getByPlaceholderText(passwordPlaceholder), 'hunter2');
     await user.type(screen.getByPlaceholderText('Confirm your code...'), 'different');
     await user.click(document.querySelector('button[type="submit"]') as HTMLButtonElement);
 

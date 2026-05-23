@@ -27,6 +27,7 @@ export const forms = sqliteTable('forms', {
   expiresAt:   integer('expires_at', { mode: 'timestamp' }),
   responseLimit: integer('response_limit'),
   accessPasswordHash: text('access_password_hash'),
+  allowResponseEdits: integer('allow_response_edits', { mode: 'boolean' }).notNull().default(false),
   // JSON array of FieldSchema
   schema:      text('schema').notNull().default('[]'),
   worldTheme:  text('world_theme'),
@@ -40,6 +41,7 @@ export const responses = sqliteTable('responses', {
   formId:      text('form_id').notNull().references(() => forms.id, { onDelete: 'cascade' }),
   // JSON object: { fieldId: value }
   data:        text('data').notNull(),
+  respondentTokenHash: text('respondent_token_hash'),
   // sha256 hash of IP for rate limiting (no raw IP stored)
   ipHash:      text('ip_hash'),
   submittedAt: integer('submitted_at', { mode: 'timestamp' }).notNull(),

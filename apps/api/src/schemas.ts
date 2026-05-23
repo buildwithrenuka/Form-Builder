@@ -114,6 +114,7 @@ export const UpdateFormInput = z.object({
   expiresAt:   z.string().datetime().nullable().optional(),
   responseLimit: z.number().int().min(1).max(100000).nullable().optional(),
   accessPassword: z.string().min(4).max(128).nullable().optional(),
+  allowResponseEdits: z.boolean().optional(),
   schema:      FormFieldsSchema.optional(),
   worldTheme:  z.string().max(50).optional(),
 });
@@ -127,6 +128,7 @@ export const PublishFormInput = z.object({
 export const SubmitResponseInput = z.object({
   formId: z.string(),
   accessPassword: z.string().max(128).optional(),
+  respondentToken: z.string().min(16).max(256).optional(),
   data:   z.record(z.string(), z.unknown()),
 });
 

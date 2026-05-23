@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { LibraryWorld } from '../libraryData';
 
 type Props = {
@@ -11,20 +11,45 @@ export function LibraryWorldCinematic({ world, onComplete, onBack }: Props) {
   const [panel, setPanel] = useState(0);
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const timeoutsRef = useRef<number[]>([]);
+
+  function queueTimeout(callback: () => void, delay: number) {
+    const timeoutId = window.setTimeout(() => {
+      timeoutsRef.current = timeoutsRef.current.filter((id) => id !== timeoutId);
+      callback();
+    }, delay);
+    timeoutsRef.current.push(timeoutId);
+  }
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setVisible(true), 90);
-    return () => window.clearTimeout(timer);
+    queueTimeout(() => setVisible(true), 90);
+    return () => {
+      timeoutsRef.current.forEach((id) => window.clearTimeout(id));
+      timeoutsRef.current = [];
+    };
   }, []);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        advance();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [panel, leaving]);
+
   function advance() {
+    if (leaving) return;
     setLeaving(true);
-    window.setTimeout(() => {
+    queueTimeout(() => {
       if (panel < world.cinematic.length - 1) {
         setPanel((value) => value + 1);
         setLeaving(false);
         setVisible(false);
-        window.setTimeout(() => setVisible(true), 70);
+        queueTimeout(() => setVisible(true), 70);
       } else {
         onComplete();
       }
@@ -46,6 +71,8 @@ export function LibraryWorldCinematic({ world, onComplete, onBack }: Props) {
         cursor: 'pointer',
       }}
       onClick={advance}
+      role="presentation"
+      data-testid="library-world-cinematic"
     >
       <button
         onClick={(event) => {
@@ -141,8 +168,21 @@ export function LibraryWorldCinematic({ world, onComplete, onBack }: Props) {
         ))}
       </div>
 
-      <div style={{ position: 'absolute', bottom: 28, color: 'rgba(255,255,255,0.3)', fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
-        {panel < world.cinematic.length - 1 ? 'tap to continue' : 'tap to build'}
+      <div style={{ position: 'absolute', bottom: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <button
+          type="button"
+          data-testid="library-world-cinematic-advance"
+          onClick={(event) => {
+            event.stopPropagation();
+            advance();
+          }}
+          style={{ background: `linear-gradient(135deg, ${world.color}, #ffffff1a)`, border: `1px solid ${world.color}66`, color: '#fff', borderRadius: 999, padding: '12px 24px', fontSize: 13, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', cursor: leaving ? 'not-allowed' : 'pointer', boxShadow: `0 0 24px ${world.glowColor}`, opacity: leaving ? 0.7 : 1 }}
+        >
+          {panel < world.cinematic.length - 1 ? 'Continue' : 'Start Building'}
+        </button>
+        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+          Click, tap, or press Enter
+        </div>
       </div>
 
       <style>{`

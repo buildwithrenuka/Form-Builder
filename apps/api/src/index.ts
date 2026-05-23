@@ -26,9 +26,11 @@ import {
 
 const DEFAULT_ALLOWED_ORIGINS = [
   'http://localhost:4173',
+  'http://localhost:4174',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://127.0.0.1:4173',
+  'http://127.0.0.1:4174',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
 ];
@@ -317,7 +319,7 @@ app.get('/openapi.json', (c) => {
     info: {
       title: 'FormVerse API',
       version: '1.0.0',
-      description: 'API reference for FormVerse. Explore authentication, form management, and response submission endpoints exposed through the backend worker.',
+      description: 'API reference for FormVerse. Explore authentication, form management, and response submission endpoints exposed through the backend worker. The live app runs at https://formverse-web.pages.dev, interactive docs are served from /docs, and authenticated endpoints expect a Bearer JWT returned by auth.login.',
     },
     servers: [{ url: base }],
     tags: OPENAPI_TAGS,

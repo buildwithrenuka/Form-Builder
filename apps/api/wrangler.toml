@@ -1,4 +1,4 @@
-name            = "formquest-api"
+name            = "formverse-api"
 main            = "src/index.ts"
 compatibility_date  = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
@@ -9,13 +9,13 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding       = "DB"
 database_name = "formquest-db"
-database_id   = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id   = "749d32d1-0093-47e9-9323-5308b2820525"
 
 # ── Non-secret vars (override per environment below) ──────────────────────
 [vars]
 IP_SALT       = "formquest-ip-salt"
 PASSWORD_SALT = "formquest-pw-salt"
-APP_BASE_URL  = "https://formverse.app"
+APP_BASE_URL  = "https://formverse-web.pages.dev"
 RESEND_FROM_EMAIL = "FormVerse <onboarding@resend.dev>"
 
 # JWT_SECRET must be set as a secret, NOT here in plaintext:
@@ -28,5 +28,18 @@ port = 3001
 
 # ── Production environment ─────────────────────────────────────────────────
 [env.production]
-name = "formquest-api"
+name = "formverse-api"
+
+[[env.production.d1_databases]]
+binding       = "DB"
+database_name = "formquest-db"
+database_id   = "749d32d1-0093-47e9-9323-5308b2820525"
+
+[env.production.vars]
+IP_SALT = "formquest-ip-salt"
+PASSWORD_SALT = "formquest-pw-salt"
+APP_BASE_URL = "https://formverse-web.pages.dev"
+ALLOWED_ORIGINS = "https://formverse-web.pages.dev"
+RESEND_FROM_EMAIL = "FormVerse <onboarding@resend.dev>"
+
 # Set production secrets via: wrangler secret put JWT_SECRET --env production

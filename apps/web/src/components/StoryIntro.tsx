@@ -240,6 +240,7 @@ export function StoryIntro({ playerName, onComplete, onBack }: Props) {
           ⚡ FormVerse
         </div>
         <button
+          data-testid="story-intro-skip"
           onClick={(e) => {
             e.stopPropagation();
             onComplete();

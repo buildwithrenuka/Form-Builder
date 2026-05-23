@@ -1,12 +1,14 @@
 import { useEffect, useState, FormEvent } from 'react';
-import { ParticleBackground } from './ParticleBackground';
+import { FormVerseLogo } from './Logo';
 import { saveSession } from '../auth';
 import { trpc } from '../trpc';
+import { APP_UI_FONT, getAppSurfaceTheme } from './appSurfaceTheme';
+import type { HomeTheme } from './HomePage';
 
 type Props = {
   onLogin: (name: string) => void;
   onBack?: () => void;
-  theme?: 'temple-run' | 'globe' | 'library' | 'formverse' | 'light' | 'rainbow' | 'firecracker' | 'jugnu';
+  theme?: 'temple-run' | 'globe' | 'library' | 'formverse' | 'dark' | 'light' | 'rainbow' | 'firecracker' | 'jugnu';
   initialMode?: 'login' | 'register';
 };
 
@@ -117,75 +119,56 @@ function ScanLine() {
   );
 }
 
+function buildSharedAuthTheme(theme: HomeTheme, particles: string[], icon: string, footer: string) {
+  const surface = getAppSurfaceTheme(theme);
+
+  return {
+    bg: surface.background,
+    particles,
+    cardBg: surface.panel,
+    cardBorder: surface.panelBorderStrong,
+    activeBg: surface.panelStrong,
+    activeBorder: surface.accent,
+    inactiveBorder: surface.panelBorder,
+    inputColor: surface.text,
+    logoGradient: surface.accentGradient,
+    subtitleColor: surface.textSoft,
+    tabActive: surface.accentGradient,
+    tabActiveColor: surface.buttonText,
+    submitBtn: surface.actionGradient,
+    submitColor: surface.buttonText,
+    icon,
+    title: (modeName: string) => modeName === 'login' ? 'WELCOME BACK' : 'CREATE ACCOUNT',
+    submitTxt: (modeName: string) => modeName === 'login' ? 'ENTER WORKSPACE' : 'CREATE ACCOUNT',
+    loginTab: 'LOGIN',
+    registerTab: 'REGISTER',
+    footer,
+    guestColor: surface.textSoft,
+    guestHover: surface.heading,
+    divider: surface.accentBorder,
+    dividerIcon: '✦',
+    cornerIcon: icon,
+    cornerColor: 0.22,
+    extraDecor: icon,
+    shadow: surface.shadow,
+  };
+}
+
 export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode = 'login' }: Props) {
   const isGlobe    = theme === 'globe';
   const isLibrary  = theme === 'library';
   const isFormverse = theme === 'formverse';
+  const isDarkTheme = theme === 'dark';
   const isLightTheme = theme === 'light';
   const isRainbowTheme = theme === 'rainbow';
   const isFirecrackerTheme = theme === 'firecracker';
   const isJugnuTheme = theme === 'jugnu';
-  const isCosmic = isFormverse || isLightTheme || isRainbowTheme || isFirecrackerTheme || isJugnuTheme;
+  const isCosmic = isFormverse || isDarkTheme || isLightTheme || isRainbowTheme || isFirecrackerTheme || isJugnuTheme;
   const isTemple = !isGlobe && !isLibrary && !isCosmic;
-  const T = isLightTheme ? {
-    bg:            'linear-gradient(160deg, #fff7d6 0%, #fff9ef 36%, #ffe7c2 68%, #fff2dc 100%)',
-    particles:     ['☀️', '✨', '🌤️', '🕊️', '🌼', '📜', '🪄', '💫', '🌈', '⭐'],
-    cardBg:        'rgba(255, 250, 240, 0.86)',
-    cardBorder:    'rgba(25, 25, 25, 0.16)',
-    activeBg:      'rgba(255, 255, 255, 0.96)',
-    activeBorder:  '#111111',
-    inactiveBorder:'rgba(17, 17, 17, 0.14)',
-    inputColor:    '#111111',
-    logoGradient:  'linear-gradient(135deg, #111111 0%, #2a2a2a 28%, #cc4400 58%, #ffb300 100%)',
-    subtitleColor: 'rgba(17,17,17,0.62)',
-    tabActive:     'linear-gradient(135deg, #111111, #3d3d3d)',
-    tabActiveColor:'#fff7ef',
-    submitBtn:     'linear-gradient(135deg, #111111 0%, #2f2f2f 28%, #cc4400 70%, #ffb300 100%)',
-    submitColor:   '#fffdf8',
-    icon:          '☀️',
-    title:         (m: string) => m === 'login' ? 'WELCOME BACK' : 'CREATE ACCOUNT',
-    submitTxt:     (m: string) => m === 'login' ? 'ENTER FORMVERSE' : 'START YOUR QUEST',
-    loginTab:      'LOGIN',
-    registerTab:   'REGISTER',
-    footer:        'LIGHT MODE · CLEAN FORMS · SHARED WORLDS',
-    guestColor:    'rgba(17,17,17,0.56)',
-    guestHover:    '#111111',
-    divider:       'rgba(17,17,17,0.16)',
-    dividerIcon:   '✦',
-    cornerIcon:    '☀️',
-    cornerColor:   0.16,
-    extraDecor:    '✨',
-    shadow:        '0 12px 42px rgba(0,0,0,0.12), 0 24px 70px rgba(204,68,0,0.14)',
-  } : isRainbowTheme ? {
-    bg:            'linear-gradient(160deg, #120024 0%, #001c3b 25%, #18204f 45%, #3a0f4f 68%, #24001a 100%)',
-    particles:     ['🌈', '✨', '🪩', '💫', '🎨', '⭐', '🌟', '🎆', '🫧', '🎠'],
-    cardBg:        'rgba(18, 8, 48, 0.84)',
-    cardBorder:    'rgba(255, 255, 255, 0.2)',
-    activeBg:      'rgba(32, 12, 74, 0.96)',
-    activeBorder:  '#ff7ad9',
-    inactiveBorder:'rgba(130, 110, 255, 0.28)',
-    inputColor:    '#fff6ff',
-    logoGradient:  'linear-gradient(135deg, #ff4fd8 0%, #7c3aed 24%, #00e5ff 48%, #9cff00 72%, #ffe600 88%, #ff7a00 100%)',
-    subtitleColor: '#c9b8ff',
-    tabActive:     'linear-gradient(135deg, #7c3aed, #ff4fd8)',
-    tabActiveColor:'#fff8ff',
-    submitBtn:     'linear-gradient(135deg, #7c3aed 0%, #ff4fd8 24%, #00e5ff 52%, #9cff00 78%, #ffe600 100%)',
-    submitColor:   '#13041f',
-    icon:          '🌈',
-    title:         (m: string) => m === 'login' ? 'ENTER THE SPECTRUM' : 'JOIN THE SPECTRUM',
-    submitTxt:     (m: string) => m === 'login' ? 'ENTER RAINBOW MODE' : 'BEGIN IN COLOR',
-    loginTab:      'RAINBOW LOGIN',
-    registerTab:   'COLOR REGISTER',
-    footer:        'RAINBOW MODE · BOLD FORMS · CINEMATIC WORLDS',
-    guestColor:    'rgba(226,211,255,0.68)',
-    guestHover:    '#ffffff',
-    divider:       'rgba(255, 122, 217, 0.3)',
-    dividerIcon:   '🌈',
-    cornerIcon:    '✨',
-    cornerColor:   0.22,
-    extraDecor:    '🪩',
-    shadow:        '0 0 60px rgba(124,58,237,0.22), 0 0 80px rgba(255,79,216,0.18), 0 24px 80px rgba(0,0,0,0.82)',
-  } : isFirecrackerTheme ? {
+  const T = isDarkTheme ? buildSharedAuthTheme('dark', ['✨', '🌘', '🪐', '💫', '⭐', '🌌', '🔶', '🔹'], '🌙', 'DARK MODE · CINEMATIC GLASS · FOCUSED FORMS')
+    : isLightTheme ? buildSharedAuthTheme('light', ['✨', '☁️', '🌿', '💫', '🌤️', '🕊️', '⭐', '🪄', '🌼', '🔹'], '☀️', 'LIGHT MODE · CREAM GLASS · MODERN FORMS')
+    : isRainbowTheme ? buildSharedAuthTheme('rainbow', ['🌈', '✨', '🪩', '💫', '🎨', '⭐', '🌟', '🎆', '🫧', '🎠'], '🌈', 'RAINBOW MODE · BOLD FORMS · CINEMATIC WORLDS')
+    : isFirecrackerTheme ? buildSharedAuthTheme('firecracker', ['🎆', '✨', '🔥', '💥', '🧨', '⭐', '🎇', '🌟', '⚡', '🪔'], '🎆', 'FIRECRACKER MODE · BRIGHT FORMS · FESTIVE GLOW') : isFirecrackerTheme ? {
     bg:            'linear-gradient(160deg, #140100 0%, #290500 25%, #481000 52%, #2b0500 76%, #120100 100%)',
     particles:     ['🎆', '✨', '🔥', '💥', '🧨', '⭐', '🎇', '🌟', '⚡', '🪔'],
     cardBg:        'rgba(24, 4, 0, 0.88)',
@@ -214,64 +197,35 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
     cornerColor:   0.24,
     extraDecor:    '🔥',
     shadow:        '0 0 60px rgba(255,90,0,0.22), 0 0 90px rgba(255,180,0,0.14), 0 24px 80px rgba(0,0,0,0.82)',
-  } : isJugnuTheme ? {
-    bg:            'linear-gradient(160deg, #020500 0%, #071100 28%, #141d00 56%, #0a1200 78%, #020500 100%)',
-    particles:     ['✨', '🌟', '🪲', '💫', '🌾', '🍃', '⭐', '🫧', '🪔', '🌙'],
-    cardBg:        'rgba(8, 12, 0, 0.88)',
-    cardBorder:    'rgba(255, 214, 92, 0.28)',
-    activeBg:      'rgba(24, 34, 2, 0.96)',
-    activeBorder:  '#ffd65c',
-    inactiveBorder:'rgba(255, 214, 92, 0.16)',
-    inputColor:    '#fff6d8',
-    logoGradient:  'linear-gradient(135deg, #fff1a8 0%, #ffd65c 28%, #ffe98e 58%, #cfff8c 82%, #ffd65c 100%)',
-    subtitleColor: '#ffe7a3',
-    tabActive:     'linear-gradient(135deg, #5b4300, #b07a00)',
-    tabActiveColor:'#fffbea',
-    submitBtn:     'linear-gradient(135deg, #5b4300 0%, #b07a00 30%, #ffd65c 64%, #fff0a6 100%)',
-    submitColor:   '#1a1500',
-    icon:          '✨',
-    title:         (m: string) => m === 'login' ? 'ENTER THE FIREFLIES' : 'JOIN THE FIREFLIES',
-    submitTxt:     (m: string) => m === 'login' ? 'GLOW INTO FORMVERSE' : 'BEGIN IN GOLDEN LIGHT',
-    loginTab:      'JUGNU LOGIN',
-    registerTab:   'GLOW REGISTER',
-    footer:        'JUGNU MODE · GOLDEN GLOW · QUIET MAGIC',
-    guestColor:    'rgba(255, 232, 170, 0.7)',
-    guestHover:    '#fff7cf',
-    divider:       'rgba(255,214,92,0.22)',
-    dividerIcon:   '✨',
-    cornerIcon:    '🌟',
-    cornerColor:   0.2,
-    extraDecor:    '🪔',
-    shadow:        '0 0 52px rgba(255,214,92,0.18), 0 0 90px rgba(207,255,140,0.08), 0 24px 80px rgba(0,0,0,0.84)',
-  } : isFormverse ? {
-    bg:            'linear-gradient(160deg, #060014 0%, #0d0026 35%, #120038 65%, #060014 100%)',
+  } : isJugnuTheme ? buildSharedAuthTheme('jugnu', ['✨', '🌟', '🪲', '💫', '🌾', '🍃', '⭐', '🫧', '🪔', '🌙'], '✨', 'JUGNU MODE · GOLDEN GLOW · QUIET MAGIC') : isFormverse ? {
+    bg:            'linear-gradient(160deg, #090707 0%, #12100f 35%, #10181d 68%, #080909 100%)',
     particles:     ['\u2728', '\u{1F52E}', '\u{1F3DB}\uFE0F', '\u2708\uFE0F', '\u{1F4DA}', '\u{1F30C}', '\u{1F320}', '\u{1F6F8}', '\u{1FA84}', '\u{1F9FF}', '\u{1F30D}', '\u{1F52D}'],
-    cardBg:        'rgba(6, 0, 20, 0.96)',
-    cardBorder:    'rgba(124, 58, 237, 0.65)',
-    activeBg:      'rgba(20, 0, 50, 0.96)',
-    activeBorder:  '#a78bfa',
-    inactiveBorder:'rgba(88, 28, 200, 0.35)',
-    inputColor:    '#e9d5ff',
-    logoGradient:  'linear-gradient(135deg, #5b21b6 0%, #7c3aed 28%, #a78bfa 52%, #00e5ff 70%, #a78bfa 85%, #7c3aed 100%)',
-    subtitleColor: '#a78bfa',
-    tabActive:     'linear-gradient(135deg, #2e1065, #6d28d9)',
-    tabActiveColor:'#e9d5ff',
-    submitBtn:     'linear-gradient(135deg, #4c1d95 0%, #7c3aed 40%, #a78bfa 70%, #00e5ff 100%)',
-    submitColor:   '#fff',
+    cardBg:        'rgba(12, 10, 10, 0.96)',
+    cardBorder:    'rgba(255, 140, 66, 0.34)',
+    activeBg:      'rgba(18, 20, 22, 0.96)',
+    activeBorder:  '#ffb36b',
+    inactiveBorder:'rgba(255, 140, 66, 0.18)',
+    inputColor:    '#fff2e2',
+    logoGradient:  'linear-gradient(135deg, #ffd166 0%, #ff8c42 32%, #22d3ee 74%, #9be7f2 100%)',
+    subtitleColor: '#e7b98d',
+    tabActive:     'linear-gradient(135deg, #4a2311, #ff8c42)',
+    tabActiveColor:'#fff6ec',
+    submitBtn:     'linear-gradient(135deg, #4a2311 0%, #ff8c42 38%, #ffd166 72%, #22d3ee 100%)',
+    submitColor:   '#1a0d07',
     icon:          '\u{1F52E}',
     title:         (m: string) => m === 'login' ? 'WELCOME BACK' : 'CREATE ACCOUNT',
     submitTxt:     (m: string) => m === 'login' ? '\u{1F680} ENTER FORMVERSE' : '\u2728 START YOUR QUEST',
     loginTab:      '\u{1F511} LOGIN',
     registerTab:   '\u2728 REGISTER',
     footer:        'REALM RUNNER \u00b7 GLOBE EXPLORER \u00b7 THE LIBRARY',
-    guestColor:    'rgba(167,139,250,0.65)',
-    guestHover:    '#a78bfa',
-    divider:       'rgba(124,58,237,0.45)',
+    guestColor:    'rgba(231,185,141,0.7)',
+    guestHover:    '#ffd7ad',
+    divider:       'rgba(34,211,238,0.2)',
     dividerIcon:   '\u2726',
     cornerIcon:    '\u{1F30C}',
     cornerColor:   0.28,
     extraDecor:    '\u{1FA84}',
-    shadow:        '0 0 60px rgba(124,58,237,0.3), 0 24px 80px rgba(0,0,0,0.9)',
+    shadow:        '0 0 60px rgba(255,140,66,0.14), 0 0 84px rgba(34,211,238,0.08), 0 24px 80px rgba(0,0,0,0.9)',
   } : isLibrary ? {
     bg:            'linear-gradient(160deg, #0a0018 0%, #12002e 35%, #1a0040 65%, #0a0018 100%)',
     particles:     LIBRARY_PARTICLES,
@@ -486,36 +440,123 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
     setConfirm('');
   };
 
-  const currentTitle = mode === 'forgot'
-    ? (isLibrary ? 'REQUEST THE RESET SCROLL' : isCosmic ? 'REQUEST RESET LINK' : 'REQUEST RESET CODE')
-    : mode === 'reset'
-      ? (isLibrary ? 'SET A NEW CIPHER' : isCosmic ? 'SET A NEW PASSCODE' : 'SET A NEW TEMPLE CODE')
-      : T.title(mode);
-
   const currentSubmitText = mode === 'forgot'
-    ? (isLibrary ? '📬 SEND RESET SCROLL' : isCosmic ? '📬 SEND RESET LINK' : '📬 SEND RESET CODE')
+    ? 'Send reset link'
     : mode === 'reset'
-      ? (isLibrary ? '🔐 SAVE NEW CIPHER' : isCosmic ? '🔐 SAVE NEW PASSCODE' : '🔐 SAVE NEW CODE')
-      : T.submitTxt(mode);
+      ? 'Save new password'
+      : mode === 'login'
+        ? 'Enter workspace'
+        : 'Create account';
+
+  const authHeading = mode === 'login'
+    ? 'Welcome back'
+    : mode === 'register'
+      ? 'Create your account'
+      : mode === 'forgot'
+        ? 'Reset your password'
+        : 'Choose a new password';
+
+  const authSubheading = mode === 'login'
+    ? 'Sign in to manage forms, responses, publishing, and your creator workspace.'
+    : mode === 'register'
+      ? 'Start building shareable forms with themed experiences and controlled publishing.'
+      : mode === 'forgot'
+        ? 'Enter the email linked to your account and we will send a reset link.'
+        : 'Set a fresh password for your account and get back into your workspace.';
+
+  const shellLabel = isLibrary
+    ? 'Library Workspace'
+    : isGlobe
+      ? 'Globe Workspace'
+      : isDarkTheme
+        ? 'Dark Workspace'
+      : isRainbowTheme
+        ? 'Rainbow Workspace'
+        : isFirecrackerTheme
+          ? 'Firecracker Workspace'
+          : isJugnuTheme
+            ? 'Jugnu Workspace'
+            : isLightTheme
+              ? 'Light Workspace'
+              : isFormverse
+                ? 'FormVerse Workspace'
+                : 'Realm Workspace';
+
+  const switchPrompt = mode === 'login' || mode === 'forgot' || mode === 'reset'
+    ? "Don't have an account?"
+    : 'Already have an account?';
+
+  const switchActionLabel = mode === 'login' || mode === 'forgot' || mode === 'reset' ? 'Sign up' : 'Sign in';
+  const switchAction = () => switchMode(mode === 'login' || mode === 'forgot' || mode === 'reset' ? 'register' : 'login');
+  const logoVariant = theme === 'temple-run' || theme === 'globe' || theme === 'library' || theme === 'formverse' || theme === 'dark' || theme === 'light' || theme === 'rainbow' || theme === 'firecracker' || theme === 'jugnu'
+    ? theme
+    : 'dark';
+
+  const authPanelBg = `linear-gradient(180deg, ${T.cardBg} 0%, ${T.activeBg} 100%)`;
+  const authPanelBorder = T.cardBorder;
+  const helperText = T.subtitleColor;
+  const headingText = T.inputColor;
+  const panelShadow = T.shadow;
+  const cardAccent = T.activeBorder;
+  const chipBorder = T.divider;
+  const topStripBg = T.activeBg;
+  const topStripBorder = T.inactiveBorder;
+  const cardAura = `radial-gradient(circle at top, ${T.cardBorder} 0%, transparent 52%)`;
+  const pageBackground = T.bg;
+  const ambientGlowA = T.cardBorder;
+  const ambientGlowB = T.divider;
+  const hasThemeBackdropFx = isFirecrackerTheme || isRainbowTheme || isJugnuTheme;
+  const burstOverlayA = isFirecrackerTheme
+    ? 'conic-gradient(from 90deg at 50% 50%, rgba(255,72,0,0.28), rgba(255,176,0,0.06), rgba(255,238,120,0.22), rgba(255,72,0,0.28))'
+    : isRainbowTheme
+      ? 'conic-gradient(from 90deg at 50% 50%, rgba(255,0,168,0.24), rgba(0,229,255,0.08), rgba(255,230,0,0.2), rgba(139,47,255,0.22), rgba(255,0,168,0.24))'
+      : isJugnuTheme
+        ? 'radial-gradient(circle, rgba(255,220,120,0.26) 0%, rgba(201,181,122,0.12) 30%, transparent 68%)'
+      : '';
+  const burstOverlayB = isFirecrackerTheme
+    ? 'radial-gradient(circle, rgba(255,196,0,0.26) 0%, rgba(255,106,0,0.14) 30%, transparent 62%)'
+    : isRainbowTheme
+      ? 'radial-gradient(circle, rgba(0,229,255,0.24) 0%, rgba(255,0,168,0.14) 32%, transparent 64%)'
+      : isJugnuTheme
+        ? 'radial-gradient(circle, rgba(168,191,119,0.2) 0%, rgba(255,240,150,0.12) 28%, transparent 62%)'
+      : '';
+  const burstOverlayC = isFirecrackerTheme
+    ? 'repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,110,0,0.28) 0deg 10deg, transparent 10deg 28deg)'
+    : isRainbowTheme
+      ? 'linear-gradient(135deg, rgba(255,0,168,0.12), rgba(0,229,255,0.12), rgba(255,230,0,0.12))'
+      : isJugnuTheme
+        ? 'radial-gradient(circle, rgba(255,240,150,0.18) 0%, rgba(168,191,119,0.08) 38%, transparent 70%)'
+      : '';
+  const fieldBg = T.activeBg;
+  const fieldBorder = T.inactiveBorder;
+  const fieldBorderActive = T.activeBorder;
+  const fieldLabelColor = T.subtitleColor;
+  const footerText = mode === 'login'
+    ? 'Manage forms, responses, and publishing from one workspace.'
+    : mode === 'register'
+      ? 'Start publishing forms and collecting responses in minutes.'
+      : mode === 'forgot'
+        ? 'A secure reset link will be sent to your email.'
+        : 'Save your new password and continue to your workspace.';
 
   const isBusy = submitting || loginMut.isPending || registerMut.isPending || forgotPasswordMut.isPending || resetPasswordMut.isPending;
 
   const inputStyle = (active: boolean): React.CSSProperties => ({
     width: '100%',
-    background: active ? T.activeBg : T.cardBg,
-    border: `2px solid ${active ? T.activeBorder : T.inactiveBorder}`,
-    borderRadius: '8px',
+    background: fieldBg,
+    border: `1px solid ${active ? fieldBorderActive : fieldBorder}`,
+    borderRadius: '14px',
     color: T.inputColor,
-    fontFamily: "'Rajdhani', sans-serif",
-    fontSize: '16px',
+    fontFamily: APP_UI_FONT,
+    fontSize: '15px',
     fontWeight: 600,
-    padding: '14px 16px 14px 46px',
+    padding: '14px 16px',
     outline: 'none',
     transition: 'all 0.2s ease',
     boxShadow: active
-      ? `0 0 18px ${T.activeBorder}44, inset 0 0 12px ${T.activeBorder}10`
-      : (isLightTheme ? 'inset 0 2px 8px rgba(0,0,0,0.08)' : 'inset 0 2px 8px rgba(0,0,0,0.4)'),
-    letterSpacing: '0.04em',
+      ? `0 0 0 4px ${fieldBorderActive}22`
+      : 'none',
+    letterSpacing: '0.01em',
     boxSizing: 'border-box',
   });
 
@@ -530,7 +571,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
       style={{
         position: 'fixed',
         inset: 0,
-        background: T.bg,
+        background: pageBackground,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -540,8 +581,37 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
         transition: 'opacity 0.5s ease',
       }}
     >
-      <ParticleBackground particles={T.particles} count={isLibrary ? 32 : isGlobe ? 30 : isRainbowTheme ? 34 : isFirecrackerTheme ? 30 : isJugnuTheme ? 28 : isLightTheme ? 24 : 26} />
-      <ScanLine />
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${T.divider} 1px, transparent 1px), linear-gradient(90deg, ${T.divider} 1px, transparent 1px)`, backgroundSize: '88px 88px', opacity: 0.18, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: '-12%', left: '-8%', width: '44vw', height: '44vw', background: `radial-gradient(circle, ${ambientGlowA} 0%, transparent 68%)`, filter: 'blur(42px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', right: '-10%', bottom: '-16%', width: '40vw', height: '40vw', background: `radial-gradient(circle, ${ambientGlowB} 0%, transparent 70%)`, filter: 'blur(52px)', pointerEvents: 'none' }} />
+      {hasThemeBackdropFx && (
+        <>
+          <div style={{ position: 'absolute', top: '8%', right: '8%', width: 260, height: 260, background: burstOverlayA, opacity: isJugnuTheme ? 0.82 : 0.72, filter: 'blur(26px)', mixBlendMode: 'screen', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: '10%', left: '10%', width: 220, height: 220, background: burstOverlayB, opacity: isJugnuTheme ? 0.74 : 0.84, filter: 'blur(20px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: isJugnuTheme ? '16%' : '18%', left: isJugnuTheme ? '12%' : '18%', width: isJugnuTheme ? 150 : 120, height: isJugnuTheme ? 150 : 120, borderRadius: '50%', border: `1px solid ${T.activeBorder}55`, boxShadow: `0 0 40px ${T.activeBorder}33`, opacity: isJugnuTheme ? 0.28 : 0.5, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', inset: 0, background: burstOverlayC, opacity: isFirecrackerTheme ? 0.22 : isRainbowTheme ? 0.18 : 0.2, filter: isFirecrackerTheme ? 'blur(2px)' : 'blur(10px)', mixBlendMode: isFirecrackerTheme ? 'screen' : 'normal', pointerEvents: 'none' }} />
+          {isFirecrackerTheme && (
+            <>
+              <div style={{ position: 'absolute', top: '14%', left: '22%', width: 180, height: 180, background: 'repeating-conic-gradient(from 0deg, rgba(255,196,0,0.36) 0deg 8deg, transparent 8deg 22deg)', opacity: 0.28, filter: 'blur(4px)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', bottom: '18%', right: '16%', width: 200, height: 200, background: 'radial-gradient(circle, rgba(255,90,0,0.28) 0%, rgba(255,176,0,0.12) 30%, transparent 66%)', filter: 'blur(14px)', pointerEvents: 'none' }} />
+            </>
+          )}
+          {isRainbowTheme && (
+            <>
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(120deg, transparent 16%, rgba(255,0,168,0.12) 30%, rgba(0,229,255,0.1) 52%, rgba(255,230,0,0.08) 72%, transparent 84%)', opacity: 0.7, filter: 'blur(14px)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', bottom: '16%', right: '18%', width: 190, height: 190, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,47,255,0.22) 0%, rgba(0,229,255,0.12) 40%, transparent 70%)', filter: 'blur(16px)', pointerEvents: 'none' }} />
+            </>
+          )}
+          {isJugnuTheme && (
+            <>
+              <div style={{ position: 'absolute', top: '18%', left: '24%', width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,240,150,0.9)', boxShadow: '0 0 28px rgba(255,240,150,0.55)', opacity: 0.75, pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', top: '28%', right: '22%', width: 14, height: 14, borderRadius: '50%', background: 'rgba(201,255,140,0.85)', boxShadow: '0 0 24px rgba(201,255,140,0.45)', opacity: 0.7, pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', bottom: '22%', left: '18%', width: 12, height: 12, borderRadius: '50%', background: 'rgba(255,230,160,0.88)', boxShadow: '0 0 22px rgba(255,230,160,0.4)', opacity: 0.68, pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', bottom: '16%', right: '28%', width: 16, height: 16, borderRadius: '50%', background: 'rgba(168,191,119,0.82)', boxShadow: '0 0 22px rgba(168,191,119,0.38)', opacity: 0.66, pointerEvents: 'none' }} />
+            </>
+          )}
+        </>
+      )}
 
       {/* Back button */}
       {onBack && (
@@ -552,7 +622,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
             background: backButtonBg, border: `1px solid ${backButtonBorder}`,
             borderRadius: 8, color: backButtonColor, fontSize: 12,
             fontWeight: 600, padding: '7px 14px', cursor: 'pointer',
-            fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em',
+            fontFamily: APP_UI_FONT, letterSpacing: '0.08em',
             transition: 'all 0.18s',
           }}
           onMouseEnter={e => { e.currentTarget.style.background = backButtonHoverBg; e.currentTarget.style.color = backButtonHoverColor; }}
@@ -562,174 +632,67 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
         </button>
       )}
 
-      {/* Ground */}
-      {isTemple    && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '110px', background: 'linear-gradient(0deg, #050200 0%, #200e00 55%, transparent 100%)', zIndex: 1 }} />}
-      {isGlobe     && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '110px', background: 'linear-gradient(0deg, #000010 0%, #000820 55%, transparent 100%)', zIndex: 1 }} />}
-      {isLibrary   && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '110px', background: 'linear-gradient(0deg, #050010 0%, #0f0030 55%, transparent 100%)', zIndex: 1 }} />}
-      {isFormverse && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '110px', background: 'linear-gradient(0deg, #030010 0%, #0d0028 55%, transparent 100%)', zIndex: 1 }} />}
-      {isLightTheme && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '110px', background: 'linear-gradient(0deg, rgba(255,214,150,0.44) 0%, rgba(255,245,224,0.28) 55%, transparent 100%)', zIndex: 1 }} />}
-      {isRainbowTheme && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '110px', background: 'linear-gradient(0deg, rgba(18,0,46,0.9) 0%, rgba(58,15,79,0.46) 55%, transparent 100%)', zIndex: 1 }} />}
+      <div style={{ position: 'relative', zIndex: 5, width: 'min(460px, calc(100vw - 24px))', padding: '20px 12px' }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            position: 'relative', zIndex: 5,
+            background: authPanelBg,
+            border: `1px solid ${authPanelBorder}`,
+            borderRadius: 30,
+            padding: '26px',
+            width: '100%',
+            backdropFilter: 'blur(24px)',
+            boxShadow: panelShadow,
+            animation: shaking ? 'shake 0.5s ease-in-out' : 'login-card-in 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.2s both',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: cardAura, opacity: isLightTheme ? 1 : 0.9 }} />
 
-      {/* Realm Runner — stone path + runner */}
-      {isTemple && <>
-        <div style={{ position: 'absolute', bottom: '18px', left: 0, right: 0, height: '52px', display: 'flex', gap: '3px', overflow: 'hidden', zIndex: 2 }}>
-          {Array.from({ length: 55 }, (_, i) => (
-            <div key={i} style={{ flex: '0 0 52px', height: '46px', background: `rgba(${80 + (i % 3) * 12}, ${48 + (i % 4) * 6}, ${18 + (i % 2) * 8}, 0.55)`, border: '1px solid rgba(160, 100, 40, 0.28)', borderRadius: '2px' }} />
-          ))}
-        </div>
-        <div style={{ position: 'absolute', bottom: '70px', fontSize: '44px', animation: 'runner 4.5s linear infinite', zIndex: 3, filter: 'drop-shadow(0 0 10px #ffd700)' }}>🏃</div>
-        <Torch side="left" />
-        <Torch side="right" />
-      </>}
-
-      {/* FormVerse — floating orbs + star field */}
-      {isCosmic && <>
-        {/* Deep orbs */}
-        <div style={{ position: 'absolute', top: '5%',  left: '5%',  width: '40vw', height: '40vw', background: isLightTheme ? 'radial-gradient(circle, rgba(255,196,82,0.18) 0%, transparent 70%)' : isRainbowTheme ? 'radial-gradient(circle, rgba(255,79,216,0.18) 0%, transparent 70%)' : isFirecrackerTheme ? 'radial-gradient(circle, rgba(255,94,0,0.2) 0%, transparent 70%)' : isJugnuTheme ? 'radial-gradient(circle, rgba(255,214,92,0.16) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(124,58,237,0.16) 0%, transparent 70%)', filter: 'blur(70px)', pointerEvents: 'none', zIndex: 1, animation: 'orb-drift 14s ease-in-out infinite' }} />
-        <div style={{ position: 'absolute', top: '20%', right: '3%', width: '30vw', height: '30vw', background: isLightTheme ? 'radial-gradient(circle, rgba(255,140,0,0.12) 0%, transparent 70%)' : isRainbowTheme ? 'radial-gradient(circle, rgba(0,229,255,0.14) 0%, transparent 70%)' : isFirecrackerTheme ? 'radial-gradient(circle, rgba(255,184,0,0.14) 0%, transparent 70%)' : isJugnuTheme ? 'radial-gradient(circle, rgba(207,255,140,0.1) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(0,229,255,0.1) 0%, transparent 70%)',   filter: 'blur(60px)', pointerEvents: 'none', zIndex: 1, animation: 'orb-drift 18s ease-in-out infinite 5s' }} />
-        <div style={{ position: 'absolute', bottom: '8%',left: '20%', width: '35vw', height: '20vw', background: isLightTheme ? 'radial-gradient(circle, rgba(17,17,17,0.08) 0%, transparent 70%)' : isRainbowTheme ? 'radial-gradient(circle, rgba(156,255,0,0.14) 0%, transparent 70%)' : isFirecrackerTheme ? 'radial-gradient(circle, rgba(255,70,0,0.12) 0%, transparent 70%)' : isJugnuTheme ? 'radial-gradient(circle, rgba(255,240,150,0.12) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(168,85,247,0.1) 0%, transparent 70%)',  filter: 'blur(60px)', pointerEvents: 'none', zIndex: 1, animation: 'orb-drift 22s ease-in-out infinite 10s' }} />
-        {/* Grid overlay */}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: isLightTheme ? 'linear-gradient(rgba(17,17,17,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(17,17,17,0.03) 1px,transparent 1px)' : isRainbowTheme ? 'linear-gradient(rgba(255,255,255,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.045) 1px,transparent 1px)' : isFirecrackerTheme ? 'linear-gradient(rgba(255,122,0,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,90,0,0.05) 1px,transparent 1px)' : isJugnuTheme ? 'linear-gradient(rgba(255,214,92,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(207,255,140,0.03) 1px,transparent 1px)' : 'linear-gradient(rgba(124,58,237,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,0.04) 1px,transparent 1px)', backgroundSize: '72px 72px', pointerEvents: 'none', zIndex: 1 }} />
-        {/* Scan line */}
-        <div style={{ position: 'absolute', left: 0, right: 0, height: '2px', background: isLightTheme ? 'linear-gradient(90deg, transparent, rgba(17,17,17,0.24), rgba(255,179,0,0.32), transparent)' : isRainbowTheme ? 'linear-gradient(90deg, transparent, rgba(255,79,216,0.45), rgba(0,229,255,0.45), rgba(156,255,0,0.42), transparent)' : isFirecrackerTheme ? 'linear-gradient(90deg, transparent, rgba(255,90,0,0.55), rgba(255,184,0,0.5), transparent)' : isJugnuTheme ? 'linear-gradient(90deg, transparent, rgba(255,214,92,0.42), rgba(207,255,140,0.28), transparent)' : 'linear-gradient(90deg, transparent, rgba(124,58,237,0.4), rgba(0,229,255,0.4), transparent)', animation: 'scan-h 8s linear infinite', zIndex: 2, pointerEvents: 'none' }} />
-        {/* Rocket runner */}
-        <div style={{ position: 'absolute', bottom: '70px', fontSize: '44px', animation: 'runner 5s linear infinite', zIndex: 3, filter: isLightTheme ? 'drop-shadow(0 0 14px #ff9800)' : isRainbowTheme ? 'drop-shadow(0 0 14px #ff4fd8)' : isFirecrackerTheme ? 'drop-shadow(0 0 14px #ff6a00)' : isJugnuTheme ? 'drop-shadow(0 0 14px #ffd65c)' : 'drop-shadow(0 0 14px #a78bfa)' }}>{isRainbowTheme ? '🌈' : isLightTheme ? '☀️' : isFirecrackerTheme ? '🎆' : isJugnuTheme ? '✨' : '🚀'}</div>
-        {/* Side icons */}
-        <div style={{ position: 'absolute', top: '18%', left: 'clamp(20px, 4vw, 70px)', fontSize: '40px', opacity: isLightTheme ? 0.16 : 0.18, animation: 'cosmic-float 6s ease-in-out infinite', zIndex: 3 }}>{isLightTheme ? '☁️' : isRainbowTheme ? '🪩' : isFirecrackerTheme ? '🔥' : isJugnuTheme ? '🌾' : '🏛️'}</div>
-        <div style={{ position: 'absolute', top: '18%', right: 'clamp(20px, 4vw, 70px)', fontSize: '40px', opacity: isLightTheme ? 0.16 : 0.18, animation: 'cosmic-float 6s ease-in-out 2s infinite', zIndex: 3 }}>{isLightTheme ? '✨' : isRainbowTheme ? '🎨' : isFirecrackerTheme ? '🎇' : isJugnuTheme ? '🌟' : '📚'}</div>
-        <div style={{ position: 'absolute', top: '42%', left: 'clamp(10px, 2vw, 40px)', fontSize: '28px', opacity: isLightTheme ? 0.1 : 0.12, animation: 'cosmic-float 8s ease-in-out 1s infinite', zIndex: 3 }}>{isLightTheme ? '🕊️' : isRainbowTheme ? '💫' : isFirecrackerTheme ? '💥' : isJugnuTheme ? '🪔' : '✈️'}</div>
-        <div style={{ position: 'absolute', top: '42%', right: 'clamp(10px, 2vw, 40px)', fontSize: '28px', opacity: isLightTheme ? 0.1 : 0.12, animation: 'cosmic-float 8s ease-in-out 3s infinite', zIndex: 3 }}>{isLightTheme ? '⭐' : isRainbowTheme ? '🎆' : isFirecrackerTheme ? '⚡' : isJugnuTheme ? '🍃' : '🌍'}</div>
-      </>}
-
-      {/* Globe — orbiting ring + spinning globe icon */}
-      {isGlobe && <>
-        <div style={{ position: 'absolute', bottom: '18px', left: 0, right: 0, height: '52px', display: 'flex', gap: '3px', overflow: 'hidden', zIndex: 2 }}>
-          {Array.from({ length: 55 }, (_, i) => (
-            <div key={i} style={{ flex: '0 0 52px', height: '46px', background: `rgba(0, ${18 + (i % 4) * 8}, ${40 + (i % 3) * 12}, 0.45)`, border: '1px solid rgba(0, 80, 180, 0.18)', borderRadius: '2px' }} />
-          ))}
-        </div>
-        {/* Spinning globe bar */}
-        <div style={{ position: 'absolute', bottom: '70px', fontSize: '44px', animation: 'runner 6s linear infinite', zIndex: 3, filter: 'drop-shadow(0 0 14px #00e5ff)' }}>🌍</div>
-        {/* Side satellite decorations */}
-        <div style={{ position: 'absolute', top: '20%', left: 'clamp(20px, 5vw, 80px)', fontSize: '36px', opacity: 0.25, animation: 'float-slow 5s ease-in-out infinite', zIndex: 3 }}>🛸</div>
-        <div style={{ position: 'absolute', top: '20%', right: 'clamp(20px, 5vw, 80px)', fontSize: '36px', opacity: 0.25, animation: 'float-slow 5s ease-in-out 2s infinite', zIndex: 3 }}>🔭</div>
-      </>}
-
-      {/* Library — bookshelf floor tiles + floating grimoire */}
-      {isLibrary && <>
-        <div style={{ position: 'absolute', bottom: '18px', left: 0, right: 0, height: '52px', display: 'flex', gap: '4px', overflow: 'hidden', zIndex: 2, padding: '0 8px' }}>
-          {Array.from({ length: 40 }, (_, i) => {
-            const colors = ['#4a1d96','#3b0764','#6d28d9','#5b21b6','#7c3aed'];
-            const col = colors[i % colors.length];
-            return (
-              <div key={i} style={{ flex: '0 0 18px', height: '46px', background: col, opacity: 0.55, borderRadius: '2px 2px 0 0', border: '1px solid rgba(192,132,252,0.2)', boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.4)' }} />
-            );
-          })}
-        </div>
-        {/* Floating open book */}
-        <div style={{ position: 'absolute', bottom: '72px', fontSize: '44px', animation: 'runner 8s linear infinite', zIndex: 3, filter: 'drop-shadow(0 0 14px #c084fc)' }}>📖</div>
-        {/* Side shelf candles */}
-        <div style={{ position: 'absolute', top: '22%', left: 'clamp(20px, 5vw, 80px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: 0.55, animation: 'float-slow 5s ease-in-out infinite', zIndex: 3 }}>
-          <div style={{ fontSize: 28, filter: 'drop-shadow(0 0 10px #c084fc)' }}>🕯️</div>
-          <div style={{ width: 3, height: 44, background: 'linear-gradient(180deg, #7c3aed, #3b0764)', borderRadius: 2 }} />
-          <div style={{ width: 12, height: 6, background: '#4a1d96', borderRadius: 2 }} />
-        </div>
-        <div style={{ position: 'absolute', top: '22%', right: 'clamp(20px, 5vw, 80px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: 0.55, animation: 'float-slow 5s ease-in-out 2.2s infinite', zIndex: 3 }}>
-          <div style={{ fontSize: 28, filter: 'drop-shadow(0 0 10px #c084fc)' }}>🕯️</div>
-          <div style={{ width: 3, height: 44, background: 'linear-gradient(180deg, #7c3aed, #3b0764)', borderRadius: 2 }} />
-          <div style={{ width: 12, height: 6, background: '#4a1d96', borderRadius: 2 }} />
-        </div>
-      </>}
-
-      {/* ── LOGO ── */}
-      <div style={{ position: 'relative', zIndex: 5, textAlign: 'center', marginBottom: '20px', animation: 'title-entrance 0.9s cubic-bezier(0.34,1.56,0.64,1) 0.1s both' }}>
-        {isCosmic ? (
-          <>
-            <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', padding: '10px 18px 12px', borderRadius: '18px', background: isLightTheme ? 'linear-gradient(135deg, rgba(255,255,255,0.62), rgba(255,243,220,0.42))' : isRainbowTheme ? 'linear-gradient(135deg, rgba(36,16,72,0.7), rgba(20,18,58,0.34))' : 'linear-gradient(135deg, rgba(16,8,38,0.72), rgba(10,16,42,0.34))', border: isLightTheme ? '1px solid rgba(17,17,17,0.1)' : isRainbowTheme ? '1px solid rgba(255,255,255,0.16)' : '1px solid rgba(167,139,250,0.18)', boxShadow: isLightTheme ? '0 14px 34px rgba(0, 0, 0, 0.1)' : '0 14px 34px rgba(10, 4, 28, 0.35)', backdropFilter: 'blur(14px)' }}>
-              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(28px, 6vw, 58px)', fontWeight: 900, color: isLightTheme ? '#111111' : isJugnuTheme ? '#fff3bf' : '#c4b5fd', background: isLightTheme ? 'linear-gradient(135deg, #111111 0%, #2a2a2a 22%, #cc4400 60%, #ffb300 100%)' : isRainbowTheme ? 'linear-gradient(135deg, #ff4fd8 0%, #7c3aed 24%, #00e5ff 48%, #9cff00 72%, #ffe600 88%, #ff7a00 100%)' : isFirecrackerTheme ? 'linear-gradient(135deg, #ff4d00 0%, #ff7a00 24%, #ffb000 58%, #ffe066 100%)' : isJugnuTheme ? 'linear-gradient(135deg, #fff3bf 0%, #ffd65c 34%, #ffe98e 68%, #cfff8c 100%)' : 'linear-gradient(135deg, #e9ddff 0%, #a78bfa 20%, #00e5ff 45%, #e879f9 70%, #a78bfa 90%)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'word-shimmer 5s ease-in-out infinite', filter: isLightTheme ? 'drop-shadow(0 0 12px rgba(255,179,0,0.16))' : isFirecrackerTheme ? 'drop-shadow(0 0 16px rgba(255,106,0,0.3))' : isJugnuTheme ? 'drop-shadow(0 0 16px rgba(255,214,92,0.2))' : 'drop-shadow(0 0 24px rgba(124,58,237,0.42))', textShadow: isLightTheme ? '0 3px 10px rgba(0,0,0,0.1)' : '0 0 18px rgba(8,4,24,0.36)' }}>
-                FORMVERSE
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+              <FormVerseLogo size={28} showText={false} variant={logoVariant} />
+              <div>
+                <div style={{ fontFamily: APP_UI_FONT, fontSize: 14, fontWeight: 800, color: headingText, letterSpacing: '-0.03em' }}>FormVerse</div>
+                <div style={{ fontFamily: APP_UI_FONT, fontSize: 10, fontWeight: 800, color: helperText, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{shellLabel}</div>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 6 }}>
-              <div style={{ height: 1, width: 40, background: isLightTheme ? 'linear-gradient(90deg, transparent, rgba(17,17,17,0.28))' : 'linear-gradient(90deg, transparent, rgba(167,139,250,0.5))' }} />
-              <span style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(8px, 1.2vw, 11px)', fontWeight: 700, color: isLightTheme ? 'rgba(17,17,17,0.56)' : isFirecrackerTheme ? 'rgba(255,190,115,0.62)' : isJugnuTheme ? 'rgba(255,232,170,0.66)' : 'rgba(167,139,250,0.55)', letterSpacing: '0.4em', textTransform: 'uppercase' }}>{isRainbowTheme ? 'Build · Glow · Share' : isFirecrackerTheme ? 'Build · Burst · Share' : isJugnuTheme ? 'Build · Glow · Wander' : 'Build · Share · Explore'}</span>
-              <div style={{ height: 1, width: 40, background: isLightTheme ? 'linear-gradient(90deg, rgba(17,17,17,0.28), transparent)' : 'linear-gradient(90deg, rgba(167,139,250,0.5), transparent)' }} />
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', padding: '9px 16px 10px', borderRadius: '16px', background: isLibrary ? 'linear-gradient(135deg, rgba(28, 6, 52, 0.74), rgba(16, 4, 30, 0.36))' : isGlobe ? 'linear-gradient(135deg, rgba(10, 20, 44, 0.76), rgba(10, 12, 24, 0.34))' : 'linear-gradient(135deg, rgba(40, 14, 0, 0.76), rgba(20, 8, 0, 0.34))', border: isLibrary ? '1px solid rgba(168,85,247,0.18)' : isGlobe ? '1px solid rgba(0,229,255,0.16)' : '1px solid rgba(255,170,80,0.18)', boxShadow: isLibrary ? '0 12px 28px rgba(18, 4, 32, 0.34)' : isGlobe ? '0 12px 28px rgba(4, 12, 30, 0.3)' : '0 12px 28px rgba(22, 8, 0, 0.32)', backdropFilter: 'blur(12px)' }}>
-              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(22px, 4.5vw, 48px)', fontWeight: 900, color: isLibrary ? '#e9d5ff' : isGlobe ? '#d8f7ff' : '#fff4dc', background: T.logoGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 4px 14px rgba(0,200,255,0.2))', animation: 'text-glow 3.5s ease-in-out infinite', textShadow: isLibrary ? '0 0 14px rgba(12, 4, 24, 0.34)' : isGlobe ? '0 0 14px rgba(6, 14, 24, 0.3)' : '0 0 14px rgba(22, 8, 0, 0.3)' }}>
-                {isLibrary ? '📚 FORMVERSE 📖' : isGlobe ? '🌍 GLOBE EXPLORER 🌎' : '⚡ REALM RUNNER ⚡'}
-              </div>
-            </div>
-            <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(9px, 1.4vw, 15px)', fontWeight: 700, color: T.subtitleColor, letterSpacing: '0.38em', marginTop: '5px', textTransform: 'uppercase' }}>
-              {isLibrary ? 'The Grand Library' : isGlobe ? 'Globe Explorer' : 'Form Builder'}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* ── CARD ── */}
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          position: 'relative', zIndex: 5,
-          background: T.cardBg,
-          border: `2px solid ${T.cardBorder}`,
-          borderRadius: '18px',
-          padding: 'clamp(20px, 3.5vw, 36px) clamp(22px, 4vw, 44px)',
-          width: 'min(440px, 92vw)',
-          backdropFilter: 'blur(20px)',
-          boxShadow: T.shadow,
-          animation: shaking ? 'shake 0.5s ease-in-out' : isCosmic ? 'login-card-in 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.2s both' : 'login-entrance 0.65s ease-out 0.2s both',
-          ...(isCosmic && !shaking ? { animationName: 'login-card-in, glow-border-cycle', animationDuration: '0.8s, 4s', animationDelay: '0.2s, 1s', animationTimingFunction: 'cubic-bezier(0.34,1.56,0.64,1), ease-in-out', animationFillMode: 'both, none', animationIterationCount: '1, infinite' } : {}),
-        }}
-      >
-        {/* Corner ornaments */}
-        {(['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] as const).map((pos) => (
-          <div key={pos} style={{ position: 'absolute', top: pos.startsWith('top') ? '-1px' : 'auto', bottom: pos.startsWith('bottom') ? '-1px' : 'auto', left: pos.endsWith('Left') ? '-1px' : 'auto', right: pos.endsWith('Right') ? '-1px' : 'auto', width: '18px', height: '18px', borderTop: pos.startsWith('top') ? `3px solid ${T.activeBorder}88` : 'none', borderBottom: pos.startsWith('bottom') ? `3px solid ${T.activeBorder}88` : 'none', borderLeft: pos.endsWith('Left') ? `3px solid ${T.activeBorder}88` : 'none', borderRight: pos.endsWith('Right') ? `3px solid ${T.activeBorder}88` : 'none', borderRadius: pos === 'topLeft' ? '16px 0 0 0' : pos === 'topRight' ? '0 16px 0 0' : pos === 'bottomLeft' ? '0 0 0 16px' : '0 0 16px 0' }} />
-        ))}
-
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '18px' }}>
-          <div style={{ fontSize: '40px', animation: 'idol-pulse 2.2s ease-in-out infinite', display: 'inline-block' }}>{T.icon}</div>
-          <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(12px, 2vw, 16px)', fontWeight: 700, color: T.tabActiveColor, letterSpacing: '0.14em', marginTop: '8px', filter: `drop-shadow(0 0 8px ${T.activeBorder}80)` }}>
-            {currentTitle}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-            <div style={{ flex: 1, height: '1px', background: `linear-gradient(90deg, transparent, ${T.divider})` }} />
-            <span style={{ fontSize: '13px', opacity: 0.5 }}>{T.dividerIcon}</span>
-            <div style={{ flex: 1, height: '1px', background: `linear-gradient(90deg, ${T.divider}, transparent)` }} />
-          </div>
-        </div>
 
-        {/* Login / Register tabs */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '18px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', padding: '4px' }}>
-          {mode === 'login' || mode === 'register' ? (
-            (['login', 'register'] as const).map(m => (
-              <button key={m} type="button" onClick={() => switchMode(m)}
-                style={{ flex: 1, background: mode === m ? T.tabActive : 'transparent', border: 'none', borderRadius: '7px', color: mode === m ? T.tabActiveColor : `${T.tabActiveColor}44`, fontFamily: "'Cinzel Decorative', serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', padding: '9px', cursor: 'pointer', transition: 'all 0.22s', boxShadow: mode === m ? `0 0 12px ${T.activeBorder}30` : 'none' }}>
-                {m === 'login' ? T.loginTab : T.registerTab}
-              </button>
-            ))
-          ) : (
-            <>
-              <button type="button" onClick={() => switchMode('login')}
-                style={{ flex: 1, background: T.tabActive, border: 'none', borderRadius: '7px', color: T.tabActiveColor, fontFamily: "'Cinzel Decorative', serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', padding: '9px', cursor: 'pointer', transition: 'all 0.22s', boxShadow: `0 0 12px ${T.activeBorder}30` }}>
-                {T.loginTab}
-              </button>
-              <button type="button" onClick={() => switchMode('register')}
-                style={{ flex: 1, background: 'transparent', border: 'none', borderRadius: '7px', color: `${T.tabActiveColor}66`, fontFamily: "'Cinzel Decorative', serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', padding: '9px', cursor: 'pointer', transition: 'all 0.22s' }}>
-                {T.registerTab}
-              </button>
-            </>
-          )}
-        </div>
+          <div style={{ marginBottom: 24, position: 'relative', zIndex: 1 }}>
+            <div style={{ fontFamily: APP_UI_FONT, fontSize: 11, fontWeight: 800, color: cardAccent, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>Workspace access</div>
+            <h2 style={{ fontFamily: APP_UI_FONT, fontSize: 'clamp(34px, 5vw, 46px)', fontWeight: 800, lineHeight: 0.92, color: headingText, margin: '0 0 12px', letterSpacing: '-0.06em' }}>{authHeading}</h2>
+            <p style={{ fontFamily: APP_UI_FONT, fontSize: 14, lineHeight: 1.65, color: helperText, margin: 0, maxWidth: 360, fontWeight: 500 }}>{authSubheading}</p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 6, marginBottom: 20, background: topStripBg, border: `1px solid ${topStripBorder}`, borderRadius: 16, padding: '5px', position: 'relative', zIndex: 1 }}>
+            {mode === 'login' || mode === 'register' ? (
+              (['login', 'register'] as const).map(m => (
+                <button key={m} type="button" onClick={() => switchMode(m)}
+                  style={{ flex: 1, background: mode === m ? T.tabActive : 'transparent', border: 'none', borderRadius: 11, color: mode === m ? T.tabActiveColor : helperText, fontFamily: APP_UI_FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', padding: '10px 12px', cursor: 'pointer', transition: 'all 0.22s', boxShadow: mode === m ? `0 10px 18px ${T.cardBorder}` : 'none' }}>
+                  {m === 'login' ? 'Sign in' : 'Create account'}
+                </button>
+              ))
+            ) : (
+              <>
+                <button type="button" onClick={() => switchMode('login')}
+                  style={{ flex: 1, background: T.tabActive, border: 'none', borderRadius: 11, color: T.tabActiveColor, fontFamily: APP_UI_FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', padding: '10px 12px', cursor: 'pointer', transition: 'all 0.22s', boxShadow: `0 10px 18px ${T.cardBorder}` }}>
+                  Sign in
+                </button>
+                <button type="button" onClick={() => switchMode('register')}
+                  style={{ flex: 1, background: 'transparent', border: 'none', borderRadius: 11, color: helperText, fontFamily: APP_UI_FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', padding: '10px 12px', cursor: 'pointer', transition: 'all 0.22s' }}>
+                  Create account
+                </button>
+              </>
+            )}
+          </div>
+
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 30, boxShadow: `inset 0 1px 0 ${isLightTheme ? 'rgba(255,255,255,0.76)' : 'rgba(255,255,255,0.04)'}` }} />
 
         {mode === 'register' && (
           <div style={{ position: 'relative', marginBottom: '12px' }}>
-            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '20px', zIndex: 1, pointerEvents: 'none' }}>{isLibrary ? '📖' : isCosmic ? (isLightTheme ? '☀️' : isRainbowTheme ? '🌈' : isFirecrackerTheme ? '🎆' : isJugnuTheme ? '✨' : '🧑‍🚀') : '🏃'}</span>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: fieldLabelColor, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px' }}>Display name</div>
             <input type="text" placeholder={isLibrary ? 'Your scholar name...' : isCosmic ? 'Your explorer name...' : 'Your explorer name...'} value={name}
               onChange={e => { setName(e.target.value); setError(''); }}
               onFocus={() => setNameActive(true)} onBlur={() => setNameActive(false)}
@@ -739,7 +702,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
 
         {mode !== 'reset' && (
         <div style={{ position: 'relative', marginBottom: '12px' }}>
-          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', zIndex: 1, pointerEvents: 'none' }}>✉️</span>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: fieldLabelColor, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px' }}>Email address</div>
           <input type="email" placeholder="Your email address..." value={email}
             onChange={e => { setEmail(e.target.value); setError(''); }}
             onFocus={() => setEmailActive(true)} onBlur={() => setEmailActive(false)}
@@ -750,7 +713,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
         {/* Password field */}
         {mode !== 'forgot' && (
         <div style={{ position: 'relative', marginBottom: '12px' }}>
-          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '20px', zIndex: 1, pointerEvents: 'none' }}>🔒</span>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: fieldLabelColor, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px' }}>Password</div>
           <input type="password" placeholder={isLibrary ? 'Your secret cipher...' : isCosmic ? 'Your secret passcode...' : 'Secret temple code...'} value={password}
             onChange={e => { setPassword(e.target.value); setError(''); }}
             onFocus={() => setPassActive(true)} onBlur={() => setPassActive(false)}
@@ -760,7 +723,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
 
         {mode === 'login' && (
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-2px', marginBottom: '12px' }}>
-            <button type="button" onClick={() => switchMode('forgot')} style={{ background: 'none', border: 'none', color: T.guestColor, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', letterSpacing: '0.08em', padding: 0 }}>
+            <button type="button" onClick={() => switchMode('forgot')} style={{ background: 'none', border: 'none', color: cardAccent, cursor: 'pointer', fontFamily: APP_UI_FONT, fontSize: '12px', fontWeight: 700, letterSpacing: '0.01em', padding: 0 }}>
               Forgot password?
             </button>
           </div>
@@ -769,7 +732,7 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
         {/* Confirm password (register only) */}
         {(mode === 'register' || mode === 'reset') && (
           <div style={{ position: 'relative', marginBottom: '12px' }}>
-            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '20px', zIndex: 1, pointerEvents: 'none' }}>🔐</span>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: fieldLabelColor, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px' }}>Confirm password</div>
             <input type="password" placeholder="Confirm your code..." value={confirm}
               onChange={e => { setConfirm(e.target.value); setError(''); }}
               onFocus={() => setConfirmActive(true)} onBlur={() => setConfirmActive(false)}
@@ -779,30 +742,29 @@ export function LoginScreen({ onLogin, onBack, theme = 'temple-run', initialMode
 
         {/* Error */}
         <div style={{ height: '18px', marginBottom: '10px', textAlign: 'center' }}>
-          {error && <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', color: '#ff7070', letterSpacing: '0.08em', animation: 'fade-in 0.2s ease-out' }}>⚠️ {error}</span>}
-          {!error && notice && <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', color: '#86efac', letterSpacing: '0.06em', animation: 'fade-in 0.2s ease-out' }}>✓ {notice}</span>}
+          {error && <span style={{ fontFamily: APP_UI_FONT, fontSize: '12px', color: '#ff7070', letterSpacing: '0.06em', animation: 'fade-in 0.2s ease-out' }}>⚠️ {error}</span>}
+          {!error && notice && <span style={{ fontFamily: APP_UI_FONT, fontSize: '12px', color: '#86efac', letterSpacing: '0.05em', animation: 'fade-in 0.2s ease-out' }}>✓ {notice}</span>}
         </div>
 
-        <div style={{ width: '100%', height: '1px', background: `linear-gradient(90deg, transparent, ${T.divider}, transparent)`, marginBottom: '16px' }} />
+        <div style={{ width: '100%', height: '1px', background: `linear-gradient(90deg, transparent, ${chipBorder}, transparent)`, marginBottom: '16px' }} />
 
         {/* Submit */}
-        <button type="submit" className="tr-btn" disabled={isBusy} style={{ width: '100%', background: T.submitBtn, color: T.submitColor, fontSize: 'clamp(12px, 2vw, 15px)', padding: '15px', letterSpacing: '0.18em', fontWeight: 900, borderRadius: '8px', marginBottom: '10px', boxShadow: `0 0 24px ${T.activeBorder}44, 0 4px 16px rgba(0,0,0,0.5)`, opacity: isBusy ? 0.7 : 1, cursor: isBusy ? 'not-allowed' : 'pointer' }}>
-          {isBusy ? '⏳ AUTHENTICATING' : currentSubmitText}
+        <button type="submit" className="tr-btn" disabled={isBusy} style={{ width: '100%', background: T.submitBtn, color: T.submitColor, fontFamily: APP_UI_FONT, fontSize: 'clamp(13px, 2vw, 15px)', lineHeight: 1, padding: '15px', letterSpacing: '-0.025em', fontWeight: 900, borderRadius: '16px', marginBottom: '12px', boxShadow: `0 14px 28px ${T.cardBorder}`, opacity: isBusy ? 0.7 : 1, cursor: isBusy ? 'not-allowed' : 'pointer' }}>
+          {isBusy ? 'Authenticating...' : currentSubmitText}
         </button>
 
-        <div style={{ textAlign: 'center', marginTop: '16px' }}>
-          <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '11px', color: isLightTheme ? 'rgba(17,17,17,0.34)' : `${T.tabActiveColor}44`, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-            ∴ {T.footer} ∴
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
+          <div style={{ fontSize: 12.5, color: helperText }}>{switchPrompt} <button type="button" onClick={switchAction} style={{ background: 'none', border: 'none', color: headingText, fontFamily: APP_UI_FONT, fontSize: 12.5, fontWeight: 700, padding: 0, cursor: 'pointer' }}>{switchActionLabel}</button></div>
+          <div style={{ fontSize: 11, color: helperText }}>Secure access</div>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: '18px' }}>
+          <span style={{ fontFamily: APP_UI_FONT, fontSize: '11px', color: helperText, lineHeight: 1.6 }}>
+            {footerText}
           </span>
         </div>
       </form>
-
-      {/* Corner decorations */}
-      {[{ top: '18px', left: '22px', delay: '0s' }, { top: '18px', right: '22px', delay: '1s' }, { bottom: '130px', left: '18px', delay: '0.5s' }, { bottom: '130px', right: '18px', delay: '1.5s' }].map((pos, i) => (
-        <div key={i} style={{ position: 'absolute', fontSize: '24px', opacity: T.cornerColor, animation: `float ${4 + i * 0.5}s ease-in-out ${pos.delay} infinite`, zIndex: 3, ...pos }}>{T.cornerIcon}</div>
-      ))}
-      <div style={{ position: 'absolute', bottom: '130px', left: '14px', fontSize: '32px', opacity: 0.2, animation: 'float-slow 6s ease-in-out infinite', zIndex: 3 }}>{T.extraDecor}</div>
-      <div style={{ position: 'absolute', bottom: '130px', right: '14px', fontSize: '32px', opacity: 0.2, animation: 'float-slow 6s ease-in-out 2.5s infinite', zIndex: 3 }}>{T.extraDecor}</div>
+      </div>
     </div>
   );
 }

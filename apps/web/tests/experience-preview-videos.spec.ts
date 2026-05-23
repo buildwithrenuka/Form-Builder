@@ -178,11 +178,9 @@ async function buildAndPublishRealmRunnerForm(page: Page) {
 }
 
 async function copyShareLink(page: Page) {
-  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: page.url() });
   await page.getByRole('button', { name: 'Share', exact: true }).click();
   await expect(page.getByRole('button', { name: /copied/i })).toBeVisible({ timeout: 8000 });
   await page.waitForTimeout(1000);
-  return page.evaluate(() => navigator.clipboard.readText());
 }
 
 test('records homepage to published Realm Runner submission flow', async ({ page, context }) => {
@@ -191,7 +189,7 @@ test('records homepage to published Realm Runner submission flow', async ({ page
   await scrollHomePage(page);
   await registerAndLogin(page);
   await buildAndPublishRealmRunnerForm(page);
-  const sharedUrl = await copyShareLink(page);
+  await copyShareLink(page);
 
   await page.getByRole('button', { name: /dashboard/i }).click();
   await expect(page.getByText('Creator Dashboard')).toBeVisible();
@@ -200,6 +198,7 @@ test('records homepage to published Realm Runner submission flow', async ({ page
   await page.getByRole('button', { name: 'View' }).first().click();
   await expect(page.getByText(/feedback survey/i)).toBeVisible({ timeout: 12000 });
   await page.waitForTimeout(1600);
+  const sharedUrl = page.url();
 
   const submitPage = await context.newPage();
   await submitPage.goto(sharedUrl);

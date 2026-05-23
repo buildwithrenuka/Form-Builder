@@ -317,6 +317,7 @@ function App() {
         <PricingPage
           onBack={() => setScreen('home')}
           onEnter={() => setScreen('experiencePicker')}
+          theme={homeTheme}
         />
       )}
 
@@ -327,6 +328,7 @@ function App() {
             onBack={() => setScreen('experiencePicker')}
             onLogout={() => { logout(); setPlayerName(''); setScreen('home'); }}
             onAdmin={canAccessAdmin ? () => setScreen('admin') : undefined}
+            theme={homeTheme}
             onViewForm={(slug) => {
               window.history.replaceState({}, '', `?slug=${slug}`);
               setScreen('shared');
@@ -351,7 +353,7 @@ function App() {
 
       {screen === 'login' && (
         <LoginScreen
-          theme={homeTheme === 'light' || homeTheme === 'rainbow' || homeTheme === 'firecracker' || homeTheme === 'jugnu' ? homeTheme : 'formverse'}
+          theme={homeTheme}
           initialMode={loginMode}
           onLogin={(name) => {
             setPlayerName(name);

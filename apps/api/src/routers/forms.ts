@@ -2,6 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { eq, and, desc, count, like, or } from 'drizzle-orm';
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { router, publicProc, authProc } from '../trpc';
+import type { Context } from '../context';
 import { forms, responses } from '../db/schema';
 import {
   CreateFormInput, UpdateFormInput, PublishFormInput, FormFieldsSchema, CloneFormInput,
@@ -30,6 +31,10 @@ function normalizeCustomSlug(value: string): string {
 
 function hashAccessPassword(password: string, salt: string): string {
   return createHash('sha256').update(`${salt}:form:${password}`).digest('hex');
+}
+
+function hashRespondentToken(token: string, salt: string): string {
+  return createHash('sha256').update(`${salt}:respondent:${token}`).digest('hex');
 }
 
 function verifyAccessPassword(password: string | undefined, storedHash: string, salt: string): boolean {
@@ -121,7 +126,7 @@ function isLocalDevelopmentIp(ip: string | null): boolean {
     || /^172\.(1[6-9]|2\d|3[0-1])\./.test(normalized);
 }
 
-async function ensureUniqueSlug(slug: string, currentFormId: string | null, ctx: Parameters<typeof authProc.query>[0]['ctx'] | Parameters<typeof publicProc.query>[0]['ctx']) {
+async function ensureUniqueSlug(slug: string, currentFormId: string | null, ctx: Context) {
   const existing = await ctx.db.query.forms.findFirst({
     where: eq(forms.slug, slug),
     columns: { id: true },
@@ -132,7 +137,7 @@ async function ensureUniqueSlug(slug: string, currentFormId: string | null, ctx:
   }
 }
 
-async function countResponsesForForm(ctx: Parameters<typeof publicProc.query>[0]['ctx'], formId: string): Promise<number> {
+async function countResponsesForForm(ctx: Context, formId: string): Promise<number> {
   const [result] = await ctx.db
     .select({ total: count() })
     .from(responses)
@@ -141,7 +146,7 @@ async function countResponsesForForm(ctx: Parameters<typeof publicProc.query>[0]
   return result?.total ?? 0;
 }
 
-async function assertFormAcceptingResponses(ctx: Parameters<typeof publicProc.query>[0]['ctx'], form: typeof forms.$inferSelect) {
+async function assertFormAcceptingResponses(ctx: Context, form: typeof forms.$inferSelect) {
   if (form.expiresAt && form.expiresAt.getTime() <= Date.now()) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form has expired.' });
   }
@@ -170,6 +175,7 @@ export const formsRouter = router({
         visibility:  'unlisted' as const,
         published:   false,
         archived:    false,
+        allowResponseEdits: false,
         schema:      '[]',
         worldTheme:  input.worldTheme ?? null,
         createdAt:   new Date(),
@@ -211,7 +217,7 @@ export const formsRouter = router({
         ? normalizeCustomSlug(input.slug)
         : undefined;
 
-      if (input.slug !== undefined && nextSlug.length < 3) {
+      if (input.slug !== undefined && (!nextSlug || nextSlug.length < 3)) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Slug must be at least 3 characters long.' });
       }
 
@@ -231,6 +237,7 @@ export const formsRouter = router({
           ...(input.accessPassword !== undefined ? {
             accessPasswordHash: input.accessPassword ? hashAccessPassword(input.accessPassword, ctx.env.PASSWORD_SALT) : null,
           } : {}),
+          ...(input.allowResponseEdits !== undefined ? { allowResponseEdits: input.allowResponseEdits } : {}),
           ...(input.schema      ? { schema: JSON.stringify(input.schema) } : {}),
           ...(input.worldTheme  ? { worldTheme: input.worldTheme }    : {}),
           updatedAt: new Date(),
@@ -280,6 +287,7 @@ export const formsRouter = router({
         expiresAt: existing.expiresAt,
         responseLimit: existing.responseLimit,
         accessPasswordHash: existing.accessPasswordHash,
+        allowResponseEdits: existing.allowResponseEdits,
         schema: existing.schema,
         worldTheme: existing.worldTheme,
         createdAt: new Date(),
@@ -301,14 +309,33 @@ export const formsRouter = router({
 
   // ── Public: get form by slug (for respondents) ─────────────────────────
   getBySlug: publicProc
-    .input(z.object({ slug: z.string(), accessPassword: z.string().max(128).optional() }))
+    .input(z.object({ slug: z.string(), accessPassword: z.string().max(128).optional(), respondentToken: z.string().min(16).max(256).optional() }))
     .query(async ({ ctx, input }) => {
       const form = await ctx.db.query.forms.findFirst({
         where: and(eq(forms.slug, input.slug), eq(forms.published, true), eq(forms.archived, false)),
       });
       if (!form) throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found or not published.' });
 
-      await assertFormAcceptingResponses(ctx, form);
+      const respondentTokenHash = input.respondentToken
+        ? hashRespondentToken(input.respondentToken, ctx.env.IP_SALT)
+        : null;
+      const existingResponse = respondentTokenHash
+        ? await ctx.db.query.responses.findFirst({
+          where: and(eq(responses.formId, form.id), eq(responses.respondentTokenHash, respondentTokenHash)),
+          columns: { id: true, data: true },
+        })
+        : null;
+
+      if (form.expiresAt && form.expiresAt.getTime() <= Date.now()) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form has expired.' });
+      }
+
+      if (form.responseLimit) {
+        const totalResponses = await countResponsesForForm(ctx, form.id);
+        if (totalResponses >= form.responseLimit && !(existingResponse && form.allowResponseEdits)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form is no longer accepting responses.' });
+        }
+      }
 
       if (form.accessPasswordHash && !verifyAccessPassword(input.accessPassword, form.accessPasswordHash, ctx.env.PASSWORD_SALT)) {
         return {
@@ -321,14 +348,8 @@ export const formsRouter = router({
       }
 
       const totalResponses = form.responseLimit ? await countResponsesForForm(ctx, form.id) : 0;
-      const clientIp = ctx.ip;
-      const hashedIp = clientIp ? createHash('sha256').update(clientIp + ctx.env.IP_SALT).digest('hex') : null;
-      const alreadySubmitted = hashedIp && !isLocalDevelopmentIp(clientIp)
-        ? Boolean(await ctx.db.query.responses.findFirst({
-          where: and(eq(responses.formId, form.id), eq(responses.ipHash, hashedIp)),
-          columns: { id: true },
-        }))
-        : false;
+      const alreadySubmitted = Boolean(existingResponse);
+      const canEditResponse = Boolean(existingResponse && form.allowResponseEdits);
 
       return {
         access: 'available' as const,
@@ -339,8 +360,11 @@ export const formsRouter = router({
         requiresPassword: false,
         expiresAt:   form.expiresAt,
         responseLimit: form.responseLimit,
+        allowResponseEdits: form.allowResponseEdits,
         remainingResponses: form.responseLimit ? Math.max(form.responseLimit - totalResponses, 0) : null,
         alreadySubmitted,
+        canEditResponse,
+        existingResponseData: existingResponse ? JSON.parse(existingResponse.data) as Record<string, unknown> : null,
         schema:      FormFieldsSchema.parse(JSON.parse(form.schema)),
       };
     }),

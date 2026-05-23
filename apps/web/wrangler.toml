@@ -1,4 +1,4 @@
-name    = "formquest-web"
+name    = "formverse-web"
 pages_build_output_dir = "dist"
 compatibility_date = "2025-01-01"
 
@@ -11,4 +11,4 @@ compatibility_date = "2025-01-01"
 
 # ── Environment variables (set in Cloudflare Pages dashboard) ─────────────
 # VITE_API_URL = http://localhost:3001
-# or production: https://formquest-api.<your-subdomain>.workers.dev
+# or production: https://formverse-api.<your-subdomain>.workers.dev

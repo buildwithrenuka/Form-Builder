@@ -876,6 +876,7 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
   const [expiresAt, setExpiresAt] = useState('');
   const [responseLimit, setResponseLimit] = useState('');
   const [accessPassword, setAccessPassword] = useState('');
+  const [allowResponseEdits, setAllowResponseEdits] = useState(false);
   const [activeRibbonTab, setActiveRibbonTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
 
   const trpcUtils = trpc.useUtils();
@@ -905,6 +906,7 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
         expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
         responseLimit: responseLimit ? Number(responseLimit) : null,
         accessPassword: accessPassword.trim() || null,
+        allowResponseEdits,
         worldTheme: world.id,
         schema: fields,
       });
@@ -1011,6 +1013,7 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
         expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
         responseLimit: responseLimit ? Number(responseLimit) : null,
         accessPassword: accessPassword.trim() || null,
+        allowResponseEdits,
         worldTheme: world.id,
         schema: fields,
       });
@@ -1194,7 +1197,7 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
 
         <div style={ribbonGroup}>
           <div style={ribbonRow}>
-            <button onClick={copyShareLink} disabled={fieldCount === 0} title="Copy share link"
+            <button data-testid="builder-share-button" onClick={copyShareLink} disabled={fieldCount === 0} title="Copy share link"
               style={{ ...ribbonBtn(!!shareMsg, 'default'), opacity: fieldCount > 0 ? 1 : 0.35, cursor: fieldCount > 0 ? 'pointer' : 'not-allowed' }}>
               <PremiumIcon token={shareMsg ? '✓' : '🔗'} size={16} />
               <span>{shareMsg ? 'Copied' : 'Share'}</span>
@@ -1215,12 +1218,12 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
           <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
         <div style={ribbonGroup}>
           <div style={ribbonRow}>
-            <button onClick={handlePublish} disabled={fieldCount === 0 || createMut.isPending || publishMut.isPending}
+            <button data-testid="builder-publish-button" onClick={handlePublish} disabled={fieldCount === 0 || createMut.isPending || publishMut.isPending}
               style={{ ...ribbonBtn(isPublished, 'success'), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer', color: publishMsg.startsWith('⚠') ? '#fca5a5' : isPublished ? '#fb923c' : '#86efac', border: `1px solid ${isPublished ? 'rgba(249,115,22,0.35)' : 'rgba(34,197,94,0.28)'}`, background: isPublished ? 'rgba(249,115,22,0.12)' : 'rgba(34,197,94,0.12)' }}>
               <PremiumIcon token={createMut.isPending || publishMut.isPending ? '⏳' : isPublished ? '🔒' : '🌐'} size={16} />
               <span>{createMut.isPending || publishMut.isPending ? 'Working' : isPublished ? 'Unpublish' : 'Publish'}</span>
             </button>
-            <button onClick={() => onPreview(fields, title)} disabled={fieldCount === 0}
+            <button data-testid="builder-preview-button" onClick={() => onPreview(fields, title)} disabled={fieldCount === 0}
               style={{ ...primaryRibbonBtn, opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }}>
               <PremiumIcon token="👁" size={16} />
               <span>Preview</span>
@@ -1307,6 +1310,13 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
                   </span>
                   <input type="password" value={accessPassword} onChange={(e) => setAccessPassword(e.target.value)} placeholder="Optional access password"
                     style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.color}33`, borderRadius: 10, color: '#fff', fontSize: 13, padding: '10px 12px' }} />
+                </label>
+                <label data-testid="builder-allow-response-edits" style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.color}1d`, borderRadius: 12, padding: 12 }}>
+                  <input type="checkbox" checked={allowResponseEdits} onChange={(e) => setAllowResponseEdits(e.target.checked)} style={{ marginTop: 2 }} />
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: wt.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Allow Response Edits</span>
+                    <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Let the same browser reopen the link and update its earlier response instead of being blocked.</span>
+                  </span>
                 </label>
               </div>
             </div>

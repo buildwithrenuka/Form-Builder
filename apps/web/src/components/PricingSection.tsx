@@ -108,31 +108,31 @@ export function PricingSection({ onEnter, sectionId = 'pricing', embedded = fals
     heading: isLight ? '#111111' : '#f7ecff',
     headingGradient: isLight
       ? 'linear-gradient(140deg, #111111 0%, #2f2f2f 30%, #cc4400 70%, #ffb300 100%)'
-      : `linear-gradient(140deg, ${C.purpleL}, ${C.cyan})`,
-    body: isLight ? 'rgba(17,17,17,0.72)' : 'rgba(200,185,255,0.6)',
+      : 'linear-gradient(140deg, #f7f2ff 0%, #d8cdf8 42%, #9be7f2 100%)',
+    body: isLight ? 'rgba(17,17,17,0.72)' : 'rgba(233,228,246,0.82)',
     toggleBg: isLight ? 'rgba(17,17,17,0.06)' : 'rgba(255,255,255,0.04)',
     toggleBorder: isLight ? 'rgba(17,17,17,0.14)' : 'rgba(124,58,237,0.2)',
-    toggleIdle: isLight ? 'rgba(17,17,17,0.56)' : 'rgba(167,139,250,0.5)',
-    cardBg: isLight ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.025)',
-    cardBorder: isLight ? 'rgba(17,17,17,0.12)' : 'rgba(255,255,255,0.08)',
+    toggleIdle: isLight ? 'rgba(17,17,17,0.56)' : 'rgba(223,214,246,0.72)',
+    cardBg: isLight ? 'rgba(255,255,255,0.72)' : 'rgba(17,19,31,0.72)',
+    cardBorder: isLight ? 'rgba(17,17,17,0.12)' : 'rgba(233,237,246,0.12)',
     highlightBg: (color: string) => isLight ? `linear-gradient(160deg, ${color}1f, rgba(255,255,255,0.94))` : `linear-gradient(160deg, ${color}12, rgba(6,0,20,0.95))`,
     title: isLight ? '#111111' : '#fff',
-    desc: isLight ? 'rgba(17,17,17,0.62)' : 'rgba(167,139,250,0.45)',
+    desc: isLight ? 'rgba(17,17,17,0.62)' : 'rgba(224,217,242,0.68)',
     price: isLight ? '#111111' : '#fff',
-    period: isLight ? 'rgba(17,17,17,0.5)' : 'rgba(167,139,250,0.4)',
+    period: isLight ? 'rgba(17,17,17,0.5)' : 'rgba(214,206,236,0.7)',
     buttonBg: isLight ? 'rgba(17,17,17,0.06)' : 'rgba(255,255,255,0.06)',
     buttonBorder: isLight ? 'rgba(17,17,17,0.1)' : 'rgba(255,255,255,0.1)',
     featureOn: isLight ? 'rgba(17,17,17,0.84)' : 'rgba(220,210,255,0.85)',
     featureOff: isLight ? 'rgba(17,17,17,0.28)' : 'rgba(255,255,255,0.25)',
     featureOffIcon: isLight ? 'rgba(17,17,17,0.18)' : 'rgba(255,255,255,0.15)',
-    stripBg: isLight ? 'rgba(255,255,255,0.62)' : 'rgba(255,255,255,0.02)',
-    stripBorder: isLight ? 'rgba(17,17,17,0.1)' : 'rgba(124,58,237,0.12)',
-    stripText: isLight ? 'rgba(17,17,17,0.68)' : 'rgba(200,185,255,0.65)',
-    faqBg: isLight ? 'rgba(255,255,255,0.68)' : 'rgba(255,255,255,0.03)',
+    stripBg: isLight ? 'rgba(255,255,255,0.62)' : 'rgba(15,18,28,0.68)',
+    stripBorder: isLight ? 'rgba(17,17,17,0.1)' : 'rgba(196,180,244,0.16)',
+    stripText: isLight ? 'rgba(17,17,17,0.68)' : 'rgba(230,224,244,0.8)',
+    faqBg: isLight ? 'rgba(255,255,255,0.68)' : 'rgba(15,18,28,0.62)',
     faqBorder: (open: boolean) => open ? 'rgba(124,58,237,0.4)' : (isLight ? 'rgba(17,17,17,0.1)' : 'rgba(255,255,255,0.07)'),
-    faqQuestion: (open: boolean) => open ? C.purpleL : (isLight ? 'rgba(17,17,17,0.88)' : 'rgba(220,210,255,0.85)'),
+    faqQuestion: (open: boolean) => open ? '#ddd1ff' : (isLight ? 'rgba(17,17,17,0.88)' : 'rgba(241,236,250,0.9)'),
     faqArrow: (open: boolean) => open ? C.purpleL : (isLight ? 'rgba(17,17,17,0.4)' : 'rgba(167,139,250,0.4)'),
-    faqAnswer: isLight ? 'rgba(17,17,17,0.68)' : 'rgba(167,139,250,0.55)',
+    faqAnswer: isLight ? 'rgba(17,17,17,0.68)' : 'rgba(221,214,240,0.74)',
     ctaBg: isLight ? 'linear-gradient(135deg, rgba(255,255,255,0.86), rgba(255,247,220,0.9))' : 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(0,229,255,0.06))',
     ctaBorder: isLight ? 'rgba(17,17,17,0.1)' : 'rgba(124,58,237,0.2)',
   };
@@ -151,17 +151,17 @@ export function PricingSection({ onEnter, sectionId = 'pricing', embedded = fals
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.gold, display: 'inline-block' }} />
             <span style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.25em', textTransform: 'uppercase' }}>Simple, Transparent Pricing</span>
           </div>
-          <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(32px, 6vw, 64px)', fontWeight: 900, color: S.heading, margin: '0 0 16px', background: S.headingGradient, backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: isLight ? '0 4px 10px rgba(0, 0, 0, 0.08)' : '0 0 18px rgba(8, 4, 26, 0.26)' }}>
+          <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(32px, 6vw, 64px)', fontWeight: 900, color: S.heading, margin: '0 0 16px', background: S.headingGradient, backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: isLight ? '0 4px 10px rgba(0, 0, 0, 0.08)' : '0 0 20px rgba(8, 4, 26, 0.34), 0 2px 10px rgba(0,0,0,0.24)' }}>
             Choose Your Quest
           </h2>
           <p style={{ fontSize: 16, color: S.body, maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.7 }}>
             All plans include the full form builder. Upgrade for more forms, responses, analytics, and team features.
           </p>
 
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0, background: S.toggleBg, border: `1px solid ${S.toggleBorder}`, borderRadius: 10, padding: 4 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0, background: S.toggleBg, border: `1px solid ${S.toggleBorder}`, borderRadius: 10, padding: 4, backdropFilter: 'blur(14px)' }}>
             {(['monthly', 'yearly'] as const).map((item) => (
               <button key={item} onClick={() => setBilling(item)}
-                style={{ background: billing === item ? 'rgba(124,58,237,0.35)' : 'transparent', border: 'none', borderRadius: 7, color: billing === item ? '#fff' : S.toggleIdle, fontSize: 12, fontWeight: 700, padding: '7px 20px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em', transition: 'all 0.18s' }}>
+                style={{ background: billing === item ? 'rgba(124,58,237,0.35)' : 'transparent', border: 'none', borderRadius: 7, color: billing === item ? '#fff' : S.toggleIdle, fontSize: 12, fontWeight: 700, padding: '7px 20px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em', transition: 'all 0.18s', textShadow: billing === item ? '0 1px 6px rgba(0,0,0,0.28)' : 'none' }}>
                 {item === 'yearly' ? 'YEARLY (−20%)' : 'MONTHLY'}
               </button>
             ))}

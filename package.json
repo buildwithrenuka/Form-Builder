@@ -1,5 +1,5 @@
 {
-  "name": "my-monorepo",
+  "name": "formverse",
   "version": "1.0.0",
   "private": true,
   "packageManager": "npm@10.8.2",
@@ -9,7 +9,12 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
-    "build": "turbo run build"
+    "build": "turbo run build",
+    "dev:api": "npm --workspace @formverse/api run dev",
+    "dev:web": "npm --workspace @formverse/web run dev",
+    "test:web": "npm --workspace @formverse/web run test",
+    "test:e2e": "npm --workspace @formverse/web run test:e2e",
+    "test:preview-videos": "npm --workspace @formverse/web run test:e2e:preview-videos"
   },
   "devDependencies": {
     "turbo": "^2.0.0",

@@ -72,339 +72,419 @@ function getPublicFormMeta(worldTheme?: string | null) {
 }
 
 const DARK = {
-  bg:          'linear-gradient(160deg, #000508 0%, #000d12 45%, #020010 100%)',
-  navBg:       'rgba(0,8,16,0.92)',
-  navBorder:   'rgba(0,210,255,0.3)',
-  navShadow:   '0 2px 40px rgba(0,200,255,0.12)',
-  gridLine1:   'rgba(0,245,255,0.05)',
-  gridLine2:   'rgba(0,245,255,0.04)',
-  vignette:    'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 30%, rgba(0,3,10,0.85) 100%)',
-  orb1:        'rgba(0,200,255,0.32)',
-  orb2:        'rgba(255,80,0,0.26)',
-  orb3:        'rgba(0,255,160,0.18)',
-  orb4:        'rgba(255,220,0,0.14)',
-  scanLine:    'linear-gradient(90deg, transparent 0%, rgba(0,245,255,0.9) 25%, rgba(255,80,0,0.8) 55%, rgba(0,255,160,0.8) 80%, transparent 100%)',
-  navLinkColor:'rgba(160,220,255,0.8)',
-  navLinkHoverBg: 'rgba(0,180,255,0.14)',
-  navLinkHoverShadow: '0 0 12px rgba(0,200,255,0.7)',
-  divider:     'linear-gradient(180deg, rgba(0,200,255,0.5), rgba(255,80,0,0.35))',
-  tutorialBg:  'rgba(0,180,255,0.08)',
-  tutorialBorder: 'rgba(0,220,255,0.45)',
-  tutorialColor: '#00e5ff',
-  loginBg:     'rgba(0,245,255,0.08)',
-  loginBorder: 'rgba(0,245,255,0.45)',
-  loginColor:  '#00f5ff',
-  signupBg:    'linear-gradient(135deg, #6d00cc, #8b2fff, #00bcd4)',
-  signupShadow:'0 0 24px rgba(139,47,255,0.65), 0 0 8px rgba(0,245,255,0.3)',
-  dot1:        '#00f5ff',
-  tagColor:    '#7fdfff',
-  tagShadow:   '0 0 20px rgba(0,220,255,0.4)',
-  ctaBg:       'linear-gradient(135deg, #6d00cc, #8b2fff 30%, #ff00aa 58%, #ffe600 80%, #ff6a00 100%)',
-  ctaShadow:   '0 0 50px rgba(139,47,255,0.7), 0 0 20px rgba(255,0,170,0.4), 0 0 30px rgba(255,220,0,0.35), 0 8px 32px rgba(0,0,0,0.5)',
-  scrollColor: '#c084fc',
-  sectionLabel:'#00f5ff',
-  sectionLabelShadow: '0 0 14px #00f5ff',
-  h2Gradient:  'linear-gradient(135deg, #fff 0%, #c084fc 50%, #00f5ff 100%)',
-  subText:     'rgba(180,240,255,0.55)',
-  featCardBg:  'rgba(255,255,255,0.025)',
-  featCardBorder: 'rgba(255,255,255,0.07)',
-  featDescColor: 'rgba(160,220,255,0.45)',
-  expCardBgIdle: (c: string) => `linear-gradient(160deg, ${c}0e 0%, rgba(6,0,20,0.85) 60%)`,
-  expCardBgHov:  (c: string) => `linear-gradient(160deg, ${c}24 0%, rgba(10,4,30,0.98) 60%)`,
-  expH3:       '#fff',
-  expDesc:     'rgba(200,240,255,0.5)',
+  bg:          'linear-gradient(145deg, #06070d 0%, #120d18 38%, #24111b 100%)',
+  navBg:       'rgba(10,14,21,0.78)',
+  navBorder:   'rgba(255,202,110,0.22)',
+  navShadow:   '0 20px 48px rgba(0,0,0,0.34)',
+  gridLine1:   'rgba(255,202,110,0.06)',
+  gridLine2:   'rgba(155,86,103,0.05)',
+  vignette:    'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 28%, rgba(4,6,12,0.9) 100%)',
+  orb1:        'rgba(112,52,68,0.26)',
+  orb2:        'rgba(201,94,120,0.2)',
+  orb3:        'rgba(255,202,110,0.16)',
+  orb4:        'rgba(111,47,67,0.14)',
+  scanLine:    'linear-gradient(90deg, transparent 0%, rgba(255,202,110,0.72) 28%, rgba(214,110,136,0.56) 58%, rgba(111,47,67,0.54) 82%, transparent 100%)',
+  navLinkColor:'rgba(223,228,239,0.78)',
+  navLinkHoverBg: 'rgba(255,255,255,0.06)',
+  navLinkHoverShadow: '0 0 12px rgba(209,176,112,0.24)',
+  divider:     'linear-gradient(180deg, rgba(209,176,112,0.42), rgba(126,150,191,0.22))',
+  tutorialBg:  'rgba(214,188,134,0.08)',
+  tutorialBorder: 'rgba(214,188,134,0.24)',
+  tutorialColor: '#ffd995',
+  loginBg:     'rgba(198,94,120,0.1)',
+  loginBorder: 'rgba(198,94,120,0.28)',
+  loginColor:  '#f1ccd7',
+  signupBg:    'linear-gradient(135deg, #fff1c4 0%, #ffca6e 28%, #c65e78 60%, #6f2f43 100%)',
+  signupShadow:'0 20px 44px rgba(0,0,0,0.34), 0 0 28px rgba(255,202,110,0.2)',
+  dot1:        '#ffca6e',
+  tagColor:    '#d6def0',
+  tagShadow:   '0 0 20px rgba(198,94,120,0.24)',
+  ctaBg:       'linear-gradient(135deg, #fff3cf 0%, #ffca6e 24%, #d86e88 56%, #7c3248 100%)',
+  ctaShadow:   '0 24px 56px rgba(0,0,0,0.38), 0 0 30px rgba(255,202,110,0.22)',
+  scrollColor: '#f0c270',
+  sectionLabel:'#ffca6e',
+  sectionLabelShadow: '0 0 16px rgba(255,202,110,0.28)',
+  h2Gradient:  'linear-gradient(135deg, #fff8ea 0%, #ffca6e 34%, #c65e78 100%)',
+  subText:     'rgba(216,223,237,0.68)',
+  featCardBg:  'rgba(255,255,255,0.028)',
+  featCardBorder: 'rgba(222,228,239,0.08)',
+  featDescColor: 'rgba(210,217,232,0.6)',
+  expCardBgIdle: (c: string) => `linear-gradient(160deg, ${c}10 0%, rgba(10,13,20,0.9) 64%)`,
+  expCardBgHov:  (c: string) => `linear-gradient(160deg, ${c}1d 0%, rgba(14,17,27,0.98) 64%)`,
+  expH3:       '#f5f1e8',
+  expDesc:     'rgba(221,227,239,0.62)',
   expChipLabel:'rgba(255,255,255,0.22)',
   expChipBg:   'rgba(255,255,255,0.04)',
   expChipBorder:'rgba(255,255,255,0.06)',
   expChipColor:'rgba(255,255,255,0.3)',
-  stepCircleBg:'linear-gradient(135deg, rgba(139,47,255,0.22), rgba(0,245,255,0.12))',
-  stepCircleBorder: 'rgba(0,220,255,0.5)',
-  stepCircleShadow: '0 0 32px rgba(0,180,255,0.3), 0 0 12px rgba(255,80,0,0.15)',
-  stepNumBg:   'linear-gradient(135deg, #8b2fff, #ffe600)',
+  stepCircleBg:'linear-gradient(135deg, rgba(198,94,120,0.24), rgba(255,202,110,0.12))',
+  stepCircleBorder: 'rgba(214,110,136,0.5)',
+  stepCircleShadow: '0 0 32px rgba(198,94,120,0.28), 0 0 12px rgba(255,202,110,0.16)',
+  stepNumBg:   'linear-gradient(135deg, #7c3248, #ffca6e)',
   stepNumBorder: 'rgba(8,0,26,1)',
-  stepNumShadow: '0 0 12px rgba(139,47,255,0.7), 0 0 8px rgba(255,220,0,0.5)',
-  stepConnector: 'linear-gradient(90deg, transparent, rgba(0,180,255,0.5), rgba(255,80,0,0.45), rgba(0,255,160,0.45), transparent)',
-  stepTitle:   '#e0f7ff',
-  stepTitleShadow: '0 0 8px rgba(0,220,255,0.25)',
-  stepDesc:    'rgba(160,220,255,0.5)',
-  statsBg:     'linear-gradient(135deg, rgba(0,15,30,0.85), rgba(10,0,25,0.85))',
-  statsBorderT:'rgba(0,200,255,0.25)',
-  statsBorderB:'rgba(255,80,0,0.2)',
-  statsLabel:  'rgba(180,240,255,0.45)',
-  footerBg:    'rgba(0,5,14,0.97)',
-  footerBorder:'linear-gradient(90deg, rgba(0,200,255,0.5), rgba(255,80,0,0.4), rgba(255,220,0,0.45), rgba(0,255,160,0.35))',
-  copyright:   'rgba(160,220,255,0.18)',
+  stepNumShadow: '0 0 12px rgba(124,50,72,0.56), 0 0 8px rgba(255,202,110,0.4)',
+  stepConnector: 'linear-gradient(90deg, transparent, rgba(198,94,120,0.5), rgba(255,202,110,0.45), rgba(111,47,67,0.45), transparent)',
+  stepTitle:   '#f6e6eb',
+  stepTitleShadow: '0 0 8px rgba(198,94,120,0.22)',
+  stepDesc:    'rgba(236,191,205,0.56)',
+  statsBg:     'linear-gradient(135deg, rgba(12,16,24,0.88), rgba(22,18,28,0.88))',
+  statsBorderT:'rgba(255,202,110,0.24)',
+  statsBorderB:'rgba(198,94,120,0.18)',
+  statsLabel:  'rgba(214,221,236,0.54)',
+  footerBg:    'rgba(8,10,16,0.96)',
+  footerBorder:'linear-gradient(90deg, rgba(255,202,110,0.44), rgba(198,94,120,0.32), rgba(111,47,67,0.34))',
+  panelBg:     'rgba(13,16,24,0.78)',
+  panelBorder: 'rgba(227,231,240,0.12)',
+  panelShadow: '0 26px 60px rgba(0,0,0,0.38)',
+  panelActiveBg: 'rgba(255,255,255,0.08)',
+  panelActiveBorder: 'rgba(255,202,110,0.3)',
+  heroPrimaryGradient: 'linear-gradient(140deg, #fffdf6 0%, #ffca6e 40%, #c65e78 100%)',
+  heroSecondaryGradient: 'linear-gradient(140deg, #ffe2a0 0%, #d86e88 46%, #7c3248 100%)',
+  heroPrimaryShadow: 'drop-shadow(0 0 30px rgba(255,202,110,0.2))',
+  heroSecondaryShadow: 'drop-shadow(0 0 26px rgba(198,94,120,0.18))',
+  softButtonBg: 'rgba(255,249,238,0.04)',
+  softButtonBorder: 'rgba(214,188,134,0.18)',
+  softButtonColor: '#ead4a5',
+  softButtonShadow: '0 18px 36px rgba(0,0,0,0.22)',
+  copyright:   'rgba(205,212,226,0.2)',
 };
 
 const LIGHT = {
-  bg:          'linear-gradient(160deg, #fff9c4 0%, #fffde7 45%, #fff8e1 100%)',
-  navBg:       'rgba(12,6,0,0.96)',
-  navBorder:   'rgba(255,180,0,0.55)',
-  navShadow:   '0 2px 40px rgba(200,100,0,0.35)',
-  gridLine1:   'rgba(180,120,0,0.1)',
-  gridLine2:   'rgba(255,140,0,0.07)',
-  vignette:    'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 30%, rgba(255,220,80,0.25) 100%)',
-  orb1:        'rgba(255,200,0,0.55)',
-  orb2:        'rgba(255,60,0,0.4)',
-  orb3:        'rgba(255,0,120,0.3)',
-  orb4:        'rgba(160,0,255,0.22)',
-  scanLine:    'linear-gradient(90deg, transparent 0%, rgba(255,200,0,0.7) 25%, rgba(255,60,0,0.55) 55%, rgba(200,0,255,0.45) 80%, transparent 100%)',
-  navLinkColor:'rgba(255,220,100,0.85)',
-  navLinkHoverBg: 'rgba(255,180,0,0.18)',
-  navLinkHoverShadow: '0 0 10px rgba(255,180,0,0.6)',
-  divider:     'linear-gradient(180deg, rgba(255,180,0,0.6), rgba(255,60,0,0.45))',
-  tutorialBg:  'rgba(255,160,0,0.1)',
-  tutorialBorder: 'rgba(255,160,0,0.55)',
-  tutorialColor: '#ff9900',
-  loginBg:     'rgba(255,140,0,0.1)',
-  loginBorder: 'rgba(255,160,0,0.55)',
-  loginColor:  '#ff9900',
-  signupBg:    'linear-gradient(135deg, #cc4400, #ff6600, #ffcc00)',
-  signupShadow:'0 0 24px rgba(255,100,0,0.55), 0 0 10px rgba(255,200,0,0.35)',
-  dot1:        '#ff8800',
-  tagColor:    '#111111',
-  tagShadow:   '0 0 12px rgba(255,140,0,0.3)',
-  ctaBg:       'linear-gradient(135deg, #cc4400, #ff6600 30%, #cc0080 58%, #ffe600 80%, #ff4400 100%)',
-  ctaShadow:   '0 0 40px rgba(200,60,0,0.6), 0 0 18px rgba(255,180,0,0.4), 0 8px 28px rgba(0,0,0,0.25)',
-  scrollColor: '#111111',
-  sectionLabel:'#111111',
-  sectionLabelShadow: '0 0 10px rgba(255,140,0,0.45)',
-  h2Gradient:  'linear-gradient(135deg, #111111 0%, #2a2a2a 28%, #cc3300 62%, #ffb300 100%)',
-  subText:     'rgba(17,17,17,0.72)',
-  featCardBg:  'rgba(255,150,0,0.06)',
-  featCardBorder: 'rgba(255,140,0,0.18)',
-  featDescColor: 'rgba(17,17,17,0.68)',
-  expCardBgIdle: (c: string) => `linear-gradient(160deg, ${c}18 0%, rgba(255,252,220,0.94) 60%)`,
-  expCardBgHov:  (c: string) => `linear-gradient(160deg, ${c}30 0%, rgba(255,250,210,0.98) 60%)`,
-  expH3:       '#111111',
-  expDesc:     'rgba(17,17,17,0.72)',
-  expChipLabel:'rgba(17,17,17,0.58)',
-  expChipBg:   'rgba(255,140,0,0.08)',
-  expChipBorder:'rgba(255,140,0,0.22)',
-  expChipColor:'rgba(17,17,17,0.72)',
-  stepCircleBg:'linear-gradient(135deg, rgba(255,160,0,0.22), rgba(255,0,120,0.1))',
-  stepCircleBorder: 'rgba(255,160,0,0.65)',
-  stepCircleShadow: '0 0 28px rgba(255,140,0,0.35), 0 0 10px rgba(255,60,0,0.2)',
-  stepNumBg:   'linear-gradient(135deg, #cc4400, #ffcc00)',
-  stepNumBorder: 'rgba(255,252,220,1)',
-  stepNumShadow: '0 0 12px rgba(200,60,0,0.6), 0 0 6px rgba(255,200,0,0.5)',
-  stepConnector: 'linear-gradient(90deg, transparent, rgba(255,160,0,0.5), rgba(255,60,0,0.45), rgba(200,0,255,0.35), transparent)',
-  stepTitle:   '#111111',
-  stepTitleShadow: 'none',
-  stepDesc:    'rgba(17,17,17,0.68)',
-  statsBg:     'linear-gradient(135deg, rgba(255,240,180,0.85), rgba(255,220,120,0.75))',
-  statsBorderT:'rgba(255,180,0,0.4)',
-  statsBorderB:'rgba(255,80,0,0.3)',
-  statsLabel:  'rgba(17,17,17,0.62)',
-  footerBg:    'rgba(12,6,0,0.97)',
-  footerBorder:'linear-gradient(90deg, rgba(255,180,0,0.7), rgba(255,60,0,0.55), rgba(200,0,255,0.4), rgba(255,200,0,0.5))',
-  copyright:   'rgba(17,17,17,0.42)',
+  bg:          'linear-gradient(145deg, #fff8ef 0%, #fff1df 30%, #effaf6 64%, #eef7ff 100%)',
+  navBg:       'rgba(255,250,244,0.9)',
+  navBorder:   'rgba(233,113,72,0.16)',
+  navShadow:   '0 20px 46px rgba(214,121,82,0.12)',
+  gridLine1:   'rgba(233,113,72,0.08)',
+  gridLine2:   'rgba(45,184,165,0.08)',
+  vignette:    'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 34%, rgba(255,209,152,0.14) 100%)',
+  orb1:        'rgba(255,145,103,0.22)',
+  orb2:        'rgba(255,214,125,0.16)',
+  orb3:        'rgba(45,184,165,0.14)',
+  orb4:        'rgba(123,194,255,0.1)',
+  scanLine:    'linear-gradient(90deg, transparent 0%, rgba(233,113,72,0.34) 24%, rgba(45,184,165,0.26) 56%, rgba(123,194,255,0.2) 82%, transparent 100%)',
+  navLinkColor:'rgba(36,24,19,0.86)',
+  navLinkHoverBg: 'rgba(233,113,72,0.1)',
+  navLinkHoverShadow: '0 0 12px rgba(233,113,72,0.18)',
+  divider:     'linear-gradient(180deg, rgba(233,113,72,0.3), rgba(45,184,165,0.18))',
+  tutorialBg:  'rgba(45,184,165,0.1)',
+  tutorialBorder: 'rgba(45,184,165,0.24)',
+  tutorialColor: '#1d7d71',
+  loginBg:     'rgba(45,184,165,0.08)',
+  loginBorder: 'rgba(45,184,165,0.18)',
+  loginColor:  '#1d7d71',
+  signupBg:    'linear-gradient(135deg, #2e1c18 0%, #e97148 34%, #ffcb6b 72%, #2db8a5 100%)',
+  signupShadow:'0 18px 42px rgba(214,121,82,0.18), 0 0 18px rgba(45,184,165,0.08)',
+  dot1:        '#e97148',
+  tagColor:    '#3d2a23',
+  tagShadow:   '0 0 12px rgba(233,113,72,0.14)',
+  ctaBg:       'linear-gradient(135deg, #2e1c18 0%, #e97148 30%, #ffcb6b 62%, #2db8a5 100%)',
+  ctaShadow:   '0 24px 48px rgba(214,121,82,0.18)',
+  scrollColor: '#cf6842',
+  sectionLabel:'#cf6842',
+  sectionLabelShadow: '0 0 12px rgba(233,113,72,0.16)',
+  h2Gradient:  'linear-gradient(135deg, #2e1c18 0%, #e97148 44%, #2db8a5 100%)',
+  subText:     'rgba(92,67,56,0.76)',
+  featCardBg:  'rgba(255,255,255,0.7)',
+  featCardBorder: 'rgba(233,113,72,0.14)',
+  featDescColor: 'rgba(92,67,56,0.7)',
+  expCardBgIdle: (c: string) => `linear-gradient(160deg, ${c}14 0%, rgba(255,252,246,0.96) 64%)`,
+  expCardBgHov:  (c: string) => `linear-gradient(160deg, ${c}20 0%, rgba(255,249,241,0.99) 64%)`,
+  expH3:       '#241813',
+  expDesc:     'rgba(92,67,56,0.76)',
+  expChipLabel:'rgba(36,24,19,0.58)',
+  expChipBg:   'rgba(45,184,165,0.08)',
+  expChipBorder:'rgba(233,113,72,0.18)',
+  expChipColor:'rgba(61,42,35,0.8)',
+  stepCircleBg:'linear-gradient(135deg, rgba(233,113,72,0.24), rgba(45,184,165,0.12))',
+  stepCircleBorder: 'rgba(233,113,72,0.52)',
+  stepCircleShadow: '0 0 28px rgba(233,113,72,0.18), 0 0 10px rgba(45,184,165,0.1)',
+  stepNumBg:   'linear-gradient(135deg, #2e1c18, #e97148)',
+  stepNumBorder: 'rgba(255,249,240,1)',
+  stepNumShadow: '0 0 12px rgba(233,113,72,0.28), 0 0 6px rgba(255,203,107,0.2)',
+  stepConnector: 'linear-gradient(90deg, transparent, rgba(233,113,72,0.34), rgba(45,184,165,0.22), rgba(123,194,255,0.18), transparent)',
+  stepTitle:   '#2d1d17',
+  stepTitleShadow: '0 1px 0 rgba(255,255,255,0.72)',
+  stepDesc:    'rgba(78,58,48,0.74)',
+  statsBg:     'linear-gradient(135deg, rgba(255,252,247,0.94), rgba(250,245,235,0.94))',
+  statsBorderT:'rgba(233,113,72,0.24)',
+  statsBorderB:'rgba(45,184,165,0.14)',
+  statsLabel:  'rgba(92,67,56,0.68)',
+  footerBg:    'rgba(43,29,19,0.98)',
+  footerBorder:'linear-gradient(90deg, rgba(233,113,72,0.28), rgba(45,184,165,0.18), rgba(123,194,255,0.18))',
+  panelBg:     'rgba(255,251,247,0.86)',
+  panelBorder: 'rgba(233,113,72,0.14)',
+  panelShadow: '0 24px 54px rgba(214,121,82,0.14)',
+  panelActiveBg: 'rgba(233,113,72,0.06)',
+  panelActiveBorder: 'rgba(45,184,165,0.22)',
+  heroPrimaryGradient: 'linear-gradient(140deg, #2e1c18 0%, #e97148 42%, #ffcb6b 100%)',
+  heroSecondaryGradient: 'linear-gradient(140deg, #ff8f67 0%, #ffd88d 42%, #2db8a5 100%)',
+  heroPrimaryShadow: 'drop-shadow(0 6px 16px rgba(214,121,82,0.14))',
+  heroSecondaryShadow: 'drop-shadow(0 6px 14px rgba(45,184,165,0.14))',
+  softButtonBg: 'rgba(255,255,255,0.84)',
+  softButtonBorder: 'rgba(233,113,72,0.16)',
+  softButtonColor: '#4c3328',
+  softButtonShadow: '0 14px 30px rgba(214,121,82,0.1)',
+  copyright:   'rgba(235,220,198,0.58)',
 };
 
 const RAINBOW = {
-  bg:          'linear-gradient(160deg, #05000f 0%, #000a05 45%, #0a0005 100%)',
-  navBg:       'rgba(4,0,12,0.94)',
-  navBorder:   'rgba(255,0,180,0.55)',
-  navShadow:   '0 2px 40px rgba(180,0,255,0.28)',
-  gridLine1:   'rgba(255,0,200,0.07)',
-  gridLine2:   'rgba(0,255,200,0.05)',
-  vignette:    'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 20%, rgba(0,0,8,0.75) 100%)',
-  orb1:        'rgba(255,0,100,0.55)',
-  orb2:        'rgba(0,220,255,0.45)',
-  orb3:        'rgba(0,255,80,0.38)',
-  orb4:        'rgba(255,180,0,0.38)',
-  scanLine:    'linear-gradient(90deg, transparent 0%, rgba(255,0,80,0.9) 15%, rgba(255,140,0,0.85) 30%, rgba(255,240,0,0.85) 45%, rgba(0,240,0,0.85) 60%, rgba(0,80,255,0.85) 77%, rgba(180,0,255,0.85) 90%, transparent 100%)',
-  navLinkColor:'rgba(255,255,255,0.88)',
-  navLinkHoverBg: 'rgba(255,0,200,0.18)',
-  navLinkHoverShadow: '0 0 14px rgba(255,0,200,0.75)',
-  divider:     'linear-gradient(180deg, rgba(255,0,180,0.65), rgba(0,200,255,0.5))',
-  tutorialBg:  'rgba(255,100,0,0.1)',
-  tutorialBorder: 'rgba(255,140,0,0.6)',
-  tutorialColor: '#ffaa00',
-  loginBg:     'rgba(0,180,255,0.1)',
-  loginBorder: 'rgba(0,200,255,0.55)',
-  loginColor:  '#00ccff',
-  signupBg:    'linear-gradient(135deg, #ff0080, #ff6600, #ffcc00, #00cc44, #0066ff, #8800ff)',
-  signupShadow:'0 0 30px rgba(255,0,128,0.65), 0 0 14px rgba(0,200,255,0.45)',
-  dot1:        '#ff0088',
-  tagColor:    '#ffffff',
-  tagShadow:   '0 0 20px rgba(255,80,255,0.65)',
-  ctaBg:       'linear-gradient(135deg, #ff0080, #ff5500 18%, #ffcc00 36%, #00cc44 54%, #0066ff 72%, #8800ff 90%)',
-  ctaShadow:   '0 0 55px rgba(255,0,128,0.65), 0 0 25px rgba(0,200,255,0.45), 0 8px 32px rgba(0,0,0,0.55)',
-  scrollColor: '#ff80ff',
-  sectionLabel:'#ff80ff',
-  sectionLabelShadow: '0 0 14px rgba(255,80,255,0.7)',
-  h2Gradient:  'linear-gradient(135deg, #ff0080 0%, #ff8800 20%, #ffee00 40%, #00ee44 60%, #0088ff 80%, #aa00ff 100%)',
-  subText:     'rgba(255,255,255,0.58)',
+  bg:          'linear-gradient(145deg, #090013 0%, #120d33 34%, #18073b 68%, #031b27 100%)',
+  navBg:       'rgba(8,9,22,0.86)',
+  navBorder:   'rgba(255,0,168,0.22)',
+  navShadow:   '0 20px 48px rgba(0,0,0,0.34)',
+  gridLine1:   'rgba(255,0,168,0.06)',
+  gridLine2:   'rgba(0,229,255,0.05)',
+  vignette:    'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 22%, rgba(4,5,14,0.92) 100%)',
+  orb1:        'rgba(255,0,168,0.26)',
+  orb2:        'rgba(0,229,255,0.18)',
+  orb3:        'rgba(255,230,0,0.14)',
+  orb4:        'rgba(139,47,255,0.16)',
+  scanLine:    'linear-gradient(90deg, transparent 0%, rgba(255,0,168,0.4) 24%, rgba(0,229,255,0.34) 54%, rgba(255,230,0,0.32) 82%, transparent 100%)',
+  navLinkColor:'rgba(244,246,255,0.88)',
+  navLinkHoverBg: 'rgba(255,255,255,0.08)',
+  navLinkHoverShadow: '0 0 14px rgba(255,0,168,0.22)',
+  divider:     'linear-gradient(180deg, rgba(255,0,168,0.34), rgba(0,229,255,0.22))',
+  tutorialBg:  'rgba(255,122,0,0.08)',
+  tutorialBorder: 'rgba(255,122,0,0.24)',
+  tutorialColor: '#ffd08c',
+  loginBg:     'rgba(0,229,255,0.08)',
+  loginBorder: 'rgba(0,229,255,0.24)',
+  loginColor:  '#bff7ff',
+  signupBg:    'linear-gradient(135deg, #8b2fff 0%, #ff00a8 26%, #00e5ff 56%, #8dff00 82%, #ffe600 100%)',
+  signupShadow:'0 20px 46px rgba(0,0,0,0.38), 0 0 34px rgba(255,0,168,0.18)',
+  dot1:        '#ff00a8',
+  tagColor:    '#eef2ff',
+  tagShadow:   '0 0 14px rgba(255,0,168,0.16)',
+  ctaBg:       'linear-gradient(135deg, #8b2fff 0%, #ff00a8 24%, #00e5ff 52%, #8dff00 78%, #ffe600 100%)',
+  ctaShadow:   '0 24px 56px rgba(0,0,0,0.4), 0 0 36px rgba(255,0,168,0.18)',
+  scrollColor: '#efe7ff',
+  sectionLabel:'#f0ccff',
+  sectionLabelShadow: '0 0 12px rgba(255,0,168,0.16)',
+  h2Gradient:  'linear-gradient(135deg, #ffffff 0%, #ffd6f4 24%, #8eeeff 62%, #ecff8c 100%)',
+  subText:     'rgba(224,230,248,0.68)',
   featCardBg:  'rgba(255,255,255,0.03)',
-  featCardBorder: 'rgba(255,255,255,0.09)',
-  featDescColor: 'rgba(210,210,255,0.5)',
-  expCardBgIdle: (c: string) => `linear-gradient(160deg, ${c}18 0%, rgba(5,0,14,0.88) 60%)`,
-  expCardBgHov:  (c: string) => `linear-gradient(160deg, ${c}32 0%, rgba(8,0,20,0.98) 60%)`,
+  featCardBorder: 'rgba(232,237,245,0.1)',
+  featDescColor: 'rgba(226,232,248,0.68)',
+  expCardBgIdle: (c: string) => `linear-gradient(160deg, ${c}18 0%, rgba(9,11,28,0.94) 64%)`,
+  expCardBgHov:  (c: string) => `linear-gradient(160deg, ${c}28 0%, rgba(12,14,34,0.99) 64%)`,
   expH3:       '#fff',
-  expDesc:     'rgba(210,210,255,0.55)',
-  expChipLabel:'rgba(255,255,255,0.28)',
-  expChipBg:   'rgba(255,255,255,0.05)',
-  expChipBorder:'rgba(255,255,255,0.1)',
-  expChipColor:'rgba(255,255,255,0.38)',
-  stepCircleBg:'linear-gradient(135deg, rgba(255,0,128,0.22), rgba(0,200,255,0.14))',
-  stepCircleBorder: 'rgba(255,200,0,0.65)',
-  stepCircleShadow: '0 0 36px rgba(255,80,0,0.4), 0 0 14px rgba(0,200,255,0.28)',
-  stepNumBg:   'linear-gradient(135deg, #ff0080, #ffee00)',
+  expDesc:     'rgba(224,224,255,0.64)',
+  expChipLabel:'rgba(255,255,255,0.34)',
+  expChipBg:   'rgba(255,255,255,0.06)',
+  expChipBorder:'rgba(255,255,255,0.12)',
+  expChipColor:'rgba(255,255,255,0.48)',
+  stepCircleBg:'linear-gradient(135deg, rgba(139,47,255,0.24), rgba(0,229,255,0.14))',
+  stepCircleBorder: 'rgba(255,230,0,0.46)',
+  stepCircleShadow: '0 0 36px rgba(255,0,168,0.24), 0 0 16px rgba(0,229,255,0.2)',
+  stepNumBg:   'linear-gradient(135deg, #8b2fff, #ffe600)',
   stepNumBorder: 'rgba(4,0,12,1)',
-  stepNumShadow: '0 0 14px rgba(255,0,128,0.8), 0 0 8px rgba(255,200,0,0.55)',
-  stepConnector: 'linear-gradient(90deg, transparent, rgba(255,0,100,0.6), rgba(255,140,0,0.55), rgba(0,230,0,0.5), rgba(0,80,255,0.5), rgba(180,0,255,0.5), transparent)',
+  stepNumShadow: '0 0 12px rgba(139,47,255,0.4), 0 0 6px rgba(255,230,0,0.28)',
+  stepConnector: 'linear-gradient(90deg, transparent, rgba(255,0,168,0.4), rgba(0,229,255,0.36), rgba(255,230,0,0.34), transparent)',
   stepTitle:   '#ffffff',
-  stepTitleShadow: '0 0 10px rgba(255,80,255,0.4)',
-  stepDesc:    'rgba(200,200,255,0.55)',
-  statsBg:     'linear-gradient(135deg, rgba(15,0,30,0.9), rgba(0,15,30,0.9))',
-  statsBorderT:'rgba(255,0,128,0.35)',
-  statsBorderB:'rgba(0,200,255,0.3)',
-  statsLabel:  'rgba(200,200,255,0.5)',
-  footerBg:    'rgba(4,0,12,0.98)',
-  footerBorder:'linear-gradient(90deg, rgba(255,0,80,0.7), rgba(255,140,0,0.6), rgba(0,220,0,0.55), rgba(0,80,255,0.55), rgba(200,0,255,0.65))',
-  copyright:   'rgba(200,200,255,0.2)',
+  stepTitleShadow: '0 0 8px rgba(255,0,168,0.22)',
+  stepDesc:    'rgba(214,214,255,0.62)',
+  statsBg:     'linear-gradient(135deg, rgba(11,12,28,0.92), rgba(16,10,30,0.92))',
+  statsBorderT:'rgba(255,0,168,0.22)',
+  statsBorderB:'rgba(0,229,255,0.16)',
+  statsLabel:  'rgba(220,226,242,0.5)',
+  footerBg:    'rgba(7,8,20,0.97)',
+  footerBorder:'linear-gradient(90deg, rgba(255,0,168,0.28), rgba(0,229,255,0.22), rgba(255,230,0,0.2))',
+  panelBg:     'rgba(11,13,28,0.82)',
+  panelBorder: 'rgba(235,239,247,0.14)',
+  panelShadow: '0 26px 60px rgba(0,0,0,0.4)',
+  panelActiveBg: 'rgba(255,255,255,0.08)',
+  panelActiveBorder: 'rgba(255,0,168,0.28)',
+  heroPrimaryGradient: 'linear-gradient(140deg, #ffffff 0%, #ffd6f4 32%, #8eeeff 68%, #ecff8c 100%)',
+  heroSecondaryGradient: 'linear-gradient(140deg, #8b2fff 0%, #ff00a8 38%, #ff7a00 72%, #ffe600 100%)',
+  heroPrimaryShadow: 'drop-shadow(0 0 22px rgba(255,0,168,0.14))',
+  heroSecondaryShadow: 'drop-shadow(0 0 20px rgba(0,229,255,0.14))',
+  softButtonBg: 'rgba(255,255,255,0.05)',
+  softButtonBorder: 'rgba(255,0,168,0.16)',
+  softButtonColor: '#f4eeff',
+  softButtonShadow: '0 18px 36px rgba(0,0,0,0.22)',
+  copyright:   'rgba(220,226,242,0.24)',
 };
 
 const FIRECRACKER = {
-  bg:          'linear-gradient(160deg, #0a0200 0%, #060100 45%, #050000 100%)',
-  navBg:       'rgba(5,1,0,0.96)',
-  navBorder:   'rgba(255,100,0,0.65)',
-  navShadow:   '0 2px 40px rgba(255,60,0,0.35)',
-  gridLine1:   'rgba(255,80,0,0.07)',
-  gridLine2:   'rgba(255,160,0,0.05)',
-  vignette:    'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 20%, rgba(5,0,0,0.82) 100%)',
-  orb1:        'rgba(255,50,0,0.6)',
-  orb2:        'rgba(255,180,0,0.5)',
-  orb3:        'rgba(255,255,80,0.3)',
-  orb4:        'rgba(200,0,255,0.22)',
-  scanLine:    'linear-gradient(90deg, transparent 0%, rgba(255,50,0,1) 20%, rgba(255,160,0,0.9) 40%, rgba(255,255,80,0.9) 60%, rgba(255,80,0,0.9) 80%, transparent 100%)',
-  navLinkColor:'rgba(255,180,100,0.9)',
-  navLinkHoverBg: 'rgba(255,80,0,0.2)',
-  navLinkHoverShadow: '0 0 14px rgba(255,100,0,0.8)',
-  divider:     'linear-gradient(180deg, rgba(255,80,0,0.7), rgba(255,200,0,0.5))',
-  tutorialBg:  'rgba(255,80,0,0.1)',
-  tutorialBorder: 'rgba(255,120,0,0.65)',
-  tutorialColor: '#ff6600',
-  loginBg:     'rgba(255,60,0,0.1)',
-  loginBorder: 'rgba(255,100,0,0.6)',
-  loginColor:  '#ff6600',
-  signupBg:    'linear-gradient(135deg, #cc0000, #ff4400, #ff9900, #ffee00)',
-  signupShadow:'0 0 30px rgba(255,60,0,0.7), 0 0 14px rgba(255,180,0,0.45)',
-  dot1:        '#ff4400',
-  tagColor:    '#ffcc88',
-  tagShadow:   '0 0 20px rgba(255,120,0,0.65)',
-  ctaBg:       'linear-gradient(135deg, #cc0000, #ff4400 22%, #ff9900 48%, #ffee00 75%, #ff6600 100%)',
-  ctaShadow:   '0 0 55px rgba(255,50,0,0.7), 0 0 25px rgba(255,160,0,0.5), 0 8px 32px rgba(0,0,0,0.6)',
-  scrollColor: '#ff8844',
-  sectionLabel:'#ff6600',
-  sectionLabelShadow: '0 0 14px rgba(255,100,0,0.7)',
-  h2Gradient:  'linear-gradient(135deg, #fff 0%, #ff6600 30%, #ffcc00 65%, #ff3300 100%)',
-  subText:     'rgba(255,200,150,0.55)',
-  featCardBg:  'rgba(255,80,0,0.04)',
-  featCardBorder: 'rgba(255,80,0,0.1)',
-  featDescColor: 'rgba(255,180,120,0.5)',
-  expCardBgIdle: (c: string) => `linear-gradient(160deg, ${c}14 0%, rgba(8,1,0,0.88) 60%)`,
-  expCardBgHov:  (c: string) => `linear-gradient(160deg, ${c}28 0%, rgba(12,2,0,0.98) 60%)`,
+  bg:          'linear-gradient(145deg, #140100 0%, #290500 30%, #481000 62%, #240207 100%)',
+  navBg:       'rgba(20,10,9,0.8)',
+  navBorder:   'rgba(255,120,0,0.22)',
+  navShadow:   '0 20px 48px rgba(0,0,0,0.34)',
+  gridLine1:   'rgba(255,86,34,0.07)',
+  gridLine2:   'rgba(255,196,0,0.05)',
+  vignette:    'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 24%, rgba(11,5,5,0.9) 100%)',
+  orb1:        'rgba(255,72,0,0.28)',
+  orb2:        'rgba(255,176,0,0.18)',
+  orb3:        'rgba(255,238,120,0.14)',
+  orb4:        'rgba(255,86,34,0.12)',
+  scanLine:    'linear-gradient(90deg, transparent 0%, rgba(255,72,0,0.42) 22%, rgba(255,176,0,0.34) 54%, rgba(255,238,120,0.26) 82%, transparent 100%)',
+  navLinkColor:'rgba(247,228,205,0.84)',
+  navLinkHoverBg: 'rgba(255,255,255,0.06)',
+  navLinkHoverShadow: '0 0 14px rgba(215,159,110,0.2)',
+  divider:     'linear-gradient(180deg, rgba(197,88,58,0.36), rgba(215,159,110,0.18))',
+  tutorialBg:  'rgba(215,159,110,0.08)',
+  tutorialBorder: 'rgba(215,159,110,0.24)',
+  tutorialColor: '#ffcc8a',
+  loginBg:     'rgba(255,106,0,0.1)',
+  loginBorder: 'rgba(255,120,0,0.28)',
+  loginColor:  '#ffc08a',
+  signupBg:    'linear-gradient(135deg, #ffb974 0%, #ff7a00 30%, #ff4d00 62%, #ffd84d 100%)',
+  signupShadow:'0 22px 48px rgba(0,0,0,0.36), 0 0 28px rgba(255,136,0,0.16)',
+  dot1:        '#ff7a00',
+  tagColor:    '#e9d4bc',
+  tagShadow:   '0 0 14px rgba(192,144,111,0.14)',
+  ctaBg:       'linear-gradient(135deg, #ffcc7a 0%, #ff7a00 28%, #ff4d00 58%, #ffe34d 100%)',
+  ctaShadow:   '0 24px 54px rgba(0,0,0,0.4), 0 0 30px rgba(255,122,0,0.16)',
+  scrollColor: '#ffb15a',
+  sectionLabel:'#ff9b3d',
+  sectionLabelShadow: '0 0 14px rgba(255,122,0,0.2)',
+  h2Gradient:  'linear-gradient(135deg, #fff5dc 0%, #ffb15a 36%, #ff6a00 72%, #ffe34d 100%)',
+  subText:     'rgba(255,219,189,0.64)',
+  featCardBg:  'rgba(255,255,255,0.028)',
+  featCardBorder: 'rgba(237,219,203,0.08)',
+  featDescColor: 'rgba(245,220,191,0.6)',
+  expCardBgIdle: (c: string) => `linear-gradient(160deg, ${c}12 0%, rgba(22,10,10,0.9) 64%)`,
+  expCardBgHov:  (c: string) => `linear-gradient(160deg, ${c}20 0%, rgba(28,12,12,0.98) 64%)`,
   expH3:       '#fff',
   expDesc:     'rgba(255,200,160,0.55)',
   expChipLabel:'rgba(255,180,100,0.3)',
-  expChipBg:   'rgba(255,80,0,0.06)',
-  expChipBorder:'rgba(255,80,0,0.12)',
-  expChipColor:'rgba(255,180,120,0.45)',
-  stepCircleBg:'linear-gradient(135deg, rgba(255,60,0,0.25), rgba(255,180,0,0.15))',
-  stepCircleBorder: 'rgba(255,140,0,0.7)',
-  stepCircleShadow: '0 0 36px rgba(255,80,0,0.45), 0 0 14px rgba(255,200,0,0.3)',
-  stepNumBg:   'linear-gradient(135deg, #cc0000, #ffcc00)',
+  expChipBg:   'rgba(255,106,0,0.08)',
+  expChipBorder:'rgba(255,136,0,0.16)',
+  expChipColor:'rgba(255,208,164,0.56)',
+  stepCircleBg:'linear-gradient(135deg, rgba(255,72,0,0.28), rgba(255,196,0,0.14))',
+  stepCircleBorder: 'rgba(255,176,0,0.5)',
+  stepCircleShadow: '0 0 36px rgba(255,72,0,0.26), 0 0 14px rgba(255,196,0,0.18)',
+  stepNumBg:   'linear-gradient(135deg, #ff4d00, #ffd84d)',
   stepNumBorder: 'rgba(5,1,0,1)',
-  stepNumShadow: '0 0 14px rgba(255,50,0,0.85), 0 0 8px rgba(255,180,0,0.6)',
-  stepConnector: 'linear-gradient(90deg, transparent, rgba(255,50,0,0.65), rgba(255,140,0,0.6), rgba(255,240,0,0.55), rgba(255,80,0,0.6), transparent)',
+  stepNumShadow: '0 0 14px rgba(255,72,0,0.38), 0 0 8px rgba(255,216,77,0.24)',
+  stepConnector: 'linear-gradient(90deg, transparent, rgba(255,72,0,0.46), rgba(255,176,0,0.38), rgba(255,238,120,0.3), transparent)',
   stepTitle:   '#fff5e0',
-  stepTitleShadow: '0 0 10px rgba(255,100,0,0.4)',
-  stepDesc:    'rgba(255,190,130,0.55)',
-  statsBg:     'linear-gradient(135deg, rgba(12,2,0,0.9), rgba(8,1,0,0.9))',
-  statsBorderT:'rgba(255,80,0,0.35)',
-  statsBorderB:'rgba(255,180,0,0.3)',
-  statsLabel:  'rgba(255,180,100,0.5)',
-  footerBg:    'rgba(5,1,0,0.98)',
-  footerBorder:'linear-gradient(90deg, rgba(255,30,0,0.75), rgba(255,120,0,0.65), rgba(255,220,0,0.6), rgba(255,80,0,0.65))',
-  copyright:   'rgba(255,160,80,0.22)',
+  stepTitleShadow: '0 0 10px rgba(255,106,0,0.26)',
+  stepDesc:    'rgba(255,202,143,0.62)',
+  statsBg:     'linear-gradient(135deg, rgba(25,11,10,0.9), rgba(35,14,14,0.9))',
+  statsBorderT:'rgba(255,176,0,0.24)',
+  statsBorderB:'rgba(255,86,34,0.18)',
+  statsLabel:  'rgba(244,219,191,0.54)',
+  footerBg:    'rgba(14,7,7,0.96)',
+  footerBorder:'linear-gradient(90deg, rgba(255,136,0,0.3), rgba(255,72,0,0.24), rgba(255,216,77,0.22))',
+  panelBg:     'rgba(22,10,10,0.8)',
+  panelBorder: 'rgba(239,225,210,0.12)',
+  panelShadow: '0 26px 60px rgba(0,0,0,0.4)',
+  panelActiveBg: 'rgba(255,255,255,0.08)',
+  panelActiveBorder: 'rgba(255,136,0,0.26)',
+  heroPrimaryGradient: 'linear-gradient(140deg, #fff9e8 0%, #ffb15a 40%, #ff6a00 100%)',
+  heroSecondaryGradient: 'linear-gradient(140deg, #ff7a00 0%, #ffd37a 46%, #ffe34d 100%)',
+  heroPrimaryShadow: 'drop-shadow(0 0 24px rgba(255,136,0,0.16))',
+  heroSecondaryShadow: 'drop-shadow(0 0 22px rgba(255,72,0,0.14))',
+  softButtonBg: 'rgba(255,255,255,0.04)',
+  softButtonBorder: 'rgba(215,159,110,0.16)',
+  softButtonColor: '#f3dec2',
+  softButtonShadow: '0 18px 36px rgba(0,0,0,0.22)',
+  copyright:   'rgba(232,212,190,0.22)',
 };
 
 const JUGNU = {
-  bg:          'linear-gradient(160deg, #000801 0%, #000502 45%, #010400 100%)',
-  navBg:       'rgba(0,5,1,0.96)',
-  navBorder:   'rgba(255,210,90,0.34)',
-  navShadow:   '0 2px 40px rgba(255,190,60,0.14)',
-  gridLine1:   'rgba(255,210,90,0.035)',
-  gridLine2:   'rgba(180,120,30,0.03)',
-  vignette:    'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 25%, rgba(0,4,0,0.82) 100%)',
-  orb1:        'rgba(255,226,120,0.32)',
-  orb2:        'rgba(255,184,56,0.22)',
-  orb3:        'rgba(255,244,148,0.2)',
-  orb4:        'rgba(188,255,110,0.12)',
-  scanLine:    'linear-gradient(90deg, transparent 0%, rgba(255,214,92,0.65) 25%, rgba(255,240,150,0.58) 55%, rgba(180,255,120,0.42) 80%, transparent 100%)',
-  navLinkColor:'rgba(255,232,170,0.82)',
-  navLinkHoverBg: 'rgba(255,214,92,0.12)',
-  navLinkHoverShadow: '0 0 12px rgba(255,214,92,0.55)',
-  divider:     'linear-gradient(180deg, rgba(255,214,92,0.5), rgba(184,255,120,0.26))',
-  tutorialBg:  'rgba(255,214,92,0.07)',
-  tutorialBorder: 'rgba(255,214,92,0.36)',
-  tutorialColor: '#ffd65c',
-  loginBg:     'rgba(255,214,92,0.08)',
-  loginBorder: 'rgba(255,214,92,0.36)',
-  loginColor:  '#ffd65c',
-  signupBg:    'linear-gradient(135deg, #5b4300, #b07a00, #ffd65c, #fff0a6)',
-  signupShadow:'0 0 28px rgba(255,214,92,0.42), 0 0 12px rgba(255,240,150,0.26)',
-  dot1:        '#ffd65c',
-  tagColor:    '#ffefb4',
-  tagShadow:   '0 0 20px rgba(255,214,92,0.36)',
-  ctaBg:       'linear-gradient(135deg, #5b4300, #b07a00 28%, #ffd65c 58%, #fff0a6 82%, #c9ff84 100%)',
-  ctaShadow:   '0 0 50px rgba(255,214,92,0.38), 0 0 22px rgba(255,240,150,0.26), 0 8px 32px rgba(0,0,0,0.55)',
-  scrollColor: '#ffd65c',
-  sectionLabel:'#ffd65c',
-  sectionLabelShadow: '0 0 14px rgba(255,214,92,0.52)',
-  h2Gradient:  'linear-gradient(135deg, #fff3bf 0%, #ffd65c 38%, #ffe98e 68%, #cfff8c 100%)',
-  subText:     'rgba(255,235,178,0.5)',
-  featCardBg:  'rgba(255,214,92,0.03)',
-  featCardBorder: 'rgba(255,214,92,0.08)',
-  featDescColor: 'rgba(238,220,156,0.48)',
-  expCardBgIdle: (c: string) => `linear-gradient(160deg, ${c}12 0%, rgba(0,5,1,0.88) 60%)`,
-  expCardBgHov:  (c: string) => `linear-gradient(160deg, ${c}25 0%, rgba(0,8,2,0.98) 60%)`,
+  bg:          'linear-gradient(145deg, #07110c 0%, #0b1713 44%, #101a12 100%)',
+  navBg:       'rgba(9,16,13,0.8)',
+  navBorder:   'rgba(201,181,122,0.18)',
+  navShadow:   '0 20px 48px rgba(0,0,0,0.34)',
+  gridLine1:   'rgba(224,194,125,0.04)',
+  gridLine2:   'rgba(164,190,119,0.035)',
+  vignette:    'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 25%, rgba(5,10,8,0.9) 100%)',
+  orb1:        'rgba(201,181,122,0.16)',
+  orb2:        'rgba(145,167,110,0.11)',
+  orb3:        'rgba(225,214,171,0.08)',
+  orb4:        'rgba(93,121,82,0.08)',
+  scanLine:    'linear-gradient(90deg, transparent 0%, rgba(201,181,122,0.28) 24%, rgba(225,214,171,0.22) 54%, rgba(145,167,110,0.18) 82%, transparent 100%)',
+  navLinkColor:'rgba(240,230,195,0.8)',
+  navLinkHoverBg: 'rgba(255,255,255,0.05)',
+  navLinkHoverShadow: '0 0 12px rgba(224,194,125,0.2)',
+  divider:     'linear-gradient(180deg, rgba(224,194,125,0.3), rgba(168,191,119,0.16))',
+  tutorialBg:  'rgba(224,194,125,0.08)',
+  tutorialBorder: 'rgba(224,194,125,0.22)',
+  tutorialColor: '#e8cd90',
+  loginBg:     'rgba(168,191,119,0.08)',
+  loginBorder: 'rgba(168,191,119,0.2)',
+  loginColor:  '#dce6b4',
+  signupBg:    'linear-gradient(135deg, #efe6ce 0%, #d2bb7e 36%, #8fa375 74%, #5c6f57 100%)',
+  signupShadow:'0 22px 48px rgba(0,0,0,0.34), 0 0 22px rgba(201,181,122,0.1)',
+  dot1:        '#dcc589',
+  tagColor:    '#ede4bf',
+  tagShadow:   '0 0 14px rgba(201,181,122,0.12)',
+  ctaBg:       'linear-gradient(135deg, #f3ecd9 0%, #d8c084 38%, #9cac7c 72%, #66795e 100%)',
+  ctaShadow:   '0 24px 54px rgba(0,0,0,0.38), 0 0 24px rgba(201,181,122,0.1)',
+  scrollColor: '#dcc48a',
+  sectionLabel:'#e0c27c',
+  sectionLabelShadow: '0 0 12px rgba(201,181,122,0.12)',
+  h2Gradient:  'linear-gradient(135deg, #fff8e5 0%, #d6c083 40%, #b2c08f 100%)',
+  subText:     'rgba(232,225,190,0.54)',
+  featCardBg:  'rgba(255,255,255,0.026)',
+  featCardBorder: 'rgba(238,233,211,0.08)',
+  featDescColor: 'rgba(232,225,190,0.48)',
+  expCardBgIdle: (c: string) => `linear-gradient(160deg, ${c}10 0%, rgba(10,18,14,0.9) 64%)`,
+  expCardBgHov:  (c: string) => `linear-gradient(160deg, ${c}18 0%, rgba(13,21,16,0.98) 64%)`,
   expH3:       '#fff5cf',
   expDesc:     'rgba(255,235,178,0.5)',
   expChipLabel:'rgba(255,214,92,0.3)',
-  expChipBg:   'rgba(255,214,92,0.05)',
-  expChipBorder:'rgba(255,214,92,0.1)',
-  expChipColor:'rgba(255,232,170,0.38)',
-  stepCircleBg:'linear-gradient(135deg, rgba(255,214,92,0.18), rgba(184,255,120,0.08))',
-  stepCircleBorder: 'rgba(255,214,92,0.5)',
-  stepCircleShadow: '0 0 32px rgba(255,214,92,0.24), 0 0 12px rgba(255,240,150,0.16)',
-  stepNumBg:   'linear-gradient(135deg, #7a5a00, #ffd65c)',
+  expChipBg:   'rgba(201,181,122,0.05)',
+  expChipBorder:'rgba(201,181,122,0.1)',
+  expChipColor:'rgba(244,231,188,0.38)',
+  stepCircleBg:'linear-gradient(135deg, rgba(201,181,122,0.18), rgba(156,182,114,0.08))',
+  stepCircleBorder: 'rgba(201,181,122,0.38)',
+  stepCircleShadow: '0 0 24px rgba(201,181,122,0.16), 0 0 10px rgba(156,182,114,0.12)',
+  stepNumBg:   'linear-gradient(135deg, #88724f, #d6c081)',
   stepNumBorder: 'rgba(0,5,1,1)',
-  stepNumShadow: '0 0 12px rgba(255,214,92,0.52), 0 0 6px rgba(255,240,150,0.26)',
-  stepConnector: 'linear-gradient(90deg, transparent, rgba(255,214,92,0.42), rgba(255,240,150,0.38), rgba(184,255,120,0.28), transparent)',
+  stepNumShadow: '0 0 10px rgba(201,181,122,0.26), 0 0 6px rgba(156,182,114,0.16)',
+  stepConnector: 'linear-gradient(90deg, transparent, rgba(201,181,122,0.32), rgba(225,214,171,0.26), rgba(156,182,114,0.22), transparent)',
   stepTitle:   '#fff0c9',
-  stepTitleShadow: '0 0 8px rgba(255,214,92,0.18)',
+  stepTitleShadow: '0 0 8px rgba(201,181,122,0.12)',
   stepDesc:    'rgba(238,220,156,0.48)',
-  statsBg:     'linear-gradient(135deg, rgba(0,8,1,0.88), rgba(0,5,0,0.88))',
-  statsBorderT:'rgba(255,214,92,0.2)',
-  statsBorderB:'rgba(184,255,120,0.14)',
-  statsLabel:  'rgba(240,226,166,0.42)',
-  footerBg:    'rgba(0,4,0,0.98)',
-  footerBorder:'linear-gradient(90deg, rgba(255,214,92,0.55), rgba(255,240,150,0.42), rgba(184,255,120,0.35), rgba(255,214,92,0.48))',
-  copyright:   'rgba(255,230,160,0.2)',
+  statsBg:     'linear-gradient(135deg, rgba(10,18,14,0.9), rgba(12,16,12,0.9))',
+  statsBorderT:'rgba(224,194,125,0.2)',
+  statsBorderB:'rgba(168,191,119,0.14)',
+  statsLabel:  'rgba(232,225,190,0.42)',
+  footerBg:    'rgba(7,12,10,0.96)',
+  footerBorder:'linear-gradient(90deg, rgba(201,181,122,0.24), rgba(145,167,110,0.18), rgba(92,114,86,0.14))',
+  panelBg:     'rgba(10,18,14,0.8)',
+  panelBorder: 'rgba(239,233,211,0.12)',
+  panelShadow: '0 26px 60px rgba(0,0,0,0.38)',
+  panelActiveBg: 'rgba(255,255,255,0.08)',
+  panelActiveBorder: 'rgba(201,181,122,0.2)',
+  heroPrimaryGradient: 'linear-gradient(140deg, #fff9e9 0%, #dcc688 46%, #b3c094 100%)',
+  heroSecondaryGradient: 'linear-gradient(140deg, #dbc58a 0%, #efe3bf 48%, #92a877 100%)',
+  heroPrimaryShadow: 'drop-shadow(0 0 20px rgba(201,181,122,0.1))',
+  heroSecondaryShadow: 'drop-shadow(0 0 18px rgba(145,167,110,0.1))',
+  softButtonBg: 'rgba(255,255,255,0.04)',
+  softButtonBorder: 'rgba(224,194,125,0.16)',
+  softButtonColor: '#f2e7c2',
+  softButtonShadow: '0 18px 36px rgba(0,0,0,0.22)',
+  copyright:   'rgba(232,225,190,0.22)',
 };
 
 const THEMES = { dark: DARK, light: LIGHT, rainbow: RAINBOW, firecracker: FIRECRACKER, jugnu: JUGNU } as const;
 
 const HOME_THEME_OPTIONS = [
   { id: 'dark', icon: '🌙', title: 'Dark', glow: 'rgba(100,80,255,0.55)' },
-  { id: 'light', icon: '☀️', title: 'Light', glow: 'rgba(255,200,0,0.55)' },
-  { id: 'rainbow', icon: '🌈', title: 'Rainbow', glow: 'rgba(255,0,200,0.55)' },
-  { id: 'firecracker', icon: '🎆', title: 'Firecracker', glow: 'rgba(255,80,0,0.65)' },
-  { id: 'jugnu', icon: '✨', title: 'Jugnu', glow: 'rgba(160,255,0,0.55)' },
+  { id: 'light', icon: '☀️', title: 'Light', glow: 'rgba(255,168,59,0.68)' },
+  { id: 'rainbow', icon: '🌈', title: 'Rainbow', glow: 'rgba(168,153,214,0.42)' },
+  { id: 'firecracker', icon: '🎆', title: 'Firecracker', glow: 'rgba(192,144,111,0.42)' },
+  { id: 'jugnu', icon: '✨', title: 'Jugnu', glow: 'rgba(201,181,122,0.38)' },
 ] as const satisfies ReadonlyArray<{ id: HomeTheme; icon: string; title: string; glow: string }>;
+
+function enhanceHomeThemeContrast<TTheme extends Record<string, unknown>>(theme: TTheme, isLight: boolean) {
+  return {
+    ...theme,
+    tagColor: isLight ? 'rgba(61,42,35,0.84)' : 'rgba(238,241,247,0.84)',
+    subText: isLight ? 'rgba(92,67,56,0.8)' : 'rgba(229,233,241,0.8)',
+    featDescColor: isLight ? 'rgba(92,67,56,0.74)' : 'rgba(221,227,238,0.76)',
+    expDesc: isLight ? 'rgba(92,67,56,0.76)' : 'rgba(229,234,243,0.78)',
+    expChipLabel: isLight ? 'rgba(17,17,17,0.62)' : 'rgba(255,255,255,0.5)',
+    expChipColor: isLight ? 'rgba(61,42,35,0.78)' : 'rgba(243,246,250,0.74)',
+    stepDesc: isLight ? 'rgba(78,58,48,0.76)' : 'rgba(229,234,242,0.76)',
+    statsLabel: isLight ? 'rgba(92,67,56,0.76)' : 'rgba(226,231,240,0.74)',
+    copyright: isLight ? 'rgba(92,67,56,0.54)' : 'rgba(226,231,240,0.44)',
+  };
+}
 
 const EXPERIENCES = [
   {
@@ -472,6 +552,36 @@ const TAGLINES = [
   'Share in one click.',
   'Forms, reimagined.',
 ];
+
+const SYSTEM_PILLARS = [
+  {
+    eyebrow: '01 Create the surface',
+    title: 'Pick the mood before you enter the builder.',
+    desc: 'The first decision is visual direction. Dark, Light, Rainbow, Firecracker, and Jugnu change the product atmosphere before the form even starts taking shape.',
+    points: ['Five home-page modes', 'Three distinct builder worlds', 'Editorial, cinematic UI instead of plain SaaS chrome'],
+  },
+  {
+    eyebrow: '02 Control the release',
+    title: 'Publishing is treated like launch control.',
+    desc: 'Custom slugs, passwords, expiry windows, response limits, and version history are built into the flow so shared forms still feel managed, not careless.',
+    points: ['Protected access when needed', 'Response caps and expiry windows', 'Restoreable snapshots and imports'],
+  },
+  {
+    eyebrow: '03 Walk the respondent path',
+    title: 'Preview the experience exactly as users will see it.',
+    desc: 'Public form previews, guided walkthroughs, and live submission flows turn the landing page into product proof instead of a list of claims.',
+    points: ['Tutorial preview with motion', 'Public gallery with real forms', 'Respondent journey visible before signup'],
+  },
+];
+
+const OPERATOR_NOTES = [
+  { label: 'Entry', value: 'Theme -> Experience -> Builder' },
+  { label: 'Control', value: 'Share links stay governed' },
+  { label: 'Proof', value: 'Users can test live forms instantly' },
+];
+
+const DISPLAY_FONT = "'Cormorant Garamond', serif";
+const UI_FONT = "'Manrope', 'Exo 2', sans-serif";
 
 // ── Waterfall Canvas ──────────────────────────────────────────
 function WaterfallCanvas({ active }: { active: boolean }) {
@@ -702,7 +812,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
   const statsRef = useRef<HTMLDivElement>(null);
   const previewVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const themeSelectorRef = useRef<HTMLDivElement>(null);
-  const T = THEMES[theme];
+  const T = enhanceHomeThemeContrast(THEMES[theme], theme === 'light');
   const isDark = theme !== 'light';
   const rainbow     = theme === 'rainbow';
   const firecracker = theme === 'firecracker';
@@ -786,6 +896,28 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
 
   const tutorialPanel = TUTORIAL_PANELS[tutorialIdx];
   const activeThemeOption = HOME_THEME_OPTIONS.find((option) => option.id === theme) ?? HOME_THEME_OPTIONS[0];
+  const readableHeading = isDark ? '#f4f1fb' : '#2f1d12';
+  const readableBody = isDark ? 'rgba(238,242,248,0.86)' : 'rgba(55,38,27,0.8)';
+  const readableSubtle = isDark ? 'rgba(224,230,239,0.78)' : 'rgba(74,52,37,0.72)';
+  const readableLabel = isDark ? 'rgba(244,246,250,0.62)' : 'rgba(52,36,24,0.6)';
+  const heroFormGradient = theme === 'light'
+    ? 'linear-gradient(140deg, #261813 0%, #5a3526 42%, #d86d49 100%)'
+    : T.heroPrimaryGradient;
+  const heroVerseGradient = theme === 'light'
+    ? 'linear-gradient(140deg, #dc6d49 0%, #f2b85f 40%, #1ea89d 100%)'
+    : T.heroSecondaryGradient;
+  const heroFormShadow = theme === 'light'
+    ? 'drop-shadow(0 6px 16px rgba(216,109,73,0.14))'
+    : T.heroPrimaryShadow;
+  const heroVerseShadow = theme === 'light'
+    ? 'drop-shadow(0 6px 16px rgba(30,168,157,0.14))'
+    : T.heroSecondaryShadow;
+  const landingSignals = [
+    { value: String(EXPERIENCES.length), label: 'Experience worlds', detail: 'Realm Runner, Globe Explorer, The Library' },
+    { value: String(HOME_THEME_OPTIONS.length), label: 'Visual modes', detail: 'Switch the landing atmosphere before entry' },
+    { value: publicFormsLoading ? '...' : String(publicGalleryTotal), label: 'Public forms live', detail: 'Open and test the respondent flow now' },
+    { value: String(FEATURES.length), label: 'Builder systems', detail: 'Validation, layout, access, history, import/export' },
+  ];
 
   const fade = (delay: string) => ({
     opacity:    heroIn ? 1 : 0,
@@ -833,7 +965,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: T.bg, overflowY: 'auto', overflowX: 'hidden', fontFamily: "'Rajdhani', sans-serif", transition: 'background 0.4s' }}>
+    <div style={{ position: 'fixed', inset: 0, background: T.bg, overflowY: 'auto', overflowX: 'hidden', fontFamily: UI_FONT, transition: 'background 0.4s' }}>
 
       {/* ── Waterfall ── */}
       <WaterfallCanvas active={rainbow} />
@@ -846,47 +978,51 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${T.gridLine1} 1px, transparent 1px), linear-gradient(90deg, ${T.gridLine2} 1px, transparent 1px)`, backgroundSize: '72px 72px' }} />
         <div style={{ position: 'absolute', inset: 0, background: T.vignette }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 44% 28% at 50% 36%, rgba(255,255,255,0.09), rgba(255,255,255,0.03) 28%, transparent 70%)', mixBlendMode: 'screen', opacity: isDark ? 0.5 : 0.28 }} />
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.06, backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 0.55px, transparent 0.55px)', backgroundSize: '6px 6px' }} />
         <div style={{ position: 'absolute', top: '-18%', left: '-10%', width: '60vw', height: '60vw', background: `radial-gradient(circle, ${T.orb1} 0%, transparent 65%)`, filter: 'blur(90px)', animation: 'orb-drift 14s ease-in-out infinite' }} />
         <div style={{ position: 'absolute', top: '20%', right: '-12%', width: '48vw', height: '48vw', background: `radial-gradient(circle, ${T.orb2} 0%, transparent 65%)`, filter: 'blur(80px)', animation: 'orb-drift 18s ease-in-out infinite 4s' }} />
         <div style={{ position: 'absolute', bottom: '-8%', left: '20%', width: '55vw', height: '32vw', background: `radial-gradient(ellipse, ${T.orb3} 0%, transparent 65%)`, filter: 'blur(90px)', animation: 'orb-drift 22s ease-in-out infinite 9s' }} />
         <div style={{ position: 'absolute', top: '50%', left: '35%', width: '30vw', height: '30vw', background: `radial-gradient(circle, ${T.orb4} 0%, transparent 65%)`, filter: 'blur(90px)', animation: 'orb-drift 26s ease-in-out infinite 6s' }} />
-        <div style={{ position: 'absolute', left: 0, right: 0, height: '2px', background: T.scanLine, animation: 'scan-h 8s linear infinite', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', left: 0, right: 0, height: '1px', background: T.scanLine, animation: 'scan-h 14s linear infinite', opacity: 0.22, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 'clamp(26px, 4vw, 42px)', background: 'linear-gradient(180deg, rgba(2,4,8,0.96), rgba(2,4,8,0.72) 55%, transparent)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 'clamp(26px, 4vw, 42px)', background: 'linear-gradient(0deg, rgba(2,4,8,0.96), rgba(2,4,8,0.72) 55%, transparent)' }} />
       </div>
 
       {/* ── Nav ── */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: T.navBg, backdropFilter: 'blur(32px)', borderBottom: `1px solid ${T.navBorder}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: T.navShadow, transition: 'background 0.3s, border-color 0.3s' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: T.navBg, backdropFilter: 'blur(32px)', borderBottom: `1px solid ${T.navBorder}`, padding: '0 36px', height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: T.navShadow, transition: 'background 0.3s, border-color 0.3s' }}>
         <FormVerseLogo key={`nav-logo-${theme}`} size={34} textSize={14} variant={theme} />
         <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           {([['#experiences','Experiences'],['#gallery','Gallery'],['#features','Features'],['#how','How it works']] as [string,string][]).map(([href, label]) => (
-            <a key={href} href={href} style={{ fontSize: 12, color: T.navLinkColor, textDecoration: 'none', letterSpacing: '0.1em', padding: '6px 13px', borderRadius: 7, transition: 'all 0.18s', fontWeight: 700, textTransform: 'uppercase' }}
+            <a key={href} href={href} style={{ fontSize: 12, color: T.navLinkColor, textDecoration: 'none', letterSpacing: '0.03em', padding: '8px 14px', borderRadius: 999, transition: 'all 0.18s', fontWeight: 600, fontFamily: UI_FONT }}
               onMouseEnter={e => { e.currentTarget.style.color = isDark ? '#fff' : '#000'; e.currentTarget.style.background = T.navLinkHoverBg; e.currentTarget.style.textShadow = T.navLinkHoverShadow; }}
               onMouseLeave={e => { e.currentTarget.style.color = T.navLinkColor; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.textShadow = 'none'; }}>
               {label}
             </a>
           ))}
           {onApiDocs && (
-            <button onClick={onApiDocs} style={{ background: 'transparent', border: 'none', fontSize: 12, color: T.navLinkColor, letterSpacing: '0.1em', padding: '6px 13px', borderRadius: 7, transition: 'all 0.18s', fontWeight: 700, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}
+            <button onClick={onApiDocs} style={{ background: 'transparent', border: 'none', fontSize: 12, color: T.navLinkColor, letterSpacing: '0.03em', padding: '8px 14px', borderRadius: 999, transition: 'all 0.18s', fontWeight: 600, cursor: 'pointer', fontFamily: UI_FONT }}
               onMouseEnter={e => { e.currentTarget.style.color = isDark ? '#fff' : '#000'; e.currentTarget.style.background = T.navLinkHoverBg; e.currentTarget.style.textShadow = T.navLinkHoverShadow; }}
               onMouseLeave={e => { e.currentTarget.style.color = T.navLinkColor; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.textShadow = 'none'; }}>
               API Docs
             </button>
           )}
           {playerName && onDashboard && (
-            <button onClick={onDashboard} style={{ background: T.loginBg, border: `1px solid ${T.loginBorder}`, fontSize: 12, color: T.loginColor, letterSpacing: '0.1em', padding: '7px 14px', borderRadius: 8, transition: 'all 0.18s', fontWeight: 700, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}
+            <button onClick={onDashboard} style={{ background: T.loginBg, border: `1px solid ${T.loginBorder}`, fontSize: 12, color: T.loginColor, letterSpacing: '0.03em', padding: '8px 15px', borderRadius: 999, transition: 'all 0.18s', fontWeight: 600, cursor: 'pointer', fontFamily: UI_FONT }}
               onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.05)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
               onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               Dashboard
             </button>
           )}
           {playerName && onAdmin && (
-            <button onClick={onAdmin} style={{ background: T.tutorialBg, border: `1px solid ${T.tutorialBorder}`, fontSize: 12, color: T.tutorialColor, letterSpacing: '0.1em', padding: '7px 14px', borderRadius: 8, transition: 'all 0.18s', fontWeight: 700, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}
+            <button onClick={onAdmin} style={{ background: T.tutorialBg, border: `1px solid ${T.tutorialBorder}`, fontSize: 12, color: T.tutorialColor, letterSpacing: '0.03em', padding: '8px 15px', borderRadius: 999, transition: 'all 0.18s', fontWeight: 600, cursor: 'pointer', fontFamily: UI_FONT }}
               onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.05)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
               onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               Admin
             </button>
           )}
           {!playerName && onLogin && (
-            <button onClick={onLogin} style={{ background: T.loginBg, border: `1px solid ${T.loginBorder}`, fontSize: 12, color: T.loginColor, letterSpacing: '0.1em', padding: '7px 14px', borderRadius: 8, transition: 'all 0.18s', fontWeight: 700, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}
+            <button onClick={onLogin} style={{ background: T.loginBg, border: `1px solid ${T.loginBorder}`, fontSize: 12, color: T.loginColor, letterSpacing: '0.03em', padding: '8px 15px', borderRadius: 999, transition: 'all 0.18s', fontWeight: 600, cursor: 'pointer', fontFamily: UI_FONT }}
               onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.05)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
               onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               Login
@@ -902,18 +1038,17 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 10,
-                background: theme === 'light' ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.08)',
-                border: `1px solid ${theme === 'light' ? 'rgba(90,40,0,0.16)' : 'rgba(255,255,255,0.18)'}`,
+                background: T.panelBg,
+                border: `1px solid ${T.panelBorder}`,
                 borderRadius: 8,
-                color: theme === 'light' ? '#5c2f00' : '#f4f7ff',
+                color: T.expH3,
                 fontSize: 12,
                 fontWeight: 800,
                 padding: '7px 12px',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                fontFamily: "'Rajdhani', sans-serif",
+                letterSpacing: '0.03em',
+                fontFamily: UI_FONT,
                 cursor: 'pointer',
-                boxShadow: theme === 'light' ? '0 8px 18px rgba(255,180,0,0.1)' : '0 8px 22px rgba(0,0,0,0.18)',
+                boxShadow: T.panelShadow,
               }}>
               <PremiumIcon token={activeThemeOption.icon} size={15} />
               <span>{activeThemeOption.title}</span>
@@ -928,13 +1063,13 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                   top: 'calc(100% + 10px)',
                   right: 0,
                   width: 240,
-                  background: theme === 'light' ? 'rgba(255,252,245,0.98)' : 'rgba(10,8,22,0.96)',
-                  border: `1px solid ${theme === 'light' ? 'rgba(90,40,0,0.14)' : 'rgba(255,255,255,0.14)'}`,
+                  background: T.panelBg,
+                  border: `1px solid ${T.panelBorder}`,
                   borderRadius: 18,
                   padding: 10,
                   display: 'grid',
                   gap: 8,
-                  boxShadow: theme === 'light' ? '0 18px 40px rgba(140,80,0,0.12)' : '0 24px 60px rgba(0,0,0,0.34)',
+                  boxShadow: T.panelShadow,
                 }}>
                 {HOME_THEME_OPTIONS.map((option) => (
                   <button
@@ -951,25 +1086,21 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: 10,
-                      background: theme === option.id
-                        ? (theme === 'light' ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.14)')
-                        : (theme === 'light' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.04)'),
-                      border: `1px solid ${theme === option.id
-                        ? (theme === 'light' ? 'rgba(90,40,0,0.22)' : 'rgba(255,255,255,0.42)')
-                        : (theme === 'light' ? 'rgba(90,40,0,0.1)' : 'rgba(255,255,255,0.12)')}`,
+                      background: theme === option.id ? T.panelActiveBg : 'transparent',
+                      border: `1px solid ${theme === option.id ? T.panelActiveBorder : T.panelBorder}`,
                       borderRadius: 14,
                       padding: '10px 12px',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
-                      boxShadow: theme === option.id ? `0 0 16px ${option.glow}, 0 0 24px ${option.glow}` : 'none',
-                      color: theme === 'light' ? '#2b1700' : '#f8fbff',
-                      fontFamily: "'Rajdhani', sans-serif",
-                      fontWeight: 700,
-                      letterSpacing: '0.05em',
+                      boxShadow: theme === option.id ? `0 12px 24px ${option.glow}22` : 'none',
+                      color: T.expH3,
+                      fontFamily: UI_FONT,
+                      fontWeight: 600,
+                      letterSpacing: '0.02em',
                     }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                       <PremiumIcon token={option.icon} size={16} />
-                      <span style={{ fontSize: 12, textTransform: 'uppercase' }}>{option.title}</span>
+                      <span style={{ fontSize: 12 }}>{option.title}</span>
                     </span>
                     <span style={{ fontSize: 11, opacity: theme === option.id ? 1 : 0.35 }}>{theme === option.id ? 'Active' : 'Select'}</span>
                   </button>
@@ -981,68 +1112,167 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
       </nav>
 
       {/* ── HERO ── */}
-      <section style={{ minHeight: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px 60px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+      <section style={{ minHeight: 'calc(100vh - 72px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '92px 24px 72px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+        <div style={{ ...fade('0s'), width: 'min(1080px, 100%)', position: 'relative', padding: 'clamp(28px, 4vw, 40px)', borderRadius: 28, border: `1px solid ${T.panelBorder}`, background: `linear-gradient(180deg, ${T.panelBg}, rgba(8,10,18,0.42))`, boxShadow: `0 28px 70px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.05)`, overflow: 'hidden', backdropFilter: 'blur(22px)' }}>
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 28%, transparent 72%, rgba(255,255,255,0.03))' }} />
+          <div style={{ position: 'absolute', inset: 16, borderRadius: 22, border: `1px solid ${T.panelActiveBorder}`, opacity: 0.65, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 18, left: 20, display: 'flex', alignItems: 'center', gap: 10, color: T.sectionLabel, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 700 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: T.sectionLabel, boxShadow: `0 0 14px ${T.sectionLabel}` }} />
+            opening sequence
+          </div>
+          <div style={{ position: 'absolute', top: 18, right: 20, color: T.subText, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>FormVerse Studio Reel</div>
 
-        {/* Main title */}
-        <div key={`hero-wordmark-${theme}`} style={{ ...fade('0.1s'), marginBottom: 18 }}>
-          <h1 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(56px, 12vw, 130px)', fontWeight: 900, lineHeight: 0.95, margin: 0, letterSpacing: '0.02em', position: 'relative', display: 'inline-block' }}>
-            <span style={{ display: 'block', color: isDark ? '#ffffff' : '#111111', background: isDark ? `linear-gradient(140deg, #ffffff 0%, ${T.dot1} 25%, #ff4dff 55%, #ffe600 80%, ${T.dot1} 100%)` : 'linear-gradient(140deg, #111111 0%, #2a2a2a 26%, #cc3300 54%, #ff9900 82%, #ffd24a 100%)', backgroundSize: '250% 250%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'word-shimmer 5s ease-in-out infinite', filter: `drop-shadow(0 0 ${isDark ? 54 : 12}px rgba(139,47,255,${isDark ? 0.52 : 0.08}))`, textShadow: isDark ? '0 1px 0 rgba(255,255,255,0.08), 0 0 16px rgba(6, 4, 18, 0.44)' : '0 1px 0 rgba(255,255,255,0.72), 0 4px 10px rgba(0, 0, 0, 0.12)' }}>
-              Form
-            </span>
-            <span style={{ display: 'block', color: isDark ? T.dot1 : '#111111', background: isDark ? `linear-gradient(140deg, ${T.dot1} 0%, #ff00aa 30%, #c084fc 60%, #ffe600 85%, ${T.dot1} 100%)` : 'linear-gradient(140deg, #111111 0%, #444444 26%, #7c3aed 56%, #ffb000 84%, #ff7700 100%)', backgroundSize: '250% 250%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'word-shimmer 5s ease-in-out infinite 0.8s', filter: `drop-shadow(0 0 ${isDark ? 54 : 12}px rgba(0,245,255,${isDark ? 0.42 : 0.06}))`, textShadow: isDark ? '0 0 18px rgba(6, 4, 18, 0.4)' : '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
-              Verse
-            </span>
-          </h1>
-        </div>
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ ...fade('0s'), marginBottom: 18, fontSize: 12, letterSpacing: '0.22em', textTransform: 'uppercase', color: T.sectionLabel, fontWeight: 700 }}>
+              cinematic form infrastructure
+            </div>
 
-        {/* Animated tagline */}
-        <div style={{ ...fade('0.25s'), height: 32, marginBottom: 32, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ fontSize: 'clamp(16px, 2.2vw, 22px)', color: T.tagColor, letterSpacing: '0.06em', margin: 0, fontWeight: 600, opacity: tagVisible ? 1 : 0, transform: tagVisible ? 'translateY(0)' : 'translateY(10px)', transition: 'opacity 0.35s ease, transform 0.35s ease', textShadow: T.tagShadow }}>
-            {TAGLINES[tagIdx]}
-          </p>
-        </div>
+            {/* Main title */}
+            <div key={`hero-wordmark-${theme}`} style={{ ...fade('0.1s'), marginBottom: 18 }}>
+              <h1 style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(62px, 11vw, 126px)', fontWeight: 700, lineHeight: 0.9, margin: 0, letterSpacing: '-0.035em', position: 'relative', display: 'inline-block' }}>
+                <span style={{ display: 'block', color: isDark ? '#ffffff' : '#111111', background: heroFormGradient, backgroundSize: '180% 180%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'word-shimmer 14s ease-in-out infinite', filter: heroFormShadow, textShadow: isDark ? '0 1px 0 rgba(255,255,255,0.04), 0 0 10px rgba(8, 9, 15, 0.14)' : '0 1px 0 rgba(255,255,255,0.72), 0 3px 8px rgba(0, 0, 0, 0.06)' }}>
+                  Form
+                </span>
+                <span style={{ display: 'block', color: isDark ? T.dot1 : '#111111', background: heroVerseGradient, backgroundSize: '180% 180%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'word-shimmer 14s ease-in-out infinite 1.2s', filter: heroVerseShadow, textShadow: isDark ? '0 0 10px rgba(8, 9, 15, 0.14)' : '0 3px 8px rgba(0, 0, 0, 0.06)' }}>
+                  Verse
+                </span>
+              </h1>
+            </div>
 
-        {/* CTA buttons */}
-        <div style={{ ...fade('0.5s'), display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 64 }}>
+            {/* Animated tagline */}
+            <div style={{ ...fade('0.25s'), height: 32, marginBottom: 32, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <p style={{ fontSize: 'clamp(17px, 2.1vw, 22px)', color: T.tagColor, letterSpacing: '0.015em', margin: 0, fontWeight: 500, opacity: tagVisible ? 1 : 0, transform: tagVisible ? 'translateY(0)' : 'translateY(10px)', transition: 'opacity 0.35s ease, transform 0.35s ease', textShadow: T.tagShadow }}>
+                {TAGLINES[tagIdx]}
+              </p>
+            </div>
+
+            {/* CTA buttons */}
+            <div style={{ ...fade('0.5s'), display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 40 }}>
           <button onClick={handlePrimaryStart}
-            style={{ background: T.ctaBg, border: 'none', borderRadius: 14, color: '#fff', fontSize: 16, fontWeight: 800, padding: '18px 48px', cursor: 'pointer', letterSpacing: '0.12em', fontFamily: "'Rajdhani', sans-serif", boxShadow: T.ctaShadow, transition: 'all 0.2s', position: 'relative', overflow: 'hidden', textShadow: '0 0 8px rgba(255,255,255,0.5)' }}
-            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)'; }}
+            style={{ background: T.ctaBg, border: `1px solid ${T.panelActiveBorder}`, borderRadius: 999, color: '#fff', fontSize: 15, fontWeight: 700, padding: '17px 34px', cursor: 'pointer', letterSpacing: '0.02em', fontFamily: UI_FONT, boxShadow: T.ctaShadow, transition: 'all 0.2s', position: 'relative', overflow: 'hidden' }}
+            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.06)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
             onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; }}>
             {playerName ? 'Choose Your Experience' : 'Create Free Account'}
           </button>
           {onApiDocs && (
             <button onClick={onApiDocs}
-              style={{ background: isDark ? 'rgba(246, 196, 112, 0.08)' : 'rgba(53, 16, 0, 0.06)', border: `1px solid ${isDark ? 'rgba(246, 196, 112, 0.42)' : 'rgba(53, 16, 0, 0.16)'}`, borderRadius: 14, color: isDark ? '#f6d59b' : '#351000', fontSize: 16, fontWeight: 800, padding: '18px 30px', cursor: 'pointer', letterSpacing: '0.1em', fontFamily: "'Rajdhani', sans-serif", transition: 'all 0.2s', boxShadow: isDark ? '0 18px 40px rgba(0, 0, 0, 0.24)' : '0 16px 34px rgba(171, 81, 0, 0.12)' }}
+              style={{ background: T.softButtonBg, border: `1px solid ${T.softButtonBorder}`, borderRadius: 999, color: T.softButtonColor, fontSize: 15, fontWeight: 700, padding: '17px 26px', cursor: 'pointer', letterSpacing: '0.02em', fontFamily: UI_FONT, transition: 'all 0.2s', boxShadow: T.softButtonShadow, backdropFilter: 'blur(18px)' }}
               onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
               onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               Browse API Docs
             </button>
           )}
           <button onClick={() => document.getElementById('experiences')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: T.tutorialBg, border: `1px solid ${T.tutorialBorder}`, borderRadius: 14, color: T.tutorialColor, fontSize: 16, fontWeight: 800, padding: '18px 32px', cursor: 'pointer', letterSpacing: '0.1em', fontFamily: "'Rajdhani', sans-serif", transition: 'all 0.2s' }}
+            style={{ background: T.tutorialBg, border: `1px solid ${T.tutorialBorder}`, borderRadius: 999, color: T.tutorialColor, fontSize: 15, fontWeight: 700, padding: '17px 28px', cursor: 'pointer', letterSpacing: '0.02em', fontFamily: UI_FONT, transition: 'all 0.2s' }}
             onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.15)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
             onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
             See Experiences First
           </button>
-        </div>
+            </div>
 
-        <div style={{ ...fade('0.58s'), display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10, marginBottom: 54, maxWidth: 860 }}>
+            <div style={{ ...fade('0.58s'), display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10, marginBottom: 34, maxWidth: 860 }}>
           {[
             '3 distinct builder experiences',
             '5 visual modes: Dark, Light, Rainbow, Firecracker, Jugnu',
             'Account setup in one screen',
             'Custom slugs, passwords, expiry, and response caps',
           ].map((item) => (
-            <div key={item} style={{ background: T.expChipBg, border: `1px solid ${T.expChipBorder}`, borderRadius: 999, padding: '9px 14px', fontSize: 12, color: T.expChipColor, letterSpacing: '0.06em' }}>
+            <div key={item} style={{ background: T.expChipBg, border: `1px solid ${T.expChipBorder}`, borderRadius: 999, padding: '10px 15px', fontSize: 12, color: T.expChipColor, letterSpacing: '0.015em', fontWeight: 600 }}>
               {item}
             </div>
           ))}
+            </div>
+
+            <div style={{ ...fade('0.64s'), width: 'min(760px, 100%)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 18 }}>
+              {[
+                ['Act I', 'Choose the mood'],
+                ['Act II', 'Build the form'],
+                ['Act III', 'Publish the link'],
+              ].map(([label, copy]) => (
+                <div key={label} style={{ padding: '14px 16px', borderRadius: 18, background: 'rgba(255,255,255,0.04)', border: `1px solid ${T.panelBorder}`, textAlign: 'left', backdropFilter: 'blur(16px)' }}>
+                  <div style={{ fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.sectionLabel, fontWeight: 700, marginBottom: 6 }}>{label}</div>
+                  <div style={{ fontSize: 14, color: T.expH3, fontWeight: 600 }}>{copy}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Scroll hint */}
         <div style={{ ...fade('0.7s'), display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: 0.4, cursor: 'pointer' }} onClick={() => document.getElementById('experiences')?.scrollIntoView({ behavior: 'smooth' })}>
-          <span style={{ fontSize: 11, letterSpacing: '0.25em', textTransform: 'uppercase', color: T.scrollColor }}>Explore Worlds</span>
+          <span style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.scrollColor, fontFamily: UI_FONT }}>Explore Worlds</span>
           <div style={{ width: 1, height: 36, background: `linear-gradient(180deg, ${T.scrollColor}, transparent)`, animation: 'float-slow 2s ease-in-out infinite' }} />
+        </div>
+      </section>
+
+      <section id="signal-rail" style={{ padding: '0 24px 92px', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 1180, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1.05fr) minmax(320px, 0.95fr)', gap: 20, alignItems: 'stretch' }}>
+          <div style={{ background: T.panelBg, border: `1px solid ${T.panelBorder}`, borderRadius: 28, padding: '28px clamp(22px, 3vw, 34px)', boxShadow: T.panelShadow, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', inset: 0, background: isDark ? 'linear-gradient(140deg, rgba(255,255,255,0.05), transparent 42%, rgba(255,255,255,0.02))' : 'linear-gradient(140deg, rgba(255,255,255,0.42), transparent 42%, rgba(255,255,255,0.18))', pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: 12, textShadow: T.sectionLabelShadow }}>✦ Live Product Signal</div>
+              <h2 style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(30px, 4vw, 46px)', fontWeight: 700, color: readableHeading, margin: '0 0 14px', lineHeight: 1.02, letterSpacing: '-0.025em' }}>See the builder before you commit to it.</h2>
+              <p style={{ fontSize: 14.5, lineHeight: 1.8, color: readableBody, maxWidth: 660, margin: '0 0 24px' }}>Explore the visual modes, preview real form experiences, and understand how publishing works before you create an account. The page should help you feel the product, not decode it.</p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+                {landingSignals.map((signal) => (
+                  <div key={signal.label} style={{ borderRadius: 20, padding: '16px 16px 15px', background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.62)', border: `1px solid ${T.featCardBorder}`, backdropFilter: 'blur(14px)' }}>
+                    <div style={{ fontFamily: DISPLAY_FONT, fontSize: 28, fontWeight: 700, color: readableHeading, lineHeight: 1, marginBottom: 8, letterSpacing: '-0.03em' }}>{signal.value}</div>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>{signal.label}</div>
+                    <div style={{ fontSize: 12.5, lineHeight: 1.6, color: readableSubtle }}>{signal.detail}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                <button onClick={() => document.getElementById('tutorial-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ background: T.ctaBg, border: `1px solid ${T.panelActiveBorder}`, borderRadius: 999, color: '#fff', fontSize: 13, fontWeight: 700, padding: '14px 18px', cursor: 'pointer', letterSpacing: '0.02em', fontFamily: UI_FONT, boxShadow: T.ctaShadow }}>
+                  See the guided walkthrough
+                </button>
+                <button onClick={() => document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ background: T.softButtonBg, border: `1px solid ${T.softButtonBorder}`, borderRadius: 999, color: T.softButtonColor, fontSize: 13, fontWeight: 700, padding: '14px 18px', cursor: 'pointer', letterSpacing: '0.02em', fontFamily: UI_FONT, boxShadow: T.softButtonShadow }}>
+                  Jump to live forms
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gap: 14 }}>
+            <div style={{ background: isDark ? 'linear-gradient(160deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02))' : 'linear-gradient(160deg, rgba(255,255,255,0.74), rgba(255,247,236,0.78))', border: `1px solid ${T.featCardBorder}`, borderRadius: 24, padding: '22px 22px 20px', boxShadow: T.panelShadow }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 6 }}>Current mode</div>
+                  <div style={{ fontFamily: DISPLAY_FONT, fontSize: 28, fontWeight: 700, color: readableHeading, letterSpacing: '-0.02em' }}>{activeThemeOption.title}</div>
+                </div>
+                <div style={{ width: 52, height: 52, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: T.expChipBg, border: `1px solid ${T.expChipBorder}` }}>
+                  <PremiumIcon token={activeThemeOption.icon} size={26} />
+                </div>
+              </div>
+              <p style={{ fontSize: 13, lineHeight: 1.7, color: readableBody, margin: '0 0 14px' }}>The landing page now behaves more like an app shell: a chosen mood, a guided story, visible live examples, and a controlled route into the builder.</p>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {OPERATOR_NOTES.map((note) => (
+                  <div key={note.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, paddingTop: 10, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(70,40,18,0.08)'}` }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: readableLabel, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{note.label}</div>
+                    <div style={{ fontSize: 12.5, lineHeight: 1.5, color: readableBody, textAlign: 'right' }}>{note.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background: T.featCardBg, border: `1px solid ${T.featCardBorder}`, borderRadius: 24, padding: '20px 22px' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 10 }}>Why this structure works</div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {[
+                  'The hero sells the mood.',
+                  'The signal rail proves depth quickly.',
+                  'The next sections explain how the system actually behaves.'
+                ].map((line) => (
+                  <div key={line} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.sectionLabel, boxShadow: `0 0 10px ${T.sectionLabel}`, marginTop: 6, flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, lineHeight: 1.65, color: readableSubtle }}>{line}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1050,7 +1280,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
         <div style={{ maxWidth: 1120, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: 10, textShadow: T.sectionLabelShadow }}>✦ Tutorial Preview</div>
-            <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 900, color: isDark ? '#f7f4ff' : '#351000', background: T.h2Gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textShadow: isDark ? '0 0 16px rgba(8, 4, 26, 0.24)' : '0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(171, 81, 0, 0.14)', margin: '0 0 12px' }}>See How FormVerse Works</h2>
+            <h2 style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 700, color: isDark ? '#f4f1fb' : '#2f1d12', textShadow: isDark ? '0 0 14px rgba(8, 4, 26, 0.18)' : '0 1px 0 rgba(255,255,255,0.6), 0 5px 12px rgba(171, 81, 0, 0.08)', margin: '0 0 12px', letterSpacing: '-0.02em' }}>See How FormVerse Works</h2>
             <p style={{ fontSize: 14, color: T.subText, maxWidth: 620, margin: '0 auto', lineHeight: 1.7 }}>Themes here mean the visual modes you can switch on the home page: Dark, Light, Rainbow, Firecracker, and Jugnu. Pick the mood you want before entering the builder.</p>
           </div>
 
@@ -1079,9 +1309,9 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                   {tutorialPanel.icon}
                 </div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: tutorialPanel.accent, letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 10 }}>{tutorialPanel.hint || 'Cinematic walkthrough'}</div>
-                <h3 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(26px, 4vw, 40px)', lineHeight: 1.05, fontWeight: 900, color: '#fff8ef', margin: '0 0 12px', textShadow: '0 0 20px rgba(0,0,0,0.26)' }}>{tutorialPanel.title}</h3>
+                <h3 style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(28px, 4vw, 42px)', lineHeight: 1.02, fontWeight: 700, color: '#fff8ef', margin: '0 0 12px', textShadow: '0 0 14px rgba(0,0,0,0.18)', letterSpacing: '-0.02em' }}>{tutorialPanel.title}</h3>
                 <p style={{ fontSize: 16, lineHeight: 1.7, color: 'rgba(255,255,255,0.88)', maxWidth: 620, margin: '0 0 10px' }}>{tutorialPanel.text}</p>
-                <p style={{ fontSize: 13, lineHeight: 1.7, color: 'rgba(255,255,255,0.64)', maxWidth: 640, margin: 0 }}>{tutorialPanel.subtext}</p>
+                <p style={{ fontSize: 13, lineHeight: 1.7, color: readableSubtle, maxWidth: 640, margin: 0 }}>{tutorialPanel.subtext}</p>
               </div>
             </button>
 
@@ -1093,7 +1323,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                     <div key={panel.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 12px', background: idx === tutorialIdx - 1 ? (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.42)') : 'transparent', border: `1px solid ${idx === tutorialIdx - 1 ? (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(88,36,0,0.08)') : 'transparent'}`, borderRadius: 14, transition: 'all 0.22s ease' }}>
                       <div style={{ width: 34, height: 34, borderRadius: 10, background: `${panel.accent}20`, border: `1px solid ${panel.accent}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{panel.icon}</div>
                       <div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: isDark ? '#fff2f0' : '#351000', marginBottom: 3 }}>{panel.title.replace('STEP ', '').replace(/\d+: /, '')}</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: readableHeading, marginBottom: 3 }}>{panel.title.replace('STEP ', '').replace(/\d+: /, '')}</div>
                         <div style={{ fontSize: 11.5, lineHeight: 1.55, color: T.featDescColor }}>{panel.text}</div>
                       </div>
                     </div>
@@ -1102,14 +1332,50 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
               </div>
 
               <div style={{ background: isDark ? 'linear-gradient(160deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))' : 'linear-gradient(160deg, rgba(255,255,255,0.72), rgba(255,247,232,0.72))', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(88,36,0,0.1)'}`, borderRadius: 22, padding: '22px 20px' }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: isDark ? '#fff' : '#2c1100', marginBottom: 8 }}>Want the full walkthrough?</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: readableHeading, marginBottom: 8 }}>Want the full walkthrough?</div>
                 <p style={{ fontSize: 13, lineHeight: 1.7, color: T.subText, margin: '0 0 18px' }}>Open the cinematic tutorial to see all steps with motion, hints, and the complete first-run story.</p>
                 <button onClick={onTutorial}
-                  style={{ width: '100%', background: T.ctaBg, border: 'none', borderRadius: 14, color: '#fff', fontSize: 14, fontWeight: 800, padding: '15px 18px', cursor: 'pointer', letterSpacing: '0.1em', fontFamily: "'Rajdhani', sans-serif", boxShadow: T.ctaShadow }}>
+                  style={{ width: '100%', background: T.ctaBg, border: `1px solid ${T.panelActiveBorder}`, borderRadius: 999, color: '#fff', fontSize: 14, fontWeight: 700, padding: '15px 18px', cursor: 'pointer', letterSpacing: '0.02em', fontFamily: UI_FONT, boxShadow: T.ctaShadow }}>
                   Watch Full Tutorial
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="product-architecture" style={{ padding: '0 24px 100px', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 1160, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(280px, 0.82fr) minmax(0, 1.18fr)', gap: 22, alignItems: 'start' }}>
+          <div style={{ background: T.panelBg, border: `1px solid ${T.panelBorder}`, borderRadius: 28, padding: '28px 24px', boxShadow: T.panelShadow }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: 12, textShadow: T.sectionLabelShadow }}>✦ Product Story</div>
+            <h2 style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(28px, 3.8vw, 42px)', fontWeight: 700, color: readableHeading, lineHeight: 1.04, margin: '0 0 14px', letterSpacing: '-0.025em' }}>From first impression to final link, every step feels deliberate.</h2>
+            <p style={{ fontSize: 14, lineHeight: 1.8, color: readableBody, margin: '0 0 20px' }}>Choose a visual world, shape the form with control, and publish with the guardrails already built in. FormVerse is made to feel expressive on the surface and reliable underneath.</p>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {STEPS.slice(0, 3).map((step) => (
+                <div key={step.n} style={{ display: 'grid', gridTemplateColumns: '34px minmax(0, 1fr)', gap: 12, alignItems: 'start', padding: '12px 0', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(70,40,18,0.08)'}` }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 12, background: T.expChipBg, border: `1px solid ${T.expChipBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{step.icon}</div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: readableHeading, marginBottom: 3 }}>{step.title}</div>
+                    <div style={{ fontSize: 12.5, lineHeight: 1.6, color: readableSubtle }}>{step.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gap: 14 }}>
+            {SYSTEM_PILLARS.map((pillar, index) => (
+              <div key={pillar.eyebrow} style={{ background: index === 1 ? T.panelBg : T.featCardBg, border: `1px solid ${index === 1 ? T.panelBorder : T.featCardBorder}`, borderRadius: 24, padding: '22px 22px 20px', boxShadow: index === 1 ? T.panelShadow : 'none' }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 10 }}>{pillar.eyebrow}</div>
+                <div style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(24px, 3vw, 30px)', fontWeight: 700, color: readableHeading, lineHeight: 1.08, letterSpacing: '-0.02em', marginBottom: 10 }}>{pillar.title}</div>
+                <p style={{ fontSize: 13.5, lineHeight: 1.75, color: readableBody, margin: '0 0 14px' }}>{pillar.desc}</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {pillar.points.map((point) => (
+                    <span key={point} style={{ fontSize: 11, fontWeight: 700, color: T.expChipColor, background: T.expChipBg, border: `1px solid ${T.expChipBorder}`, borderRadius: 999, padding: '7px 11px', letterSpacing: '0.02em' }}>{point}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -1119,7 +1385,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: 10, textShadow: T.sectionLabelShadow }}>✦ The Toolkit</div>
-            <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(22px, 3.5vw, 34px)', fontWeight: 900, color: isDark ? '#f7f4ff' : '#351000', background: T.h2Gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textShadow: isDark ? '0 0 16px rgba(8, 4, 26, 0.24)' : '0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(171, 81, 0, 0.14)', margin: '0 0 12px' }}>Everything You Need</h2>
+            <h2 style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(26px, 3.6vw, 38px)', fontWeight: 700, color: isDark ? '#f4f1fb' : '#2f1d12', textShadow: isDark ? '0 0 14px rgba(8, 4, 26, 0.18)' : '0 1px 0 rgba(255,255,255,0.6), 0 5px 12px rgba(171, 81, 0, 0.08)', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Everything You Need</h2>
             <p style={{ fontSize: 14, color: T.subText, maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>A complete form builder with controlled publishing built in: design visually, then ship with custom links, password protection, expiry dates, and response limits.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
@@ -1149,7 +1415,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 56 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: 10, textShadow: T.sectionLabelShadow }}>✦ The Experiences</div>
-            <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(24px, 4vw, 38px)', fontWeight: 900, color: isDark ? '#f7f4ff' : '#351000', background: T.h2Gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textShadow: isDark ? '0 0 16px rgba(8, 4, 26, 0.24)' : '0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(171, 81, 0, 0.14)', margin: '0 0 12px' }}>Three Ways to Build Forms</h2>
+            <h2 style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 700, color: isDark ? '#f4f1fb' : '#2f1d12', textShadow: isDark ? '0 0 14px rgba(8, 4, 26, 0.18)' : '0 1px 0 rgba(255,255,255,0.6), 0 5px 12px rgba(171, 81, 0, 0.08)', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Three Ways to Build Forms</h2>
             <p style={{ fontSize: 14, color: T.subText, maxWidth: 500, margin: '0 auto', lineHeight: 1.7 }}>Same powerful builder, three radically different worlds. Pick the one that fits your vibe.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
@@ -1165,19 +1431,19 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
                       <span style={{ fontSize: 46, filter: isH ? `drop-shadow(0 0 20px ${exp.color}bb)` : 'none', transition: 'filter 0.3s', display: 'inline-block', transform: isH ? 'scale(1.1)' : 'scale(1)', transitionProperty: 'filter, transform' }}>{exp.emoji}</span>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 10, fontWeight: 700, color: isH ? exp.color : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)'), letterSpacing: '0.22em', transition: 'color 0.3s' }}>EXP {exp.num}</div>
+                        <div style={{ fontFamily: UI_FONT, fontSize: 10, fontWeight: 700, color: isH ? exp.color : readableLabel, letterSpacing: '0.16em', transition: 'color 0.3s', textTransform: 'uppercase' }}>EXP {exp.num}</div>
                         <div style={{ width: 32, height: 2, background: isH ? `linear-gradient(90deg, transparent, ${exp.color})` : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'), borderRadius: 2, marginTop: 4, marginLeft: 'auto', transition: 'all 0.3s' }} />
                       </div>
                     </div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: isH ? exp.color : (isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'), letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: 7, transition: 'color 0.3s' }}>{exp.subtitle}</div>
-                    <h3 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(20px, 2.5vw, 26px)', fontWeight: 900, color: T.expH3, margin: '0 0 10px', lineHeight: 1.1 }}>{exp.title}</h3>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: isH ? exp.color : readableLabel, letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: 7, transition: 'color 0.3s' }}>{exp.subtitle}</div>
+                    <h3 style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(24px, 2.7vw, 30px)', fontWeight: 700, color: T.expH3, margin: '0 0 10px', lineHeight: 1.02, letterSpacing: '-0.02em' }}>{exp.title}</h3>
                     <p style={{ fontSize: 13, color: T.expDesc, lineHeight: 1.7, margin: 0 }}>{exp.desc}</p>
                   </div>
                   <div style={{ padding: '22px 30px', flex: 1 }}>
                     <div style={{ marginBottom: 18 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                         <div style={{ fontSize: 10, color: isH ? exp.color : T.expChipLabel, letterSpacing: '0.22em', textTransform: 'uppercase', transition: 'color 0.3s' }}>Preview footage</div>
-                        <div style={{ fontSize: 10, color: isDark ? 'rgba(255,255,255,0.26)' : 'rgba(0,0,0,0.3)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>{canHover ? 'Hover to play' : 'Tap to expand'}</div>
+                        <div style={{ fontSize: 10, color: readableLabel, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{canHover ? 'Hover to play' : 'Tap to expand'}</div>
                       </div>
                       <div
                         onMouseEnter={() => playPreviewVideo(exp.id)}
@@ -1238,7 +1504,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: 10, textShadow: T.sectionLabelShadow }}>✦ Public Form Gallery</div>
-            <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(24px, 4vw, 38px)', fontWeight: 900, color: isDark ? '#f7f4ff' : '#351000', background: T.h2Gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textShadow: isDark ? '0 0 16px rgba(8, 4, 26, 0.24)' : '0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(171, 81, 0, 0.14)', margin: '0 0 12px' }}>Try Real Public Forms</h2>
+            <h2 style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 700, color: isDark ? '#f4f1fb' : '#2f1d12', textShadow: isDark ? '0 0 14px rgba(8, 4, 26, 0.18)' : '0 1px 0 rgba(255,255,255,0.6), 0 5px 12px rgba(171, 81, 0, 0.08)', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Try Real Public Forms</h2>
             <p style={{ fontSize: 14, color: T.subText, maxWidth: 720, margin: '0 auto', lineHeight: 1.7 }}>Browse public forms created for Realm Runner, Globe Explorer, and The Library. Open any card, submit it, and experience the respondent flow exactly as your users will.</p>
             {!publicFormsLoading && publicGalleryTotal > 0 && (
               <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -1248,7 +1514,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                 {onExplore && publicGalleryTotal > HOME_GALLERY_PREVIEW_LIMIT && (
                   <button
                     onClick={onExplore}
-                    style={{ background: 'transparent', border: `1px solid ${T.tutorialBorder}`, borderRadius: 999, color: T.tutorialColor, fontSize: 11, fontWeight: 800, padding: '8px 14px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                    style={{ background: 'transparent', border: `1px solid ${T.tutorialBorder}`, borderRadius: 999, color: T.tutorialColor, fontSize: 11, fontWeight: 700, padding: '8px 14px', cursor: 'pointer', fontFamily: UI_FONT, letterSpacing: '0.04em' }}>
                     View All Public Forms
                   </button>
                 )}
@@ -1292,12 +1558,12 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
                       <div>
                         <div style={{ fontSize: 10, fontWeight: 700, color: meta.color, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>{meta.label}</div>
-                        <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 17, fontWeight: 900, color: T.expH3, lineHeight: 1.35 }}>{form.title}</div>
+                        <div style={{ fontFamily: DISPLAY_FONT, fontSize: 22, fontWeight: 700, color: T.expH3, lineHeight: 1.15, letterSpacing: '-0.02em' }}>{form.title}</div>
                       </div>
                       <div style={{ width: 42, height: 42, flexShrink: 0, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${meta.color}18`, border: `1px solid ${meta.color}33`, color: meta.color }}><PremiumIcon token={meta.emoji} size={20} /></div>
                     </div>
 
-                    <p style={{ fontSize: 12.5, lineHeight: 1.65, color: T.expDesc, margin: 0 }}>{form.description || 'Open this public form and test the live submission experience.'}</p>
+                    <p style={{ fontSize: 12.5, lineHeight: 1.65, color: readableBody, margin: 0 }}>{form.description || 'Open this public form and test the live submission experience.'}</p>
 
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: T.expChipColor, background: T.expChipBg, border: `1px solid ${T.expChipBorder}`, borderRadius: 999, padding: '5px 10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Public</span>
@@ -1305,7 +1571,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                     </div>
 
                     <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'}` }}>
-                      <span style={{ fontSize: 11, color: T.featDescColor }}>No login required</span>
+                      <span style={{ fontSize: 11, color: readableSubtle }}>No login required</span>
                       <span style={{ fontSize: 12, fontWeight: 800, color: meta.color, letterSpacing: '0.08em' }}>Try Form →</span>
                     </div>
                   </button>
@@ -1315,7 +1581,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
           ) : (
             <div style={{ textAlign: 'center', borderRadius: 22, background: T.featCardBg, border: `1px solid ${T.featCardBorder}`, padding: '38px 24px' }}>
               <div style={{ fontSize: 42, marginBottom: 12 }}>🪄</div>
-              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 18, color: isDark ? '#fff' : '#351000', marginBottom: 8 }}>Gallery Seeds Loading Soon</div>
+              <div style={{ fontFamily: DISPLAY_FONT, fontSize: 22, fontWeight: 700, color: readableHeading, marginBottom: 8, letterSpacing: '-0.02em' }}>Gallery Seeds Loading Soon</div>
               <p style={{ fontSize: 13, color: T.featDescColor, margin: 0 }}>No public forms are available yet. Seeded showcase forms will appear here once the database migrations are applied.</p>
             </div>
           )}
@@ -1327,7 +1593,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
         <div style={{ maxWidth: 960, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 56 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: T.sectionLabel, letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: 10, textShadow: T.sectionLabelShadow }}>✦ The Flow</div>
-            <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(22px, 3.5vw, 34px)', fontWeight: 900, color: isDark ? '#f7f4ff' : '#351000', background: T.h2Gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textShadow: isDark ? '0 0 16px rgba(8, 4, 26, 0.24)' : '0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(171, 81, 0, 0.14)', margin: 0 }}>How It Works</h2>
+            <h2 style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(26px, 3.6vw, 38px)', fontWeight: 700, color: isDark ? '#f4f1fb' : '#2f1d12', textShadow: isDark ? '0 0 14px rgba(8, 4, 26, 0.18)' : '0 1px 0 rgba(255,255,255,0.6), 0 5px 12px rgba(171, 81, 0, 0.08)', margin: 0, letterSpacing: '-0.02em' }}>How It Works</h2>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, position: 'relative' }}>
             <div style={{ position: 'absolute', top: 40, left: '6%', right: '6%', height: 2, background: T.stepConnector, pointerEvents: 'none', borderRadius: 2, animation: 'line-grow 1.5s ease-out 0.3s both', transformOrigin: 'left' }} />
@@ -1335,7 +1601,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
               <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0 16px', position: 'relative', animation: `card-enter 0.55s ease-out ${i * 0.12}s both` }}>
                 <div style={{ width: 82, height: 82, borderRadius: '50%', background: T.stepCircleBg, border: `2px solid ${T.stepCircleBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, marginBottom: 22, position: 'relative', zIndex: 1, backdropFilter: 'blur(4px)', boxShadow: T.stepCircleShadow }}>
                   {s.icon}
-                  <span style={{ position: 'absolute', top: -9, right: -9, width: 26, height: 26, borderRadius: '50%', background: T.stepNumBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: "'Cinzel Decorative', serif", border: `2px solid ${T.stepNumBorder}`, boxShadow: T.stepNumShadow }}>{s.n}</span>
+                  <span style={{ position: 'absolute', top: -9, right: -9, width: 26, height: 26, borderRadius: '50%', background: T.stepNumBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#fff', fontFamily: UI_FONT, border: `2px solid ${T.stepNumBorder}`, boxShadow: T.stepNumShadow }}>{s.n}</span>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: T.stepTitle, marginBottom: 6, letterSpacing: '0.04em', textShadow: T.stepTitleShadow }}>{s.title}</div>
                 <div style={{ fontSize: 12, color: T.stepDesc, lineHeight: 1.6 }}>{s.desc}</div>
@@ -1361,12 +1627,12 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                 <div style={{ width: 52, height: 52, borderRadius: 16, background: `${previewModalExperience.color}24`, border: `1px solid ${previewModalExperience.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, boxShadow: `0 0 22px ${previewModalExperience.glow}` }}>{previewModalExperience.emoji}</div>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 10, fontWeight: 800, color: previewModalExperience.color, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 6 }}>{previewModalExperience.subtitle}</div>
-                  <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 900, color: isDark ? '#fff8ef' : '#2c1100', lineHeight: 1.15 }}>{previewModalExperience.title}</div>
+                  <div style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(26px, 3vw, 34px)', fontWeight: 700, color: readableHeading, lineHeight: 1.05, letterSpacing: '-0.02em' }}>{previewModalExperience.title}</div>
                 </div>
               </div>
               <button
                 onClick={closePreviewModal}
-                style={{ background: isDark ? 'rgba(0,0,0,0.36)' : 'rgba(255,255,255,0.55)', border: `1px solid ${previewModalExperience.border}`, color: isDark ? '#fff' : '#1f0b00', borderRadius: 12, padding: '10px 14px', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif" }}
+                style={{ background: isDark ? 'rgba(0,0,0,0.36)' : 'rgba(255,255,255,0.55)', border: `1px solid ${previewModalExperience.border}`, color: isDark ? '#fff' : '#1f0b00', borderRadius: 999, padding: '10px 14px', fontSize: 12, fontWeight: 700, letterSpacing: '0.03em', cursor: 'pointer', fontFamily: UI_FONT }}
               >
                 Close
               </button>
@@ -1388,13 +1654,13 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', padding: '16px 4px 6px' }}>
-                <p style={{ margin: 0, maxWidth: 760, fontSize: 13.5, lineHeight: 1.7, color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(44,17,0,0.72)' }}>{previewModalExperience.desc}</p>
+                <p style={{ margin: 0, maxWidth: 760, fontSize: 13.5, lineHeight: 1.7, color: readableBody }}>{previewModalExperience.desc}</p>
                 <button
                   onClick={() => {
                     closePreviewModal();
                     handleExperienceStart();
                   }}
-                  style={{ background: `linear-gradient(135deg, ${previewModalExperience.color}, rgba(255,255,255,0.92))`, border: `1px solid ${previewModalExperience.border}`, borderRadius: 14, color: '#120014', fontSize: 12, fontWeight: 900, padding: '13px 18px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.12em', textTransform: 'uppercase', boxShadow: `0 0 24px ${previewModalExperience.glow}` }}
+                  style={{ background: `linear-gradient(135deg, ${previewModalExperience.color}, rgba(255,255,255,0.92))`, border: `1px solid ${previewModalExperience.border}`, borderRadius: 999, color: '#120014', fontSize: 12, fontWeight: 700, padding: '13px 18px', cursor: 'pointer', fontFamily: UI_FONT, letterSpacing: '0.03em', boxShadow: `0 10px 24px ${previewModalExperience.glow}33` }}
                 >
                   {playerName ? `Open ${previewModalExperience.title}` : `Enter ${previewModalExperience.title}`}
                 </button>
@@ -1421,7 +1687,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
                 return (
                   <>
                     <div style={{ fontSize: 30, marginBottom: 8, filter: statGlow }}>{s.icon}</div>
-                    <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(24px, 3.5vw, 42px)', fontWeight: 900, color: statColor, lineHeight: 1, filter: valueGlow }}>{s.v}</div>
+                    <div style={{ fontFamily: DISPLAY_FONT, fontSize: 'clamp(28px, 3.6vw, 44px)', fontWeight: 700, color: statColor, lineHeight: 1, filter: valueGlow, letterSpacing: '-0.03em' }}>{s.v}</div>
                   </>
                 );
               })()}

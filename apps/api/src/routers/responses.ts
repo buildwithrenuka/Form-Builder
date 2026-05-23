@@ -18,6 +18,10 @@ function hashAccessPassword(password: string, salt: string): string {
   return createHash('sha256').update(`${salt}:form:${password}`).digest('hex');
 }
 
+function hashRespondentToken(token: string, salt: string): string {
+  return createHash('sha256').update(`${salt}:respondent:${token}`).digest('hex');
+}
+
 function verifyAccessPassword(password: string | undefined, storedHash: string, salt: string): boolean {
   if (!password) return false;
 
@@ -284,13 +288,23 @@ export const responsesRouter = router({
       });
       if (!form) throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
 
+      const respondentTokenHash = input.respondentToken
+        ? hashRespondentToken(input.respondentToken, ctx.env.IP_SALT)
+        : null;
+      const existingResponse = respondentTokenHash
+        ? await ctx.db.query.responses.findFirst({
+          where: and(eq(responses.formId, input.formId), eq(responses.respondentTokenHash, respondentTokenHash)),
+          columns: { id: true },
+        })
+        : null;
+
       if (form.expiresAt && form.expiresAt.getTime() <= Date.now()) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form has expired.' });
       }
 
       if (form.responseLimit) {
         const totalResponses = await countResponsesForForm(ctx.db, input.formId);
-        if (totalResponses >= form.responseLimit) {
+        if (totalResponses >= form.responseLimit && !(existingResponse && form.allowResponseEdits)) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form is no longer accepting responses.' });
         }
       }
@@ -301,12 +315,11 @@ export const responsesRouter = router({
 
       const clientIp = ctx.ip;
       const hash     = clientIp ? ipHash(clientIp, ctx.env.IP_SALT) : null;
-      if (hash && !isLocalDevelopmentIp(clientIp)) {
-        const alreadySubmitted = await hasExistingResponseForIp(ctx.db, input.formId, hash);
-        if (alreadySubmitted) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'You have already submitted this form.' });
-        }
+      if (existingResponse && !form.allowResponseEdits) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'You have already submitted this form.' });
+      }
 
+      if (hash && !isLocalDevelopmentIp(clientIp)) {
         const rlKey   = `${input.formId}:${hash}`;
         const allowed = await checkRateLimit(ctx.db, rlKey);
         if (!allowed) {
@@ -325,16 +338,31 @@ export const responsesRouter = router({
         });
       }
 
+      const submittedAt = new Date();
+
       const response = {
-        id:          uid(),
+        id:          existingResponse?.id ?? uid(),
         formId:      input.formId,
         data:        JSON.stringify(parsed.data),
+        respondentTokenHash,
         ipHash:      hash ?? 'unavailable',
-        submittedAt: new Date(),
+        submittedAt,
       };
-      await ctx.db.insert(responses).values(response);
 
-      const submittedAt = response.submittedAt.toUTCString();
+      if (existingResponse && form.allowResponseEdits) {
+        await ctx.db.update(responses)
+          .set({
+            data: response.data,
+            respondentTokenHash: response.respondentTokenHash,
+            ipHash: response.ipHash,
+            submittedAt: response.submittedAt,
+          })
+          .where(eq(responses.id, existingResponse.id));
+      } else {
+        await ctx.db.insert(responses).values(response);
+      }
+
+      const submittedAtLabel = response.submittedAt.toUTCString();
       const respondentEmail = findRespondentEmail(fields, parsed.data);
       const respondentName = findRespondentName(fields, parsed.data);
 
@@ -352,7 +380,7 @@ export const responsesRouter = router({
           formTitle: form.title,
           responseId: response.id,
           formId: input.formId,
-          submittedAt,
+          submittedAt: submittedAtLabel,
         }));
       }
 
@@ -362,7 +390,7 @@ export const responsesRouter = router({
           respondentName,
           formTitle: form.title,
           responseId: response.id,
-          submittedAt,
+          submittedAt: submittedAtLabel,
           formSlug: form.slug,
         }));
       }
@@ -371,7 +399,7 @@ export const responsesRouter = router({
         void Promise.allSettled(notificationTasks);
       }
 
-      return { success: true, id: response.id };
+      return { success: true, id: response.id, updated: Boolean(existingResponse && form.allowResponseEdits) };
     }),
 
   // ── Creator: list responses for own form ──────────────────────────────

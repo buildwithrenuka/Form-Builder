@@ -356,6 +356,7 @@ export function WorldCinematic({ world, avatar, onComplete, onBack }: Props) {
           <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '12px', color: avatar.color, letterSpacing: '0.14em' }}>{avatar.name.toUpperCase()}</span>
           <span style={{ fontSize: '22px' }}>{avatar.emoji}</span>
           <button
+            data-testid="world-cinematic-skip"
             onClick={e => { e.stopPropagation(); onComplete(); }}
             style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '5px', color: 'rgba(255,255,255,0.3)', fontFamily: "'Rajdhani', sans-serif", fontSize: '10px', padding: '4px 12px', cursor: 'pointer', letterSpacing: '0.18em' }}
           >
@@ -419,6 +420,7 @@ export function WorldCinematic({ world, avatar, onComplete, onBack }: Props) {
             </div>
 
             <button
+              data-testid="world-cinematic-begin"
               onClick={e => { e.stopPropagation(); playSuccess(); onComplete(); }}
               className="tr-btn"
               style={{

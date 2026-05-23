@@ -4,6 +4,7 @@ import { PremiumIcon } from './PremiumIcon';
 import { trpc } from '../trpc';
 import { ALL_TEMPLATES } from '../formTemplates';
 import type { HomeTheme } from './HomePage';
+import { APP_DISPLAY_FONT, APP_UI_FONT, getAppSurfaceTheme } from './appSurfaceTheme';
 
 type Props = { onBack: () => void; onViewForm: (slug: string) => void; onEnter: () => void; theme: HomeTheme };
 
@@ -222,6 +223,7 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
   const [page, setPage] = useState(1);
   const [hovCard, setHovCard] = useState<string | null>(null);
   const T = EXPLORE_THEMES[theme];
+  const S = getAppSurfaceTheme(theme);
   const isLight = theme === 'light';
 
   useEffect(() => {
@@ -265,20 +267,21 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
   });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: T.bg, overflowY: 'auto', fontFamily: "'Rajdhani', sans-serif" }}>
+    <div style={{ position: 'fixed', inset: 0, background: S.background, overflowY: 'auto', fontFamily: APP_UI_FONT }}>
       {/* Background */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${T.grid} 1px, transparent 1px), linear-gradient(90deg, ${T.grid} 1px, transparent 1px)`, backgroundSize: '72px 72px' }} />
-        <div style={{ position: 'absolute', top: '10%', right: '0', width: '40vw', height: '40vw', background: `radial-gradient(circle, ${T.orbA} 0%, transparent 65%)`, filter: 'blur(80px)' }} />
-        <div style={{ position: 'absolute', bottom: '10%', left: '0', width: '35vw', height: '35vw', background: `radial-gradient(circle, ${T.orbB} 0%, transparent 65%)`, filter: 'blur(80px)' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${S.gridPrimary} 1px, transparent 1px), linear-gradient(90deg, ${S.gridSecondary} 1px, transparent 1px)`, backgroundSize: S.gridSize }} />
+        <div style={{ position: 'absolute', inset: 0, background: S.auraA }} />
+        <div style={{ position: 'absolute', inset: 0, background: S.auraB }} />
+        <div style={{ position: 'absolute', inset: 0, background: S.auraC }} />
       </div>
 
       {/* Nav */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: T.navBg, backdropFilter: 'blur(24px)', borderBottom: `1px solid ${T.navBorder}`, padding: '0 32px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: S.navBg, backdropFilter: 'blur(24px)', borderBottom: `1px solid ${S.navBorder}`, padding: '0 32px', minHeight: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <FormVerseLogo size={30} textSize={12} />
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${T.panelBorder}`, borderRadius: 8, color: T.accentSoft, fontSize: 12, fontWeight: 600, padding: '7px 16px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em' }}>← Back</button>
-          <button onClick={onEnter} style={{ background: T.buttonGradient, border: 'none', borderRadius: 8, color: T.buttonText, fontSize: 12, fontWeight: 700, padding: '8px 18px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.1em', display: 'inline-flex', alignItems: 'center', gap: 8 }}><PremiumIcon token="🚀" size={15} />Build Your Own</button>
+          <button onClick={onBack} style={{ background: S.panelSoft, border: `1px solid ${S.panelBorderStrong}`, borderRadius: 12, color: S.textSoft, fontSize: 12, fontWeight: 600, padding: '8px 16px', cursor: 'pointer', fontFamily: APP_UI_FONT, letterSpacing: '0.04em' }}>← Back</button>
+          <button onClick={onEnter} style={{ background: S.actionGradient, border: `1px solid ${S.accentBorder}`, borderRadius: 12, color: S.buttonText, fontSize: 12, fontWeight: 700, padding: '9px 18px', cursor: 'pointer', fontFamily: APP_UI_FONT, letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: `0 14px 28px ${S.accentBorder}` }}><PremiumIcon token="🚀" size={15} />Build Your Own</button>
         </div>
       </nav>
 
@@ -286,11 +289,11 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: T.panelBg, border: `1px solid ${T.accentBorder}`, borderRadius: 100, padding: '5px 18px', marginBottom: 20 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: S.panel, border: `1px solid ${S.accentBorder}`, borderRadius: 100, padding: '6px 18px', marginBottom: 20, boxShadow: S.shadow }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />
             <span style={{ fontSize: 11, fontWeight: 700, color: T.accent, letterSpacing: '0.25em', textTransform: 'uppercase' }}>Public Form Gallery</span>
           </div>
-          <h1 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(28px, 5vw, 52px)', fontWeight: 900, color: T.headingText, margin: '0 0 14px', background: T.titleGradient, backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: isLight ? '0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(171,81,0,0.14)' : '0 0 18px rgba(8, 4, 26, 0.26)' }}>
+          <h1 style={{ fontFamily: APP_DISPLAY_FONT, fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 700, color: T.headingText, margin: '0 0 14px', background: T.titleGradient, backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: isLight ? '0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(171,81,0,0.14)' : '0 0 18px rgba(8, 4, 26, 0.26)', letterSpacing: '-0.03em' }}>
             Explore Forms
           </h1>
           <p style={{ fontSize: 15, color: T.subText, maxWidth: 480, margin: '0 auto' }}>
@@ -306,13 +309,13 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search forms..."
-              style={{ width: '100%', background: T.panelBg, border: `1px solid ${T.panelBorder}`, borderRadius: 10, color: T.text, fontSize: 14, padding: '11px 14px 11px 42px', outline: 'none', fontFamily: "'Rajdhani', sans-serif", boxSizing: 'border-box' }}
+              style={{ width: '100%', background: S.inputBg, border: `1px solid ${S.inputBorder}`, borderRadius: 12, color: S.inputText, fontSize: 14, padding: '11px 14px 11px 42px', outline: 'none', fontFamily: APP_UI_FONT, boxSizing: 'border-box' }}
             />
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {CATEGORIES.map(cat => (
               <button key={cat} onClick={() => setCategory(cat)}
-                style={{ background: category === cat ? T.accentBorder : T.panelBg, border: `1px solid ${category === cat ? T.accent : T.panelBorderSoft}`, borderRadius: 8, color: category === cat ? T.accentSoft : T.mutedText, fontSize: 12, fontWeight: 600, padding: '8px 16px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.06em', transition: 'all 0.18s' }}>
+                style={{ background: category === cat ? S.accentSoft : S.panel, border: `1px solid ${category === cat ? S.accent : S.panelBorder}`, borderRadius: 12, color: category === cat ? S.heading : T.mutedText, fontSize: 12, fontWeight: 600, padding: '8px 16px', cursor: 'pointer', fontFamily: APP_UI_FONT, letterSpacing: '0.04em', transition: 'all 0.18s' }}>
                 {cat}
               </button>
             ))}
@@ -340,7 +343,7 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
         {error && (
           <div style={{ textAlign: 'center', padding: '64px 24px' }}>
             <span style={{ display: 'inline-flex', marginBottom: 16, color: '#ff7777' }}><PremiumIcon token="⚠" size={40} /></span>
-            <p style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 18, color: '#ff7777' }}>Could not load forms</p>
+            <p style={{ fontFamily: APP_DISPLAY_FONT, fontSize: 28, color: '#ff7777' }}>Could not load forms</p>
             <p style={{ fontSize: 13, color: T.weakText }}>Make sure the API server is running.</p>
           </div>
         )}
@@ -349,9 +352,9 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
         {!isLoading && !error && forms.length === 0 && (
           <div style={{ textAlign: 'center', padding: '64px 24px' }}>
             <span style={{ display: 'inline-flex', marginBottom: 16, color: T.accentSoft }}><PremiumIcon token="🔭" size={44} /></span>
-            <p style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 20, color: T.text, marginBottom: 8 }}>No forms found</p>
+            <p style={{ fontFamily: APP_DISPLAY_FONT, fontSize: 30, color: T.text, marginBottom: 8 }}>No forms found</p>
             <p style={{ fontSize: 13, color: T.mutedText, marginBottom: 28 }}>{search ? 'Try a different search term.' : 'No real public forms have been published yet. Built-in sample forms are available below.'}</p>
-            <button onClick={() => document.getElementById('sample-forms')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ background: T.buttonGradient, border: 'none', borderRadius: 10, color: T.buttonText, fontSize: 13, fontWeight: 700, padding: '12px 28px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.1em' }}>See Built-in Samples</button>
+            <button onClick={() => document.getElementById('sample-forms')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ background: S.actionGradient, border: `1px solid ${S.accentBorder}`, borderRadius: 12, color: S.buttonText, fontSize: 13, fontWeight: 700, padding: '12px 28px', cursor: 'pointer', fontFamily: APP_UI_FONT, letterSpacing: '0.04em' }}>See Built-in Samples</button>
           </div>
         )}
 
@@ -375,7 +378,7 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
                       <div style={{ fontSize: 10, fontWeight: 700, color: isH ? color : T.mutedText, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>
                         {form.worldTheme ?? 'General'}
                       </div>
-                      <h3 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 15, fontWeight: 900, color: T.text, margin: 0, lineHeight: 1.3 }}>{form.title}</h3>
+                      <h3 style={{ fontFamily: APP_DISPLAY_FONT, fontSize: 24, fontWeight: 700, color: T.text, margin: 0, lineHeight: 1.18, letterSpacing: '-0.02em' }}>{form.title}</h3>
                     </div>
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}18`, border: `1px solid ${color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0 }}>
                       <PremiumIcon token={form.worldTheme?.includes('temple') ? '🏛️' : form.worldTheme?.includes('globe') ? '✈️' : form.worldTheme?.includes('library') ? '📚' : '📋'} size={18} />
@@ -407,13 +410,13 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
                 <button
                   onClick={() => setPage((current) => Math.max(1, current - 1))}
                   disabled={!data?.hasPreviousPage}
-                  style={{ background: T.panelBg, border: `1px solid ${T.panelBorderSoft}`, borderRadius: 10, color: data?.hasPreviousPage ? T.text : T.weakText, fontSize: 12, fontWeight: 700, padding: '10px 16px', cursor: data?.hasPreviousPage ? 'pointer' : 'not-allowed', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em' }}>
+                  style={{ background: S.panel, border: `1px solid ${S.panelBorder}`, borderRadius: 12, color: data?.hasPreviousPage ? T.text : T.weakText, fontSize: 12, fontWeight: 700, padding: '10px 16px', cursor: data?.hasPreviousPage ? 'pointer' : 'not-allowed', fontFamily: APP_UI_FONT, letterSpacing: '0.04em' }}>
                   Previous
                 </button>
                 <button
                   onClick={() => setPage((current) => current + 1)}
                   disabled={!data?.hasNextPage}
-                  style={{ background: T.buttonGradient, border: 'none', borderRadius: 10, color: data?.hasNextPage ? T.buttonText : T.buttonText, fontSize: 12, fontWeight: 800, padding: '10px 16px', cursor: data?.hasNextPage ? 'pointer' : 'not-allowed', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em', opacity: data?.hasNextPage ? 1 : 0.45 }}>
+                  style={{ background: S.actionGradient, border: `1px solid ${S.accentBorder}`, borderRadius: 12, color: data?.hasNextPage ? S.buttonText : S.buttonText, fontSize: 12, fontWeight: 800, padding: '10px 16px', cursor: data?.hasNextPage ? 'pointer' : 'not-allowed', fontFamily: APP_UI_FONT, letterSpacing: '0.04em', opacity: data?.hasNextPage ? 1 : 0.45 }}>
                   Next Page
                 </button>
               </div>
@@ -425,10 +428,10 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
           <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 22 }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: T.sampleLabel, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 8 }}>Built-in Sample Forms</div>
-              <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(22px, 3.5vw, 34px)', fontWeight: 900, color: T.text, margin: '0 0 8px' }}>Start From Curated Samples</h2>
+              <h2 style={{ fontFamily: APP_DISPLAY_FONT, fontSize: 'clamp(28px, 3.5vw, 40px)', fontWeight: 700, color: T.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>Start From Curated Samples</h2>
               <p style={{ fontSize: 13, color: T.subText, margin: 0, maxWidth: 620, lineHeight: 1.7 }}>These are built-in examples, not public user submissions. Use them like an Overleaf-style starter gallery.</p>
             </div>
-            <button onClick={onEnter} style={{ background: T.panelBg, border: `1px solid ${T.panelBorderSoft}`, borderRadius: 10, color: T.text, fontSize: 12, fontWeight: 700, padding: '10px 18px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em' }}>Use In Builder</button>
+            <button onClick={onEnter} style={{ background: S.panel, border: `1px solid ${S.panelBorder}`, borderRadius: 12, color: T.text, fontSize: 12, fontWeight: 700, padding: '10px 18px', cursor: 'pointer', fontFamily: APP_UI_FONT, letterSpacing: '0.04em' }}>Use In Builder</button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
@@ -445,7 +448,7 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
                       <div style={{ fontSize: 10, fontWeight: 700, color: isH ? color : T.sampleSubText, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>
                         {sample.badge} · {sample.worldTheme}
                       </div>
-                      <h3 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 15, fontWeight: 900, color: T.text, margin: 0, lineHeight: 1.3 }}>{sample.title}</h3>
+                      <h3 style={{ fontFamily: APP_DISPLAY_FONT, fontSize: 24, fontWeight: 700, color: T.text, margin: 0, lineHeight: 1.18, letterSpacing: '-0.02em' }}>{sample.title}</h3>
                     </div>
                     <div style={{ width: 40, height: 40, borderRadius: 10, background: `${color}18`, border: `1px solid ${color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                       {sample.icon}
@@ -461,7 +464,7 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
 
                   <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTop: `1px solid ${T.panelBorderSoft}` }}>
                     <span style={{ fontSize: 11, color: T.sampleSubText }}>Starter sample</span>
-                    <button onClick={onEnter} style={{ background: `linear-gradient(135deg, ${color}, rgba(255,255,255,0.92))`, border: 'none', borderRadius: 10, color: '#1a0820', fontSize: 11, fontWeight: 800, padding: '10px 14px', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em' }}>Use Template</button>
+                    <button onClick={onEnter} style={{ background: `linear-gradient(135deg, ${color}, rgba(255,255,255,0.92))`, border: 'none', borderRadius: 12, color: '#1a0820', fontSize: 11, fontWeight: 800, padding: '10px 14px', cursor: 'pointer', fontFamily: APP_UI_FONT, letterSpacing: '0.04em' }}>Use Template</button>
                   </div>
                 </div>
               );
@@ -472,7 +475,7 @@ export function ExplorePage({ onBack, onViewForm, onEnter, theme }: Props) {
         {/* Bottom CTA */}
         <div style={{ marginTop: 80, textAlign: 'center', borderTop: `1px solid ${T.navBorder}`, paddingTop: 60 }}>
           <p style={{ fontSize: 14, color: T.mutedText, marginBottom: 20 }}>Want to publish your own form here?</p>
-          <button onClick={onEnter} style={{ background: T.ctaGradient, border: 'none', borderRadius: 12, color: T.buttonText, fontSize: 13, fontWeight: 700, padding: '13px 32px', cursor: 'pointer', letterSpacing: '0.12em', fontFamily: "'Rajdhani', sans-serif", boxShadow: isLight ? '0 10px 24px rgba(171,81,0,0.18)' : `0 0 24px ${T.accentSoft}55`, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={onEnter} style={{ background: S.actionGradient, border: `1px solid ${S.accentBorder}`, borderRadius: 12, color: S.buttonText, fontSize: 13, fontWeight: 700, padding: '13px 32px', cursor: 'pointer', letterSpacing: '0.04em', fontFamily: APP_UI_FONT, boxShadow: isLight ? '0 10px 24px rgba(171,81,0,0.18)' : `0 0 24px ${T.accentSoft}55`, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
             <PremiumIcon token="🚀" size={16} />Create & Publish a Form
           </button>
         </div>

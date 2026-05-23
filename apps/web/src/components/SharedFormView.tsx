@@ -8,7 +8,7 @@ import { trpc } from '../trpc';
 import { copyText } from '../utils/clipboard';
 import { ControlledFormField, StructureFieldBanner } from './FormFieldRenderer';
 import { countInteractiveFields, getFormPages } from '../utils/formFlow';
-import { buildSubmissionLockKey, hasSubmissionLock, setSubmissionLock } from '../utils/submissionLock';
+import { buildRespondentTokenKey, buildSubmissionLockKey, getOrCreateRespondentToken, hasSubmissionLock, setSubmissionLock } from '../utils/submissionLock';
 
 type SharedPayload = {
   formTitle: string;
@@ -203,20 +203,24 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
   const [typedAccessPassword, setTypedAccessPassword] = useState('');
   const [submittedAccessPassword, setSubmittedAccessPassword] = useState<string | undefined>(undefined);
   const [unlockAttempted, setUnlockAttempted] = useState(false);
-  const { data, isLoading, error } = trpc.forms.getBySlug.useQuery({ slug, accessPassword: submittedAccessPassword });
+  const respondentToken = useMemo(() => getOrCreateRespondentToken(buildRespondentTokenKey('form', slug)), [slug]);
+  const { data, isLoading, error } = trpc.forms.getBySlug.useQuery({ slug, accessPassword: submittedAccessPassword, respondentToken });
   const submit = trpc.responses.submit.useMutation();
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [submissionState, setSubmissionState] = useState<'idle' | 'created' | 'updated'>('idle');
   const [submitError, setSubmitError] = useState('');
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [storedSubmissionLock, setStoredSubmissionLock] = useState(false);
 
   const world = resolveSharedWorld(data?.worldTheme ?? '');
   const formFields = (data?.schema as unknown as FormField[] | undefined) ?? [];
   const pages = useMemo(() => getFormPages(formFields, formValues), [formFields, formValues]);
   const currentPage = pages[Math.min(currentPageIndex, Math.max(pages.length - 1, 0))];
-  const lockKey = data?.access === 'available' ? buildSubmissionLockKey('form', data.id) : null;
-  const submissionLocked = submitted || storedSubmissionLock || (data?.access === 'available' ? data.alreadySubmitted : false);
+  const hasEditableResponse = data?.access === 'available' ? data.canEditResponse : false;
+  const submissionLocked = data?.access === 'available' ? data.alreadySubmitted && !data.canEditResponse : false;
+  const showSubmissionConfirmation = submissionState !== 'idle';
+  const existingResponseDataJson = data?.access === 'available' && data.existingResponseData
+    ? JSON.stringify(data.existingResponseData)
+    : '';
 
   useEffect(() => {
     if (currentPageIndex > pages.length - 1) {
@@ -225,13 +229,12 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
   }, [currentPageIndex, pages.length]);
 
   useEffect(() => {
-    if (!lockKey) {
-      setStoredSubmissionLock(false);
+    if (!existingResponseDataJson) {
       return;
     }
 
-    setStoredSubmissionLock(hasSubmissionLock(lockKey));
-  }, [lockKey]);
+    setFormValues(JSON.parse(existingResponseDataJson) as Record<string, unknown>);
+  }, [existingResponseDataJson]);
 
   function updateValue(fieldId: string, value: unknown) {
     setFormValues((previous) => ({ ...previous, [fieldId]: value }));
@@ -244,13 +247,10 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
       await submit.mutateAsync({
         formId: data.id,
         accessPassword: submittedAccessPassword,
+        respondentToken,
         data: formValues,
       });
-      if (lockKey) {
-        setSubmissionLock(lockKey);
-        setStoredSubmissionLock(true);
-      }
-      setSubmitted(true);
+      setSubmissionState(hasEditableResponse ? 'updated' : 'created');
       setCurrentPageIndex(0);
     } catch (issue: unknown) {
       setSubmitError(issue instanceof Error ? issue.message : 'Submission failed. Please try again.');
@@ -328,18 +328,23 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
             {currentPage && <PageHeader world={world} pageIndex={currentPageIndex} pageCount={pages.length} title={currentPage.title} description={currentPage.description} />}
           </div>
 
-          {!submissionLocked ? (
+          {!submissionLocked && !showSubmissionConfirmation ? (
             <div style={{ padding: '22px 26px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {hasEditableResponse && (
+                <div data-testid="shared-form-edit-banner" style={{ background: 'rgba(255,220,120,0.08)', border: '1px solid rgba(255,220,120,0.24)', borderRadius: 10, padding: '10px 14px', color: '#ffe7a1', fontSize: 13, fontFamily: "'Rajdhani', sans-serif" }}>
+                  You already submitted this form from this browser. Saving again will update your previous response.
+                </div>
+              )}
               {currentPage ? renderPageRows(currentPage.fields, world, formValues, updateValue) : null}
               {submitError && <div style={{ background: 'rgba(255,60,60,0.1)', border: '1px solid rgba(255,60,60,0.3)', borderRadius: 8, padding: '10px 14px', color: '#ff8888', fontSize: 13, fontFamily: "'Rajdhani', sans-serif" }}>⚠ {submitError}</div>}
               <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${world.borderColor}66, transparent)`, marginTop: 8 }} />
-              <NavigationRow world={world} canGoBack={currentPageIndex > 0} isLastPage={isLastPage} onPrevious={() => setCurrentPageIndex((page) => Math.max(page - 1, 0))} onNext={() => setCurrentPageIndex((page) => Math.min(page + 1, pages.length - 1))} onSubmit={handleSubmit} isSubmitting={submit.isPending} submitLabel="🏃 SUBMIT FORM" />
+              <NavigationRow world={world} canGoBack={currentPageIndex > 0} isLastPage={isLastPage} onPrevious={() => setCurrentPageIndex((page) => Math.max(page - 1, 0))} onNext={() => setCurrentPageIndex((page) => Math.min(page + 1, pages.length - 1))} onSubmit={handleSubmit} isSubmitting={submit.isPending} submitLabel={hasEditableResponse ? '💾 UPDATE RESPONSE' : '🏃 SUBMIT FORM'} />
             </div>
           ) : (
             <div style={{ padding: '48px 26px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
               <span style={{ fontSize: 64, filter: `drop-shadow(0 0 16px ${world.glowColor})` }}>🏆</span>
-              <div style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 20, fontWeight: 900, color: world.accentColor, filter: `drop-shadow(0 0 10px ${world.glowColor})` }}>{submitted ? 'Submitted!' : 'Already Submitted'}</div>
-              <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: world.mutedColor, letterSpacing: '0.08em', maxWidth: 280 }}>{submitted ? `Mission complete in ${world.name}.` : 'This response has already been recorded. Additional submissions are disabled for participants.'}</p>
+              <div data-testid="shared-form-status-title" style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 20, fontWeight: 900, color: world.accentColor, filter: `drop-shadow(0 0 10px ${world.glowColor})` }}>{submissionState === 'updated' ? 'Response Updated!' : submissionState === 'created' ? 'Submitted!' : 'Already Submitted'}</div>
+              <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: world.mutedColor, letterSpacing: '0.08em', maxWidth: 320 }}>{submissionState === 'updated' ? 'Your latest answers replaced the earlier response from this browser.' : submissionState === 'created' ? (data.allowResponseEdits ? `Mission complete in ${world.name}. Reopen this link from the same browser to edit your response.` : `Mission complete in ${world.name}.`) : 'This browser has already submitted a response for this form. Additional submissions are disabled unless the creator enables edits.'}</p>
             </div>
           )}
         </div>

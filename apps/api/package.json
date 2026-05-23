@@ -1,5 +1,5 @@
 {
-  "name": "@myapp/api",
+  "name": "@formverse/api",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -7,12 +7,12 @@
     "deploy": "wrangler deploy",
     "db:create": "wrangler d1 create formquest-db",
     "db:migrate:local": "wrangler d1 migrations apply formquest-db --local",
-    "db:migrate": "wrangler d1 migrations apply formquest-db",
-    "db:migrate:prod": "wrangler d1 migrations apply formquest-db --env production"
+    "db:migrate": "wrangler d1 migrations apply formquest-db --remote",
+    "db:migrate:prod": "wrangler d1 migrations apply formquest-db --env production --remote"
   },
   "dependencies": {
     "@hono/trpc-server": "^0.3.3",
-    "@myapp/shared": "*",
+    "@formverse/shared": "*",
     "@scalar/hono-api-reference": "^0.5.0",
     "@trpc/server": "^11.0.0",
     "drizzle-orm": "^0.30.0",

@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { count, and, gt, lt } from 'drizzle-orm';
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { router, publicProc, authProc } from '../trpc';
 import type { Context } from '../context';
 import { users, rateLimits } from '../db/schema';
@@ -11,12 +11,11 @@ import { signToken } from './jwt';
 
 const PBKDF2_PREFIX = 'pbkdf2';
 const PBKDF2_DIGEST = 'SHA-256';
-const PBKDF2_ITERATIONS = 310000;
+const PBKDF2_ITERATIONS = 100000;
 const PBKDF2_KEY_LENGTH = 32;
+const PBKDF2_BLOCK_LENGTH = 32;
 const DUMMY_SALT = new Uint8Array(16);
 const PASSWORD_RESET_WINDOW_MS = 60 * 60 * 1000;
-
-const encoder = new TextEncoder();
 
 function toBase64Url(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString('base64url');
@@ -32,26 +31,33 @@ function constantTimeEqual(left: Uint8Array, right: Uint8Array): boolean {
 }
 
 async function derivePbkdf2(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
-  const importedKey = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(password),
-    'PBKDF2',
-    false,
-    ['deriveBits'],
-  );
+  if (!Number.isInteger(iterations) || iterations <= 0) {
+    throw new Error('PBKDF2 iterations must be a positive integer.');
+  }
 
-  const bits = await crypto.subtle.deriveBits(
-    {
-      name: 'PBKDF2',
-      hash: PBKDF2_DIGEST,
-      salt,
-      iterations,
-    },
-    importedKey,
-    PBKDF2_KEY_LENGTH * 8,
-  );
+  const key = Buffer.from(password, 'utf8');
+  const blocks = Math.ceil(PBKDF2_KEY_LENGTH / PBKDF2_BLOCK_LENGTH);
+  const derived = Buffer.alloc(blocks * PBKDF2_BLOCK_LENGTH);
 
-  return new Uint8Array(bits);
+  for (let blockIndex = 1; blockIndex <= blocks; blockIndex += 1) {
+    const blockSeed = Buffer.alloc(salt.byteLength + 4);
+    Buffer.from(salt).copy(blockSeed, 0);
+    blockSeed.writeUInt32BE(blockIndex, salt.byteLength);
+
+    let accumulator = createHmac('sha256', key).update(blockSeed).digest();
+    let previous = accumulator;
+
+    for (let round = 1; round < iterations; round += 1) {
+      previous = createHmac('sha256', key).update(previous).digest();
+      for (let offset = 0; offset < PBKDF2_BLOCK_LENGTH; offset += 1) {
+        accumulator[offset] ^= previous[offset];
+      }
+    }
+
+    accumulator.copy(derived, (blockIndex - 1) * PBKDF2_BLOCK_LENGTH);
+  }
+
+  return new Uint8Array(derived.subarray(0, PBKDF2_KEY_LENGTH));
 }
 
 function hashLegacyPassword(password: string, salt: string): string {

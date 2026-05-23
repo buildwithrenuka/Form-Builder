@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Country } from '../globeData';
 
 type Props = {
@@ -11,6 +11,15 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
   const [panel, setPanel]   = useState(0);
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const timeoutsRef = useRef<number[]>([]);
+
+  function queueTimeout(callback: () => void, delay: number) {
+    const timeoutId = window.setTimeout(() => {
+      timeoutsRef.current = timeoutsRef.current.filter((id) => id !== timeoutId);
+      callback();
+    }, delay);
+    timeoutsRef.current.push(timeoutId);
+  }
 
   const cinematicPanels = country.cinematic.length > 0
     ? country.cinematic
@@ -18,7 +27,11 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
   const activePanel = cinematicPanels[Math.min(panel, cinematicPanels.length - 1)];
 
   useEffect(() => {
-    setTimeout(() => setVisible(true), 100);
+    queueTimeout(() => setVisible(true), 100);
+    return () => {
+      timeoutsRef.current.forEach((id) => window.clearTimeout(id));
+      timeoutsRef.current = [];
+    };
   }, []);
 
   useEffect(() => {
@@ -26,18 +39,30 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
     setVisible(false);
     setLeaving(false);
 
-    const timeoutId = window.setTimeout(() => setVisible(true), 100);
-    return () => window.clearTimeout(timeoutId);
+    queueTimeout(() => setVisible(true), 100);
   }, [country.id]);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        advance();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [panel, leaving]);
+
   function advance() {
+    if (leaving) return;
     setLeaving(true);
-    setTimeout(() => {
+    queueTimeout(() => {
       if (panel < cinematicPanels.length - 1) {
         setPanel(p => p + 1);
         setLeaving(false);
         setVisible(false);
-        setTimeout(() => setVisible(true), 80);
+        queueTimeout(() => setVisible(true), 80);
       } else {
         onComplete();
       }
@@ -55,6 +80,8 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
         cursor: 'pointer',
       }}
       onClick={advance}
+      role="presentation"
+      data-testid="country-cinematic"
     >
       <button
         onClick={(event) => {
@@ -195,13 +222,31 @@ export function CountryCinematic({ country, onComplete, onBack }: Props) {
       {/* Tap hint */}
       <div style={{
         position: 'absolute', bottom: 28,
-        color: 'rgba(255,255,255,0.3)',
-        fontSize: 11,
-        letterSpacing: '0.2em',
-        textTransform: 'uppercase',
-        fontFamily: 'monospace',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 12,
       }}>
-        {panel < cinematicPanels.length - 1 ? 'tap to continue' : 'tap to build'}
+        <button
+          type="button"
+          data-testid="country-cinematic-advance"
+          onClick={(event) => {
+            event.stopPropagation();
+            advance();
+          }}
+          style={{ background: `linear-gradient(135deg, ${country.color}, #ffffff22)`, border: `1px solid ${country.color}66`, color: '#fff', borderRadius: 999, padding: '12px 24px', fontSize: 13, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', cursor: leaving ? 'not-allowed' : 'pointer', boxShadow: `0 0 24px ${country.glowColor}`, opacity: leaving ? 0.7 : 1 }}
+        >
+          {panel < cinematicPanels.length - 1 ? 'Continue' : 'Start Building'}
+        </button>
+        <div style={{
+          color: 'rgba(255,255,255,0.3)',
+          fontSize: 11,
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          fontFamily: 'monospace',
+        }}>
+          Click, tap, or press Enter
+        </div>
       </div>
 
       {/* Flag stripe bottom */}

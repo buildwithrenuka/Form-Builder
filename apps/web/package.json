@@ -1,5 +1,5 @@
 {
-  "name": "@myapp/web",
+  "name": "@formverse/web",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -11,7 +11,7 @@
     "test:e2e:preview-videos": "playwright test tests/experience-preview-videos.spec.ts"
   },
   "dependencies": {
-    "@myapp/shared": "*",
+    "@formverse/shared": "*",
     "@tanstack/react-query": "^5.100.11",
     "@trpc/client": "^11.17.0",
     "@trpc/react-query": "^11.17.0",

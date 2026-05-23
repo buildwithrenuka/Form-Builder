@@ -594,16 +594,16 @@ function PaletteSidebar({ world, purposeId, onAddField, onAddCollection, filePan
     if (!col.purposes || col.purposes.length === 0) return true;
     return col.purposes.includes(purposeId) || purposeId === '' || purposeId === 'scratch';
   });
-  const tabStyle = (active: boolean): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: '8px', background: active ? `${world.accentColor}14` : 'rgba(255,255,255,0.03)', border: `1px solid ${active ? world.accentColor + '26' : 'rgba(255,255,255,0.05)'}`, color: active ? world.textColor : 'rgba(255,255,255,0.68)', borderRadius: '999px', padding: '9px 14px', cursor: 'pointer', fontFamily: "'Exo 2', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.05em', transition: 'all 0.16s', boxShadow: active ? `0 4px 12px ${world.glowColor}12` : 'none' });
-  const categoryTabStyle = (active: boolean): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: '9px', minWidth: '142px', justifyContent: 'space-between', background: active ? `${world.accentColor}12` : 'rgba(255,255,255,0.025)', border: `1px solid ${active ? world.accentColor + '24' : 'rgba(255,255,255,0.05)'}`, color: active ? world.textColor : 'rgba(255,255,255,0.72)', borderRadius: '16px', padding: '12px 14px', cursor: 'pointer', fontFamily: "'Exo 2', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.04em', transition: 'all 0.16s' });
-  const dropdownPanelStyle: React.CSSProperties = { position: 'relative', marginTop: '8px', width: '100%', background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.borderColor}16`, borderRadius: '16px', padding: '10px', boxShadow: 'none', backdropFilter: 'blur(12px)' };
+  const tabStyle = (active: boolean): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: '8px', background: active ? `${world.accentColor}14` : 'rgba(255,255,255,0.035)', border: `1px solid ${active ? world.accentColor + '2c' : 'rgba(255,255,255,0.08)'}`, color: active ? world.textColor : 'rgba(244,246,250,0.72)', borderRadius: '999px', padding: '9px 14px', cursor: 'pointer', fontFamily: "'Exo 2', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.05em', transition: 'all 0.16s', boxShadow: active ? `0 10px 22px ${world.glowColor}10` : 'none', backdropFilter: 'blur(16px)' });
+  const categoryTabStyle = (active: boolean): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: '9px', minWidth: '142px', justifyContent: 'space-between', background: active ? `${world.accentColor}12` : 'rgba(255,255,255,0.035)', border: `1px solid ${active ? world.accentColor + '24' : 'rgba(255,255,255,0.08)'}`, color: active ? world.textColor : 'rgba(244,246,250,0.76)', borderRadius: '16px', padding: '12px 14px', cursor: 'pointer', fontFamily: "'Exo 2', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.04em', transition: 'all 0.16s', backdropFilter: 'blur(16px)' });
+  const dropdownPanelStyle: React.CSSProperties = { position: 'relative', marginTop: '8px', width: '100%', background: 'rgba(18,22,30,0.78)', border: `1px solid ${world.borderColor}20`, borderRadius: '18px', padding: '12px', boxShadow: '0 18px 38px rgba(0,0,0,0.18)', backdropFilter: 'blur(16px)' };
   const sectionTitleStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: world.accentColor, fontFamily: "'Exo 2', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em' };
   const tileGridStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '8px' };
-  const fieldBtn: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '10px', minHeight: '46px', background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', color: world.textColor, fontFamily: "'Exo 2', sans-serif", fontSize: '10px', fontWeight: 700, padding: '10px 12px', cursor: 'pointer', transition: 'all 0.16s', textAlign: 'left', letterSpacing: '0.02em' };
-  const collectionBtn: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px', padding: '11px 12px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.16s', width: '100%' };
+  const fieldBtn: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '10px', minHeight: '46px', background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: world.textColor, fontFamily: "'Exo 2', sans-serif", fontSize: '10px', fontWeight: 700, padding: '10px 12px', cursor: 'pointer', transition: 'all 0.16s', textAlign: 'left', letterSpacing: '0.02em', backdropFilter: 'blur(12px)' };
+  const collectionBtn: React.CSSProperties = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '11px 12px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.16s', width: '100%', backdropFilter: 'blur(12px)' };
 
   return (
-    <div className="tr-scroll" style={{ position: 'relative', width: '100%', flexShrink: 0, background: 'rgba(20,24,36,0.92)', backdropFilter: 'blur(18px)', borderBottom: `1px solid ${world.borderColor}16`, padding: '12px 16px 16px 16px', overflow: 'visible', boxShadow: '0 8px 20px rgba(0,0,0,0.14)' }}>
+    <div className="tr-scroll" style={{ position: 'relative', width: '100%', flexShrink: 0, background: 'rgba(14,18,26,0.82)', backdropFilter: 'blur(24px)', borderBottom: `1px solid ${world.borderColor}20`, padding: '12px 16px 16px 16px', overflow: 'visible', boxShadow: '0 16px 36px rgba(0,0,0,0.16)' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div className="tr-scroll" style={{ overflowX: 'auto', overflowY: 'hidden' }}>
           <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '8px', minWidth: 'max-content', width: '100%', alignItems: 'center' }}>
@@ -740,6 +740,7 @@ export function FormBuilder({
   const [expiresAt, setExpiresAt] = useState('');
   const [responseLimit, setResponseLimit] = useState('');
   const [accessPassword, setAccessPassword] = useState('');
+  const [allowResponseEdits, setAllowResponseEdits] = useState(false);
   const [activeRibbonTab, setActiveRibbonTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
 
   const trpcUtils = trpc.useUtils();
@@ -769,6 +770,7 @@ export function FormBuilder({
         expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
         responseLimit: responseLimit ? Number(responseLimit) : null,
         accessPassword: accessPassword.trim() || null,
+        allowResponseEdits,
         worldTheme: world.id,
         schema: fields,
       });
@@ -861,6 +863,7 @@ export function FormBuilder({
         expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
         responseLimit: responseLimit ? Number(responseLimit) : null,
         accessPassword: accessPassword.trim() || null,
+        allowResponseEdits,
         worldTheme: world.id,
         schema: fields,
       });
@@ -917,26 +920,26 @@ export function FormBuilder({
   // ── Button style helpers ──────────────────────────────────────────────────
   const toolBtn = (active = false, danger = false): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: 6,
-    background: danger ? 'rgba(255,91,91,0.10)' : active ? `${world.accentColor}16` : 'rgba(255,255,255,0.05)',
-    border: `1px solid ${danger ? 'rgba(255,91,91,0.22)' : active ? world.accentColor + '32' : 'rgba(255,255,255,0.06)'}`,
+    background: danger ? 'rgba(255,91,91,0.10)' : active ? `${world.accentColor}16` : 'rgba(255,255,255,0.04)',
+    border: `1px solid ${danger ? 'rgba(255,91,91,0.22)' : active ? world.accentColor + '32' : 'rgba(255,255,255,0.1)'}`,
     borderRadius: 999,
-    color: danger ? 'rgba(255,166,166,0.9)' : active ? world.textColor : 'rgba(255,255,255,0.74)',
+    color: danger ? 'rgba(255,166,166,0.9)' : active ? world.textColor : 'rgba(244,246,250,0.78)',
     fontFamily: "'Exo 2', sans-serif", fontSize: 11, fontWeight: 700,
     letterSpacing: '0.03em', padding: '8px 14px', cursor: 'pointer',
-    transition: 'all 0.18s', flexShrink: 0, whiteSpace: 'nowrap' as const,
+    transition: 'all 0.18s', flexShrink: 0, whiteSpace: 'nowrap' as const, backdropFilter: 'blur(14px)',
   });
-  const ribbonGroup: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8, padding: '12px', background: 'rgba(255,255,255,0.05)', border: `1px solid ${world.borderColor}12`, borderRadius: 18, minHeight: 90, justifyContent: 'space-between', minWidth: 0 };
-  const ribbonLabel: React.CSSProperties = { fontFamily: "'Exo 2', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.5)', textAlign: 'left' };
+  const ribbonGroup: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8, padding: '12px', background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.borderColor}18`, borderRadius: 20, minHeight: 90, justifyContent: 'space-between', minWidth: 0, backdropFilter: 'blur(18px)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' };
+  const ribbonLabel: React.CSSProperties = { fontFamily: "'Exo 2', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.54)', textAlign: 'left' };
   const ribbonRow: React.CSSProperties = { display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' };
   const ribbonBtn = (active = false, tone: 'default' | 'accent' | 'success' = 'default'): React.CSSProperties => ({
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
     minWidth: 74, minHeight: 50, padding: '9px 10px', borderRadius: 16,
     background: tone === 'success' ? 'rgba(34,197,94,0.12)' : tone === 'accent' ? `${world.accentColor}14` : active ? `${world.accentColor}12` : 'rgba(255,255,255,0.045)',
-    border: `1px solid ${tone === 'success' ? 'rgba(34,197,94,0.22)' : tone === 'accent' ? world.accentColor + '28' : active ? world.accentColor + '28' : 'rgba(255,255,255,0.05)'}`,
-    color: tone === 'success' ? '#86efac' : tone === 'accent' || active ? world.textColor : 'rgba(255,255,255,0.76)',
-    fontFamily: "'Exo 2', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer', transition: 'all 0.18s', whiteSpace: 'nowrap' as const,
+    border: `1px solid ${tone === 'success' ? 'rgba(34,197,94,0.22)' : tone === 'accent' ? world.accentColor + '28' : active ? world.accentColor + '28' : 'rgba(255,255,255,0.08)'}`,
+    color: tone === 'success' ? '#86efac' : tone === 'accent' || active ? world.textColor : 'rgba(244,246,250,0.78)',
+    fontFamily: "'Exo 2', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer', transition: 'all 0.18s', whiteSpace: 'nowrap' as const, backdropFilter: 'blur(14px)',
   });
-  const primaryRibbonBtn: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, minWidth: 88, minHeight: 50, padding: '9px 12px', borderRadius: 16, background: world.buttonGradient, border: 'none', color: world.buttonText, fontFamily: "'Exo 2', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '0.03em', cursor: 'pointer', boxShadow: `0 10px 22px ${world.glowColor}22`, whiteSpace: 'nowrap' as const };
+  const primaryRibbonBtn: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, minWidth: 88, minHeight: 50, padding: '9px 12px', borderRadius: 18, background: world.buttonGradient, border: 'none', color: world.buttonText, fontFamily: "'Exo 2', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '0.03em', cursor: 'pointer', boxShadow: `0 14px 28px ${world.glowColor}1d`, whiteSpace: 'nowrap' as const };
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: world.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -961,7 +964,7 @@ export function FormBuilder({
       )}
 
       {/* ══ TOP NAV BAR ══ */}
-      <div style={{ position: 'relative', zIndex: 10, background: 'rgba(20,24,36,0.94)', backdropFilter: 'blur(18px)', borderBottom: `1px solid ${world.borderColor}16`, padding: '10px 16px', minHeight: 60, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, flexWrap: 'wrap', boxShadow: '0 6px 16px rgba(0,0,0,0.12)' }}>
+      <div style={{ position: 'relative', zIndex: 10, background: 'rgba(14,18,26,0.82)', backdropFilter: 'blur(24px)', borderBottom: `1px solid ${world.borderColor}20`, padding: '10px 16px', minHeight: 60, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, flexWrap: 'wrap', boxShadow: '0 14px 30px rgba(0,0,0,0.14)' }}>
 
         {/* Left — back + identity */}
         <button onClick={onBack} style={toolBtn()}>← Back</button>
@@ -969,7 +972,7 @@ export function FormBuilder({
         <div style={{ width: 1, height: 24, background: `${world.borderColor}30`, flexShrink: 0 }} />
 
         {/* World + avatar badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(255,255,255,0.05)', border: `1px solid ${world.borderColor}14`, borderRadius: 999, padding: '6px 11px 6px 8px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(255,255,255,0.045)', border: `1px solid ${world.borderColor}18`, borderRadius: 999, padding: '6px 11px 6px 8px', flexShrink: 0, backdropFilter: 'blur(14px)' }}>
           <span style={{ fontSize: 18 }}>{world.emoji}</span>
           <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: world.accentColor, fontWeight: 700, letterSpacing: '0.05em' }}>{world.name}</span>
           <span style={{ width: 1, height: 14, background: `${world.accentColor}30` }} />
@@ -982,7 +985,7 @@ export function FormBuilder({
           value={formTitle}
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder="Untitled Form..."
-          style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: `1px solid ${world.borderColor}16`, borderRadius: 16, color: world.textColor, fontFamily: "'Exo 2', sans-serif", fontSize: 14, fontWeight: 700, padding: '10px 14px', outline: 'none', letterSpacing: '0.01em', minWidth: 0, transition: 'border-color 0.18s, background 0.18s' }}
+          style={{ flex: 1, background: 'rgba(255,255,255,0.045)', border: `1px solid ${world.borderColor}18`, borderRadius: 18, color: world.textColor, fontFamily: "'Exo 2', sans-serif", fontSize: 14, fontWeight: 700, padding: '10px 14px', outline: 'none', letterSpacing: '0.01em', minWidth: 0, transition: 'border-color 0.18s, background 0.18s', backdropFilter: 'blur(14px)' }}
           onFocus={e => { e.currentTarget.style.borderColor = `${world.accentColor}55`; e.currentTarget.style.background = `${world.accentColor}08`; }}
           onBlur={e  => { e.currentTarget.style.borderColor = `${world.borderColor}33`; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
         />
@@ -994,7 +997,7 @@ export function FormBuilder({
             { n: reqCount,   l: 'required', c: reqCount   > 0 ? '#f87171'         : 'rgba(255,255,255,0.22)' },
             { n: secCount,   l: 'sections', c: secCount   > 0 ? '#fbbf24'         : 'rgba(255,255,255,0.22)' },
           ].map(({ n, l, c }) => (
-            <div key={l} style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${c}18`, borderRadius: 999, padding: '6px 10px', textAlign: 'center', minWidth: 48 }}>
+            <div key={l} style={{ background: 'rgba(255,255,255,0.045)', border: `1px solid ${c}20`, borderRadius: 999, padding: '6px 10px', textAlign: 'center', minWidth: 48, backdropFilter: 'blur(12px)' }}>
               <div style={{ fontFamily: "'Exo 2', sans-serif", fontSize: 13, fontWeight: 800, color: c, lineHeight: 1 }}>{n}</div>
               <div style={{ fontFamily: "'Exo 2', sans-serif", fontSize: 8, color: `${c}88`, letterSpacing: '0.04em', marginTop: 3 }}>{l}</div>
             </div>
@@ -1036,7 +1039,7 @@ export function FormBuilder({
           <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
         <div style={ribbonGroup}>
           <div style={ribbonRow}>
-            <button onClick={copyShareLink} disabled={fieldCount === 0} style={{ ...ribbonBtn(!!shareMsg, 'default'), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }}>
+            <button data-testid="builder-share-button" onClick={copyShareLink} disabled={fieldCount === 0} style={{ ...ribbonBtn(!!shareMsg, 'default'), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }}>
               <PremiumIcon token={shareMsg ? '✓' : '🔗'} size={16} />
               <span>{shareMsg ? 'Copied' : 'Share'}</span>
             </button>
@@ -1055,12 +1058,12 @@ export function FormBuilder({
           <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, flexWrap: 'wrap' }}>
         <div style={ribbonGroup}>
           <div style={ribbonRow}>
-            <button onClick={handlePublish} disabled={fieldCount === 0 || createMut.isPending || publishMut.isPending}
+            <button data-testid="builder-publish-button" onClick={handlePublish} disabled={fieldCount === 0 || createMut.isPending || publishMut.isPending}
               style={{ ...ribbonBtn(isPublished, 'success'), opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer', color: publishMsg.startsWith('⚠') ? '#fca5a5' : isPublished ? '#fb923c' : '#86efac', border: `1px solid ${isPublished ? 'rgba(249,115,22,0.35)' : 'rgba(34,197,94,0.28)'}`, background: isPublished ? 'rgba(249,115,22,0.12)' : 'rgba(34,197,94,0.12)' }}>
               <PremiumIcon token={createMut.isPending || publishMut.isPending ? '⏳' : isPublished ? '🔒' : '🌐'} size={16} />
               <span>{createMut.isPending || publishMut.isPending ? 'Working' : isPublished ? 'Unpublish' : 'Publish'}</span>
             </button>
-            <button onClick={onPreview} disabled={fieldCount === 0} style={{ ...primaryRibbonBtn, opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }}>
+            <button data-testid="builder-preview-button" onClick={onPreview} disabled={fieldCount === 0} style={{ ...primaryRibbonBtn, opacity: fieldCount === 0 ? 0.35 : 1, cursor: fieldCount === 0 ? 'not-allowed' : 'pointer' }}>
               <PremiumIcon token="👁" size={16} />
               <span>Preview</span>
             </button>
@@ -1132,6 +1135,13 @@ export function FormBuilder({
                   </span>
                   <input type="password" value={accessPassword} onChange={(e) => setAccessPassword(e.target.value)} placeholder="Optional access password"
                     style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.borderColor}33`, borderRadius: 10, color: world.textColor, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, padding: '10px 12px' }} />
+                </label>
+                <label data-testid="builder-allow-response-edits" style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.borderColor}1f`, borderRadius: 12, padding: 12 }}>
+                  <input type="checkbox" checked={allowResponseEdits} onChange={(e) => setAllowResponseEdits(e.target.checked)} style={{ marginTop: 2 }} />
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: world.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Allow Response Edits</span>
+                    <span style={{ fontSize: 12, color: `${world.mutedColor}cc` }}>Let the same browser reopen the link and update its earlier response instead of being blocked.</span>
+                  </span>
                 </label>
               </div>
             </div>
@@ -1261,7 +1271,7 @@ export function FormBuilder({
                 <span style={{ fontSize: 11, opacity: 0.45, fontWeight: 400 }}>{showAddPicker ? '▲' : '▼'}</span>
               </button>
               {showAddPicker && (
-                <div style={{ marginTop: 8, background: world.cardBg, border: `1px solid ${world.borderColor}44`, borderRadius: 14, padding: '20px', boxShadow: `0 8px 40px rgba(0,0,0,0.55), 0 0 30px ${world.glowColor}18` }}>
+                <div style={{ marginTop: 8, background: world.cardBg, border: `1px solid ${world.borderColor}30`, borderRadius: 18, padding: '20px', boxShadow: `0 16px 44px rgba(0,0,0,0.34), 0 0 26px ${world.glowColor}12`, backdropFilter: 'blur(18px)' }}>
                   {PALETTE_CATEGORIES.map(cat => (
                     <div key={cat.id} style={{ marginBottom: 16 }}>
                       <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 10, color: world.mutedColor, letterSpacing: '0.18em', textTransform: 'uppercase' as const, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
