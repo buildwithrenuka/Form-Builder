@@ -151,7 +151,7 @@ export function PricingSection({ onEnter, sectionId = 'pricing', embedded = fals
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.gold, display: 'inline-block' }} />
             <span style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.25em', textTransform: 'uppercase' }}>Simple, Transparent Pricing</span>
           </div>
-          <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(32px, 6vw, 64px)', fontWeight: 900, color: S.heading, margin: '0 0 16px', background: S.headingGradient, backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: isLight ? '0 4px 10px rgba(0, 0, 0, 0.08)' : '0 0 20px rgba(8, 4, 26, 0.34), 0 2px 10px rgba(0,0,0,0.24)' }}>
+          <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: 'clamp(32px, 6vw, 64px)', fontWeight: 900, color: S.heading, margin: '0 0 16px', background: S.headingGradient, backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             Choose Your Quest
           </h2>
           <p style={{ fontSize: 16, color: S.body, maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.7 }}>
