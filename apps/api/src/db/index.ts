@@ -7,6 +7,8 @@ export type Env = {
   JWT_SECRET:    string;
   IP_SALT:       string;
   PASSWORD_SALT: string;
+  RAZORPAY_KEY_ID?: string;
+  RAZORPAY_KEY_SECRET?: string;
   ADMIN_EMAILS?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;

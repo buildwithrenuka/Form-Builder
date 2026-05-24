@@ -4,9 +4,19 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { router, publicProc, authProc } from '../trpc';
 import type { AppDB } from '../db';
+import type { Env } from '../db';
 import { forms, responses, rateLimits, users } from '../db/schema';
-import { SubmitResponseInput, FormFieldsSchema, FieldSchema, ResponseListInput, ResponseExportInput } from '../schemas';
+import {
+  SubmitResponseInput,
+  FormFieldsSchema,
+  FieldSchema,
+  ResponseListInput,
+  ResponseExportInput,
+  FormPaymentConfigSchema,
+  CreatePaymentOrderInput,
+} from '../schemas';
 import { sendSubmissionAlert, sendRespondentConfirmation } from '../email';
+import { createRazorpayOrder, verifyRazorpayPayment } from '../razorpay';
 
 function uid(): string { return crypto.randomUUID(); }
 
@@ -28,6 +38,17 @@ function verifyAccessPassword(password: string | undefined, storedHash: string, 
   const expected = hashAccessPassword(password, salt);
   return expected.length === storedHash.length
     && timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(storedHash, 'hex'));
+}
+
+function parsePaymentConfig(raw: string | null) {
+  if (!raw) return null;
+
+  try {
+    const parsed = FormPaymentConfigSchema.safeParse(JSON.parse(raw));
+    return parsed.success && parsed.data.enabled ? parsed.data : null;
+  } catch {
+    return null;
+  }
 }
 
 function isLocalDevelopmentIp(ip: string | null): boolean {
@@ -278,93 +299,184 @@ function buildCsv(rows: Array<{ submittedAt: Date; data: Record<string, unknown>
   return lines.join('\n');
 }
 
+async function loadSubmissionContext(
+  db: AppDB,
+  env: Env,
+  ip: string | null,
+  input: { formId: string; accessPassword?: string; respondentToken?: string },
+) {
+  const form = await db.query.forms.findFirst({
+    where: and(eq(forms.id, input.formId), eq(forms.published, true), eq(forms.archived, false)),
+  });
+  if (!form) throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
+
+  const respondentTokenHash = input.respondentToken
+    ? hashRespondentToken(input.respondentToken, env.IP_SALT)
+    : null;
+  const existingResponse = respondentTokenHash
+    ? await db.query.responses.findFirst({
+      where: and(eq(responses.formId, input.formId), eq(responses.respondentTokenHash, respondentTokenHash)),
+      columns: { id: true, paymentId: true, paymentOrderId: true },
+    })
+    : null;
+
+  if (form.expiresAt && form.expiresAt.getTime() <= Date.now()) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form has expired.' });
+  }
+
+  if (form.responseLimit) {
+    const totalResponses = await countResponsesForForm(db, input.formId);
+    if (totalResponses >= form.responseLimit && !(existingResponse && form.allowResponseEdits)) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form is no longer accepting responses.' });
+    }
+  }
+
+  if (form.accessPasswordHash && !verifyAccessPassword(input.accessPassword, form.accessPasswordHash, env.PASSWORD_SALT)) {
+    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid form password.' });
+  }
+
+  if (existingResponse && !form.allowResponseEdits) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'You have already submitted this form.' });
+  }
+
+  return {
+    form,
+    existingResponse,
+    respondentTokenHash,
+    clientIp: ip,
+    ipHashValue: ip ? ipHash(ip, env.IP_SALT) : null,
+    fields: FormFieldsSchema.parse(JSON.parse(form.schema)),
+    paymentConfig: parsePaymentConfig(form.paymentConfig),
+  };
+}
+
+function validateSubmissionData(fields: FieldSchema[], data: Record<string, unknown>) {
+  const validator = buildResponseValidator(fields);
+  const parsed = validator.safeParse(data);
+  if (!parsed.success) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'Validation failed.',
+      cause: parsed.error.flatten(),
+    });
+  }
+
+  return parsed.data;
+}
+
 export const responsesRouter = router({
+  createPaymentOrder: publicProc
+    .input(CreatePaymentOrderInput)
+    .mutation(async ({ input, ctx }) => {
+      const submission = await loadSubmissionContext(ctx.db, ctx.env, ctx.ip, input);
+      const paymentConfig = submission.paymentConfig;
+      if (!paymentConfig) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Payments are not enabled for this form.' });
+      }
+
+      validateSubmissionData(submission.fields, input.data);
+
+      const respondentEmail = findRespondentEmail(submission.fields, input.data);
+      const respondentName = findRespondentName(submission.fields, input.data);
+      const order = await createRazorpayOrder(ctx.env, {
+        amount: paymentConfig.amount,
+        currency: paymentConfig.currency,
+        receipt: `formverse_${input.formId.slice(0, 12)}_${Date.now()}`,
+        notes: {
+          formId: input.formId,
+          formSlug: submission.form.slug,
+        },
+      });
+
+      return {
+        keyId: ctx.env.RAZORPAY_KEY_ID,
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        formTitle: submission.form.title,
+        description: paymentConfig.description?.trim() || `Payment for ${submission.form.title}`,
+        prefill: {
+          name: respondentName,
+          email: respondentEmail,
+        },
+      };
+    }),
+
   // ── Public: submit a response (no auth required) ─────────────────────
   submit: publicProc
     .input(SubmitResponseInput)
     .mutation(async ({ input, ctx }) => {
-      const form = await ctx.db.query.forms.findFirst({
-        where: and(eq(forms.id, input.formId), eq(forms.published, true), eq(forms.archived, false)),
-      });
-      if (!form) throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
+      const submission = await loadSubmissionContext(ctx.db, ctx.env, ctx.ip, input);
+      const { form, existingResponse } = submission;
 
-      const respondentTokenHash = input.respondentToken
-        ? hashRespondentToken(input.respondentToken, ctx.env.IP_SALT)
-        : null;
-      const existingResponse = respondentTokenHash
-        ? await ctx.db.query.responses.findFirst({
-          where: and(eq(responses.formId, input.formId), eq(responses.respondentTokenHash, respondentTokenHash)),
-          columns: { id: true },
-        })
-        : null;
-
-      if (form.expiresAt && form.expiresAt.getTime() <= Date.now()) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form has expired.' });
-      }
-
-      if (form.responseLimit) {
-        const totalResponses = await countResponsesForForm(ctx.db, input.formId);
-        if (totalResponses >= form.responseLimit && !(existingResponse && form.allowResponseEdits)) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'This form is no longer accepting responses.' });
-        }
-      }
-
-      if (form.accessPasswordHash && !verifyAccessPassword(input.accessPassword, form.accessPasswordHash, ctx.env.PASSWORD_SALT)) {
-        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid form password.' });
-      }
-
-      const clientIp = ctx.ip;
-      const hash     = clientIp ? ipHash(clientIp, ctx.env.IP_SALT) : null;
-      if (existingResponse && !form.allowResponseEdits) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'You have already submitted this form.' });
-      }
-
-      if (hash && !isLocalDevelopmentIp(clientIp)) {
-        const rlKey   = `${input.formId}:${hash}`;
+      if (submission.ipHashValue && !isLocalDevelopmentIp(submission.clientIp)) {
+        const rlKey   = `${input.formId}:${submission.ipHashValue}`;
         const allowed = await checkRateLimit(ctx.db, rlKey);
         if (!allowed) {
           throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many submissions. Please wait.' });
         }
       }
 
-      const fields    = FormFieldsSchema.parse(JSON.parse(form.schema));
-      const validator = buildResponseValidator(fields);
-      const parsed    = validator.safeParse(input.data);
-      if (!parsed.success) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Validation failed.',
-          cause: parsed.error.flatten(),
+      const parsedData = validateSubmissionData(submission.fields, input.data);
+
+      const requiresPayment = Boolean(submission.paymentConfig && !(existingResponse && form.allowResponseEdits && existingResponse.paymentId));
+      if (requiresPayment) {
+        if (!input.payment) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Payment confirmation is required before submitting this form.' });
+        }
+
+        await verifyRazorpayPayment(ctx.env, input.payment, {
+          amount: submission.paymentConfig!.amount,
+          currency: submission.paymentConfig!.currency,
         });
       }
 
       const submittedAt = new Date();
 
-      const response = {
+      const responseRecord: typeof responses.$inferInsert = {
         id:          existingResponse?.id ?? uid(),
         formId:      input.formId,
-        data:        JSON.stringify(parsed.data),
-        respondentTokenHash,
-        ipHash:      hash ?? 'unavailable',
+        data:        JSON.stringify(parsedData),
+        respondentTokenHash: submission.respondentTokenHash ?? null,
+        paymentOrderId: input.payment?.orderId ?? existingResponse?.paymentOrderId ?? null,
+        paymentId:   input.payment?.paymentId ?? existingResponse?.paymentId ?? null,
+        paymentAmount: submission.paymentConfig?.amount ?? null,
+        paymentCurrency: submission.paymentConfig?.currency ?? null,
+        ipHash:      submission.ipHashValue ?? 'unavailable',
         submittedAt,
       };
 
       if (existingResponse && form.allowResponseEdits) {
         await ctx.db.update(responses)
           .set({
-            data: response.data,
-            respondentTokenHash: response.respondentTokenHash,
-            ipHash: response.ipHash,
-            submittedAt: response.submittedAt,
+            data: responseRecord.data,
+            respondentTokenHash: responseRecord.respondentTokenHash,
+            paymentOrderId: responseRecord.paymentOrderId,
+            paymentId: responseRecord.paymentId,
+            paymentAmount: responseRecord.paymentAmount,
+            paymentCurrency: responseRecord.paymentCurrency,
+            ipHash: responseRecord.ipHash,
+            submittedAt: responseRecord.submittedAt,
           })
           .where(eq(responses.id, existingResponse.id));
       } else {
-        await ctx.db.insert(responses).values(response);
+        await ctx.db.insert(responses).values({
+          id: responseRecord.id,
+          formId: responseRecord.formId,
+          data: responseRecord.data,
+          respondentTokenHash: responseRecord.respondentTokenHash,
+          paymentOrderId: responseRecord.paymentOrderId,
+          paymentId: responseRecord.paymentId,
+          paymentAmount: responseRecord.paymentAmount,
+          paymentCurrency: responseRecord.paymentCurrency,
+          ipHash: responseRecord.ipHash,
+          submittedAt: responseRecord.submittedAt,
+        });
       }
 
-      const submittedAtLabel = response.submittedAt.toUTCString();
-      const respondentEmail = findRespondentEmail(fields, parsed.data);
-      const respondentName = findRespondentName(fields, parsed.data);
+      const submittedAtLabel = responseRecord.submittedAt.toUTCString();
+      const respondentEmail = findRespondentEmail(submission.fields, parsedData);
+      const respondentName = findRespondentName(submission.fields, parsedData);
 
       // Fire-and-forget email notification to form creator
       const creator = await ctx.db.query.users.findFirst({
@@ -378,7 +490,7 @@ export const responsesRouter = router({
         notificationTasks.push(sendSubmissionAlert(ctx.env, {
           creatorEmail: creator.email,
           formTitle: form.title,
-          responseId: response.id,
+          responseId: responseRecord.id,
           formId: input.formId,
           submittedAt: submittedAtLabel,
         }));
@@ -389,7 +501,7 @@ export const responsesRouter = router({
           respondentEmail,
           respondentName,
           formTitle: form.title,
-          responseId: response.id,
+          responseId: responseRecord.id,
           submittedAt: submittedAtLabel,
           formSlug: form.slug,
         }));
@@ -399,7 +511,7 @@ export const responsesRouter = router({
         void Promise.allSettled(notificationTasks);
       }
 
-      return { success: true, id: response.id, updated: Boolean(existingResponse && form.allowResponseEdits) };
+      return { success: true, id: responseRecord.id, updated: Boolean(existingResponse && form.allowResponseEdits) };
     }),
 
   // ── Creator: list responses for own form ──────────────────────────────

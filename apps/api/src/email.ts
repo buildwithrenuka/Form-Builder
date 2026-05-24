@@ -30,6 +30,16 @@ interface PasswordResetPayload {
   resetToken: string;
 }
 
+interface CreatorPlanConfirmationPayload {
+  creatorEmail: string;
+  creatorName: string;
+  planName: string;
+  amount: number;
+  currency: string;
+  paymentId: string;
+  orderId: string;
+}
+
 interface OutboundEmail {
   to: string[];
   subject: string;
@@ -182,6 +192,37 @@ export async function sendPasswordResetEmail(env: Env, payload: PasswordResetPay
   await sendEmail(env, {
     to: [payload.userEmail],
     subject: '🔐 Reset your FormVerse password',
+    html,
+  });
+}
+
+export async function sendCreatorPlanConfirmation(env: Env, payload: CreatorPlanConfirmationPayload): Promise<void> {
+  const appUrl = getAppBaseUrl(env);
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #070b1d; color: #d9e9ff; border-radius: 12px;">
+      <div style="font-size: 32px; text-align: center; margin-bottom: 16px;">🎉</div>
+      <h1 style="font-size: 18px; color: #7dd3fc; margin: 0 0 8px; text-align: center;">Payment confirmed</h1>
+      <p style="font-size: 14px; color: rgba(186,230,253,0.78); text-align: center; margin: 0 0 24px; line-height: 1.6;">
+        Hi <strong style="color: #ffffff;">${escapeHtml(payload.creatorName)}</strong>, your <strong style="color: #ffffff;">${escapeHtml(payload.planName)}</strong> creator plan payment was successful.
+      </p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <tr><td style="padding: 8px 12px; color: rgba(186,230,253,0.6); border-top: 1px solid rgba(14,165,233,0.14);">Amount</td><td style="padding: 8px 12px; color: #fff; border-top: 1px solid rgba(14,165,233,0.14);">${escapeHtml(String(payload.amount / 100))} ${escapeHtml(payload.currency)}</td></tr>
+        <tr><td style="padding: 8px 12px; color: rgba(186,230,253,0.6); border-top: 1px solid rgba(14,165,233,0.14);">Payment ID</td><td style="padding: 8px 12px; color: #fff; border-top: 1px solid rgba(14,165,233,0.14);">${escapeHtml(payload.paymentId)}</td></tr>
+        <tr><td style="padding: 8px 12px; color: rgba(186,230,253,0.6); border-top: 1px solid rgba(14,165,233,0.14);">Order ID</td><td style="padding: 8px 12px; color: #fff; border-top: 1px solid rgba(14,165,233,0.14);">${escapeHtml(payload.orderId)}</td></tr>
+      </table>
+      <div style="margin-top: 24px; text-align: center;">
+        <a href="${appUrl}" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8); color: #04111e; text-decoration: none; border-radius: 8px; padding: 11px 24px; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; display: inline-block;">Open FormVerse →</a>
+      </div>
+      <p style="font-size: 12px; color: rgba(186,230,253,0.55); text-align: center; margin: 24px 0 0; line-height: 1.6;">
+        Keep this confirmation for your billing records.
+      </p>
+    </div>
+  `;
+
+  await sendEmail(env, {
+    to: [payload.creatorEmail],
+    subject: `🎉 Payment confirmed for ${payload.planName}`,
     html,
   });
 }

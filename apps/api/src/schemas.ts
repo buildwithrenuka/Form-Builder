@@ -66,6 +66,14 @@ export type FieldSchema = z.infer<typeof FieldSchema>;
 // ── Form Schema (array of fields) ─────────────────────────────────────────
 export const FormFieldsSchema = z.array(FieldSchema);
 
+export const FormPaymentConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  amount: z.number().int().min(100).max(100000000),
+  currency: z.string().trim().length(3).transform((value) => value.toUpperCase()).default('INR'),
+  description: z.string().trim().max(120).optional(),
+});
+export type FormPaymentConfig = z.infer<typeof FormPaymentConfigSchema>;
+
 // ── Auth ───────────────────────────────────────────────────────────────────
 export const RegisterInput = z.object({
   name:     z.string().min(2).max(60).trim(),
@@ -115,6 +123,7 @@ export const UpdateFormInput = z.object({
   responseLimit: z.number().int().min(1).max(100000).nullable().optional(),
   accessPassword: z.string().min(4).max(128).nullable().optional(),
   allowResponseEdits: z.boolean().optional(),
+  paymentConfig: FormPaymentConfigSchema.nullable().optional(),
   schema:      FormFieldsSchema.optional(),
   worldTheme:  z.string().max(50).optional(),
 });
@@ -125,11 +134,37 @@ export const PublishFormInput = z.object({
 });
 
 // ── Response Submission ────────────────────────────────────────────────────
+export const ResponsePaymentInput = z.object({
+  orderId: z.string().min(1).max(128),
+  paymentId: z.string().min(1).max(128),
+  signature: z.string().min(1).max(256),
+});
+
 export const SubmitResponseInput = z.object({
   formId: z.string(),
   accessPassword: z.string().max(128).optional(),
   respondentToken: z.string().min(16).max(256).optional(),
+  payment: ResponsePaymentInput.optional(),
   data:   z.record(z.string(), z.unknown()),
+});
+
+export const CreatePaymentOrderInput = z.object({
+  formId: z.string(),
+  accessPassword: z.string().max(128).optional(),
+  respondentToken: z.string().min(16).max(256).optional(),
+  data: z.record(z.string(), z.unknown()),
+});
+
+export const CreatorPlanIdEnum = z.enum(['adventurer', 'legend']);
+export type CreatorPlanId = z.infer<typeof CreatorPlanIdEnum>;
+
+export const CreateCreatorPlanOrderInput = z.object({
+  planId: CreatorPlanIdEnum,
+});
+
+export const VerifyCreatorPlanPaymentInput = z.object({
+  planId: CreatorPlanIdEnum,
+  payment: ResponsePaymentInput,
 });
 
 export const CloneFormInput = z.object({

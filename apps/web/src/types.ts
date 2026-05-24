@@ -2,7 +2,7 @@ export type Screen =
   // shared
   | 'home' | 'login' | 'shared' | 'submissionConfirmed' | 'tutorial' | 'experiencePicker' | 'explore'
   // new pages
-  | 'pricing' | 'dashboard'
+  | 'pricing' | 'premiumPayment' | 'dashboard'
   | 'admin'
   // experience 1: realm runner
   | 'story' | 'avatar' | 'world' | 'worldDoor' | 'worldCinematic' | 'mapPurpose' | 'builder' | 'preview'

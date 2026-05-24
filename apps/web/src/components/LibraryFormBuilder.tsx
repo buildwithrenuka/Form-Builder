@@ -11,6 +11,13 @@ import { PremiumIcon } from './PremiumIcon';
 import { VersionPanel } from './VersionPanel';
 import { copyText } from '../utils/clipboard';
 
+type PaymentConfigDraft = {
+  enabled: true;
+  amount: number;
+  currency: 'INR';
+  description?: string;
+};
+
 type Props = {
   world: LibraryWorld;
   onBack: () => void;
@@ -877,6 +884,9 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
   const [responseLimit, setResponseLimit] = useState('');
   const [accessPassword, setAccessPassword] = useState('');
   const [allowResponseEdits, setAllowResponseEdits] = useState(false);
+  const [paymentEnabled, setPaymentEnabled] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentDescription, setPaymentDescription] = useState('');
   const [activeRibbonTab, setActiveRibbonTab] = useState<'file' | 'history' | 'review' | 'design' | null>(null);
 
   const handleToggleSettings = useCallback(() => {
@@ -899,9 +909,26 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
   const updateMut  = trpc.forms.update.useMutation();
   const publishMut = trpc.forms.setPublished.useMutation();
 
+  function buildPaymentConfig(): PaymentConfigDraft | null {
+    if (!paymentEnabled) return null;
+
+    const amountInRupees = Number(paymentAmount);
+    if (!Number.isFinite(amountInRupees) || amountInRupees < 1) {
+      throw new Error('Enter a valid Razorpay amount in INR.');
+    }
+
+    return {
+      enabled: true,
+      amount: Math.round(amountInRupees * 100),
+      currency: 'INR',
+      description: paymentDescription.trim() || undefined,
+    };
+  }
+
   async function handlePublish() {
     if (fieldCount === 0) return;
     try {
+      const paymentConfig = buildPaymentConfig();
       let fid = savedFormId;
       if (!fid) {
         const created = await createMut.mutateAsync({
@@ -922,6 +949,7 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
         responseLimit: responseLimit ? Number(responseLimit) : null,
         accessPassword: accessPassword.trim() || null,
         allowResponseEdits,
+        paymentConfig,
         worldTheme: world.id,
         schema: fields,
       });
@@ -1005,6 +1033,7 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
   async function copyShareLink() {
     if (fieldCount === 0) return;
     try {
+      const paymentConfig = buildPaymentConfig();
       let fid = savedFormId;
       let slug = savedFormSlug;
 
@@ -1029,6 +1058,7 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
         responseLimit: responseLimit ? Number(responseLimit) : null,
         accessPassword: accessPassword.trim() || null,
         allowResponseEdits,
+        paymentConfig,
         worldTheme: world.id,
         schema: fields,
       });
@@ -1123,7 +1153,7 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
           world={wt}
           onClose={() => setShowTemplates(false)}
           onApply={(t: FormTemplate) => {
-            setFields(t.fields.map(f => ({ ...defaultField(f.type), ...f, id: makeId() })));
+            setFields(t.fields.map(f => ({ ...emptyField(f.type, world), ...f, id: makeId() })));
             if (t.name) setTitle(t.name);
             setEditingId(null);
             setShowTemplates(false);
@@ -1333,6 +1363,33 @@ export function LibraryFormBuilder({ world, onBack, onLogout, onPreview, initial
                     <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Let the same browser reopen the link and update its earlier response instead of being blocked.</span>
                   </span>
                 </label>
+                <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.color}1d`, borderRadius: 12, padding: 12 }}>
+                  <input type="checkbox" checked={paymentEnabled} onChange={(e) => setPaymentEnabled(e.target.checked)} style={{ marginTop: 2 }} />
+                  <span style={{ display: 'grid', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: wt.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Enable Premium Mode</span>
+                    <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Collect a Razorpay payment before submission and unlock selected premium benefits.</span>
+                  </span>
+                </label>
+                {paymentEnabled && (
+                  <>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.color}1d`, borderRadius: 12, padding: 12 }}>
+                      <span style={{ display: 'grid', gap: 3 }}>
+                        <span style={{ fontSize: 11, color: wt.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Amount (INR)</span>
+                        <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Charged before the record is stored.</span>
+                      </span>
+                      <input type="number" min="1" step="0.01" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} placeholder="499"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.color}33`, borderRadius: 10, color: '#fff', fontSize: 13, padding: '10px 12px' }} />
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${world.color}1d`, borderRadius: 12, padding: 12 }}>
+                      <span style={{ display: 'grid', gap: 3 }}>
+                        <span style={{ fontSize: 11, color: wt.mutedColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Payment Description</span>
+                        <span style={{ fontSize: 12, color: `${wt.mutedColor}cc` }}>Optional text shown inside checkout.</span>
+                      </span>
+                      <input value={paymentDescription} onChange={(e) => setPaymentDescription(e.target.value)} placeholder="Archive access fee"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${world.color}33`, borderRadius: 10, color: '#fff', fontSize: 13, padding: '10px 12px' }} />
+                    </label>
+                  </>
+                )}
               </div>
             </div>
           </div>

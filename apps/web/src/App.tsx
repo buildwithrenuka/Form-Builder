@@ -13,12 +13,15 @@ import { SharedFormView } from './components/SharedFormView';
 import { SubmissionConfirmedPage } from './components/SubmissionConfirmedPage';
 import { ExperienceSelector } from './components/ExperienceSelector';
 import { PricingPage } from './components/PricingPage';
+import { PremiumPaymentPage } from './components/PremiumPaymentPage';
 import { DashboardPage } from './components/DashboardPage';
 import { AdminDashboardPage } from './components/AdminDashboardPage';
 import { ExplorePage } from './components/ExplorePage';
 // experience 1: realm runner
 import { GlobeExperienceFlow, LibraryExperienceFlow, TempleExperienceFlow } from './components/ExperienceFlows';
 import { LIBRARY_WORLDS, type LibraryWorld } from './libraryData';
+
+type PremiumPlanSelection = 'adventurer' | 'legend';
 
 const VERSIONS_KEY = 'tr_form_builder_versions';
 const HOME_THEME_KEY = 'tr_form_builder_home_theme';
@@ -236,6 +239,8 @@ function App() {
   const [sessionEmail, setSessionEmail] = useState(() => getSessionEmail() ?? '');
   const [loginMode, setLoginMode] = useState<'login' | 'register'>(persistedAppState?.loginMode ?? 'login');
   const [homeTheme, setHomeTheme] = useState<HomeTheme>(loadHomeTheme);
+  const [postLoginScreen, setPostLoginScreen] = useState<Screen | null>(null);
+  const [selectedPremiumPlan, setSelectedPremiumPlan] = useState<PremiumPlanSelection>('adventurer');
 
   // ── Experience 1: Realm Runner state ────────────────────────────────────
   const [avatar, setAvatar]       = useState<Avatar | null>(() => AVATARS.find((entry) => entry.id === persistedAppState?.avatarId) ?? null);
@@ -380,6 +385,10 @@ function App() {
       {screen === 'home' && (
         <HomePage
           onEnter={() => { if (playerName) { setScreen('experiencePicker'); } else { setLoginMode('login'); setScreen('login'); } }}
+          onEnablePayments={(planId) => {
+            setSelectedPremiumPlan(planId);
+            setScreen('premiumPayment');
+          }}
           onLogin={() => { setLoginMode('login'); setScreen('login'); }}
           onRegister={() => { setLoginMode('register'); setScreen('login'); }}
           onTutorial={() => setScreen('tutorial')}
@@ -414,7 +423,29 @@ function App() {
         <PricingPage
           onBack={() => setScreen('home')}
           onEnter={() => setScreen('experiencePicker')}
+          onEnablePayments={(planId) => {
+            setSelectedPremiumPlan(planId);
+            setScreen('premiumPayment');
+          }}
           theme={homeTheme}
+        />
+      )}
+
+      {screen === 'premiumPayment' && (
+        <PremiumPaymentPage
+          onBack={() => setScreen('home')}
+          onRequireAuth={() => {
+            setPostLoginScreen('premiumPayment');
+            setLoginMode('register');
+            setScreen('login');
+          }}
+          onAfterSuccess={() => setScreen('experiencePicker')}
+          theme={homeTheme}
+          playerName={playerName || undefined}
+          sessionEmail={currentUser?.email ?? sessionEmail ?? undefined}
+          currentPlanId={currentUser?.creatorPlanId ?? undefined}
+          currentPlanActivatedAt={currentUser?.creatorPlanActivatedAt ?? undefined}
+          initialPlanId={selectedPremiumPlan}
         />
       )}
 
@@ -455,9 +486,18 @@ function App() {
           onLogin={(name) => {
             setPlayerName(name);
             setSessionEmail(getSessionEmail() ?? '');
+            if (postLoginScreen) {
+              const nextScreen = postLoginScreen;
+              setPostLoginScreen(null);
+              setScreen(nextScreen);
+              return;
+            }
             setScreen('experiencePicker');
           }}
-          onBack={() => setScreen('home')}
+          onBack={() => {
+            setPostLoginScreen(null);
+            setScreen('home');
+          }}
         />
       )}
 

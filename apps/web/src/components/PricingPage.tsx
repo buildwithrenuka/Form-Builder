@@ -3,9 +3,9 @@ import { PricingSection } from './PricingSection';
 import type { HomeTheme } from './HomePage';
 import { APP_UI_FONT, getAppSurfaceTheme } from './appSurfaceTheme';
 
-type Props = { onBack: () => void; onEnter: () => void; theme: HomeTheme };
+type Props = { onBack: () => void; onEnter: () => void; onEnablePayments?: (planId: 'adventurer' | 'legend') => void; theme: HomeTheme };
 
-export function PricingPage({ onBack, onEnter, theme }: Props) {
+export function PricingPage({ onBack, onEnter, onEnablePayments, theme }: Props) {
   const C = getAppSurfaceTheme(theme);
   return (
     <div style={{ position: 'fixed', inset: 0, background: C.background, overflowY: 'auto', fontFamily: APP_UI_FONT }}>
@@ -26,7 +26,7 @@ export function PricingPage({ onBack, onEnter, theme }: Props) {
         </div>
       </nav>
       <div style={{ position: 'relative', zIndex: 1, padding: '80px 24px 100px' }}>
-        <PricingSection onEnter={onEnter} embedded surface={theme === 'light' ? 'light' : 'dark'} />
+        <PricingSection onEnter={onEnter} onEnablePayments={onEnablePayments} embedded surface={theme === 'light' ? 'light' : 'dark'} />
       </div>
     </div>
   );

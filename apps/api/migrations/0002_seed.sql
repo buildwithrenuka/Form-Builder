@@ -8,7 +8,7 @@ VALUES (
   'demo-user-formverse-01',
   'Demo Creator',
   'demo@formverse.io',
-  'pbkdf2$sha-256$310000$Zm9ybXZlcnNlLWRlbW8tc2FsdC0wMQ$wIG8Kv-TpsyaqFq9smweYX7eEcSx1AzA1pSLFgRVB9g',
+  'pbkdf2$sha-256$100000$Zm9ybXZlcnNlLWRlbW8tc2FsdC0wMQ$3anK7dy48XA9V5xjDPuZrAfwJ-iht2yocCQ3ZEOPLNk',
   1735689600000
 );
 

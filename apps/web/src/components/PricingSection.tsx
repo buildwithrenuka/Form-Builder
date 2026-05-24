@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 type Props = {
   onEnter: () => void;
+  onEnablePayments?: (planId: 'adventurer' | 'legend') => void;
   sectionId?: string;
   embedded?: boolean;
   surface?: 'dark' | 'light';
@@ -16,6 +17,7 @@ const C = {
 
 const PLANS = [
   {
+    id: 'explorer',
     name: 'Explorer',
     badge: 'Free Forever',
     price: '$0',
@@ -40,6 +42,7 @@ const PLANS = [
     ],
   },
   {
+    id: 'adventurer',
     name: 'Adventurer',
     badge: 'Most Popular',
     price: '$12',
@@ -57,6 +60,7 @@ const PLANS = [
       { t: '17 field types', ok: true },
       { t: 'Version history (∞)', ok: true },
       { t: 'Advanced analytics', ok: true },
+      { t: 'Accept payments with Razorpay', ok: true },
       { t: 'Custom domain', ok: true },
       { t: 'Email notifications', ok: true },
       { t: 'Team collaboration', ok: false },
@@ -64,6 +68,7 @@ const PLANS = [
     ],
   },
   {
+    id: 'legend',
     name: 'Legend',
     badge: 'Enterprise',
     price: '$49',
@@ -72,7 +77,7 @@ const PLANS = [
     color: '#ffd700',
     glow: 'rgba(255,215,0,0.12)',
     desc: 'Built for teams that ship at scale.',
-    cta: 'Contact Sales',
+    cta: 'Start Legend',
     features: [
       { t: 'Unlimited active forms', ok: true },
       { t: 'Unlimited responses', ok: true },
@@ -81,6 +86,7 @@ const PLANS = [
       { t: '17 field types', ok: true },
       { t: 'Version history (∞)', ok: true },
       { t: 'Advanced analytics + CSV', ok: true },
+      { t: 'Accept payments with Razorpay', ok: true },
       { t: 'Custom domain', ok: true },
       { t: 'Email notifications', ok: true },
       { t: 'Team collaboration (10)', ok: true },
@@ -98,7 +104,7 @@ const FAQ = [
   { q: 'Do you support team access?', a: 'Team collaboration is available on the Legend plan. Up to 10 team members can co-edit forms and view shared analytics.' },
 ];
 
-export function PricingSection({ onEnter, sectionId = 'pricing', embedded = false, surface = 'dark' }: Props) {
+export function PricingSection({ onEnter, onEnablePayments, sectionId = 'pricing', embedded = false, surface = 'dark' }: Props) {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const yearlyDisc = 0.2;
@@ -193,6 +199,12 @@ export function PricingSection({ onEnter, sectionId = 'pricing', embedded = fals
               <button onClick={onEnter} style={{ background: plan.highlight ? `linear-gradient(135deg, ${plan.color}cc, #0891b2cc)` : S.buttonBg, border: `1px solid ${plan.highlight ? 'transparent' : S.buttonBorder}`, borderRadius: 10, color: plan.highlight ? '#000' : plan.color, fontSize: 13, fontWeight: 700, padding: '13px 0', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.1em', marginBottom: 28 }}>
                 {plan.cta}
               </button>
+
+              {plan.id !== 'explorer' && (
+                <button onClick={() => onEnablePayments ? onEnablePayments(plan.id) : onEnter()} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${plan.color}44`, borderRadius: 10, color: plan.color, fontSize: 12, fontWeight: 700, padding: '11px 0', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.08em', marginBottom: 20 }}>
+                  {plan.id === 'adventurer' ? 'Upgrade To Adventurer' : 'Upgrade To Legend'}
+                </button>
+              )}
 
               <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${plan.color}33, transparent)`, marginBottom: 20 }} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>

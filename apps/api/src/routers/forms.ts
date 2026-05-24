@@ -5,7 +5,7 @@ import { router, publicProc, authProc } from '../trpc';
 import type { Context } from '../context';
 import { forms, responses } from '../db/schema';
 import {
-  CreateFormInput, UpdateFormInput, PublishFormInput, FormFieldsSchema, CloneFormInput,
+  CreateFormInput, UpdateFormInput, PublishFormInput, FormFieldsSchema, CloneFormInput, FormPaymentConfigSchema,
 } from '../schemas';
 import { z } from 'zod';
 
@@ -43,6 +43,17 @@ function verifyAccessPassword(password: string | undefined, storedHash: string, 
   const expected = hashAccessPassword(password, salt);
   return expected.length === storedHash.length
     && timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(storedHash, 'hex'));
+}
+
+function parsePaymentConfig(raw: string | null) {
+  if (!raw) return null;
+
+  try {
+    const parsed = FormPaymentConfigSchema.safeParse(JSON.parse(raw));
+    return parsed.success && parsed.data.enabled ? parsed.data : null;
+  } catch {
+    return null;
+  }
 }
 
 const publicGalleryCategorySchema = z.enum([
@@ -201,7 +212,11 @@ export const formsRouter = router({
         where: and(eq(forms.id, input.id), eq(forms.creatorId, ctx.userId)),
       });
       if (!form) throw new TRPCError({ code: 'NOT_FOUND' });
-      return { ...form, schema: FormFieldsSchema.parse(JSON.parse(form.schema)) };
+      return {
+        ...form,
+        paymentConfig: parsePaymentConfig(form.paymentConfig),
+        schema: FormFieldsSchema.parse(JSON.parse(form.schema)),
+      };
     }),
 
   // ── Creator: update form (title, description, schema, theme, visibility)
@@ -238,6 +253,7 @@ export const formsRouter = router({
             accessPasswordHash: input.accessPassword ? hashAccessPassword(input.accessPassword, ctx.env.PASSWORD_SALT) : null,
           } : {}),
           ...(input.allowResponseEdits !== undefined ? { allowResponseEdits: input.allowResponseEdits } : {}),
+          ...(input.paymentConfig !== undefined ? { paymentConfig: input.paymentConfig ? JSON.stringify(input.paymentConfig) : null } : {}),
           ...(input.schema      ? { schema: JSON.stringify(input.schema) } : {}),
           ...(input.worldTheme  ? { worldTheme: input.worldTheme }    : {}),
           updatedAt: new Date(),
@@ -288,6 +304,7 @@ export const formsRouter = router({
         responseLimit: existing.responseLimit,
         accessPasswordHash: existing.accessPasswordHash,
         allowResponseEdits: existing.allowResponseEdits,
+        paymentConfig: existing.paymentConfig,
         schema: existing.schema,
         worldTheme: existing.worldTheme,
         createdAt: new Date(),
@@ -322,7 +339,7 @@ export const formsRouter = router({
       const existingResponse = respondentTokenHash
         ? await ctx.db.query.responses.findFirst({
           where: and(eq(responses.formId, form.id), eq(responses.respondentTokenHash, respondentTokenHash)),
-          columns: { id: true, data: true },
+          columns: { id: true, data: true, paymentId: true },
         })
         : null;
 
@@ -350,6 +367,8 @@ export const formsRouter = router({
       const totalResponses = form.responseLimit ? await countResponsesForForm(ctx, form.id) : 0;
       const alreadySubmitted = Boolean(existingResponse);
       const canEditResponse = Boolean(existingResponse && form.allowResponseEdits);
+      const paymentConfig = parsePaymentConfig(form.paymentConfig);
+      const paymentRequired = Boolean(paymentConfig && !(existingResponse && form.allowResponseEdits && existingResponse.paymentId));
 
       return {
         access: 'available' as const,
@@ -361,6 +380,8 @@ export const formsRouter = router({
         expiresAt:   form.expiresAt,
         responseLimit: form.responseLimit,
         allowResponseEdits: form.allowResponseEdits,
+        paymentConfig,
+        paymentRequired,
         remainingResponses: form.responseLimit ? Math.max(form.responseLimit - totalResponses, 0) : null,
         alreadySubmitted,
         canEditResponse,

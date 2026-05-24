@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { count, and, gt, lt } from 'drizzle-orm';
-import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual, webcrypto } from 'node:crypto';
 import { router, publicProc, authProc } from '../trpc';
 import type { Context } from '../context';
 import { users, rateLimits } from '../db/schema';
@@ -13,9 +13,10 @@ const PBKDF2_PREFIX = 'pbkdf2';
 const PBKDF2_DIGEST = 'SHA-256';
 const PBKDF2_ITERATIONS = 100000;
 const PBKDF2_KEY_LENGTH = 32;
-const PBKDF2_BLOCK_LENGTH = 32;
+const PBKDF2_WEBCRYPTO_MAX_ITERATIONS = 100000;
 const DUMMY_SALT = new Uint8Array(16);
 const PASSWORD_RESET_WINDOW_MS = 60 * 60 * 1000;
+const subtleCrypto = webcrypto.subtle;
 
 function toBase64Url(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString('base64url');
@@ -35,29 +36,30 @@ async function derivePbkdf2(password: string, salt: Uint8Array, iterations: numb
     throw new Error('PBKDF2 iterations must be a positive integer.');
   }
 
-  const key = Buffer.from(password, 'utf8');
-  const blocks = Math.ceil(PBKDF2_KEY_LENGTH / PBKDF2_BLOCK_LENGTH);
-  const derived = Buffer.alloc(blocks * PBKDF2_BLOCK_LENGTH);
-
-  for (let blockIndex = 1; blockIndex <= blocks; blockIndex += 1) {
-    const blockSeed = Buffer.alloc(salt.byteLength + 4);
-    Buffer.from(salt).copy(blockSeed, 0);
-    blockSeed.writeUInt32BE(blockIndex, salt.byteLength);
-
-    let accumulator = createHmac('sha256', key).update(blockSeed).digest();
-    let previous = accumulator;
-
-    for (let round = 1; round < iterations; round += 1) {
-      previous = createHmac('sha256', key).update(previous).digest();
-      for (let offset = 0; offset < PBKDF2_BLOCK_LENGTH; offset += 1) {
-        accumulator[offset] ^= previous[offset];
-      }
-    }
-
-    accumulator.copy(derived, (blockIndex - 1) * PBKDF2_BLOCK_LENGTH);
+  if (iterations > PBKDF2_WEBCRYPTO_MAX_ITERATIONS) {
+    throw new Error(`PBKDF2 iterations above ${PBKDF2_WEBCRYPTO_MAX_ITERATIONS} require a password reset.`);
   }
 
-  return new Uint8Array(derived.subarray(0, PBKDF2_KEY_LENGTH));
+  const keyMaterial = await subtleCrypto.importKey(
+    'raw',
+    Buffer.from(password, 'utf8'),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits'],
+  );
+
+  const derived = await subtleCrypto.deriveBits(
+    {
+      name: 'PBKDF2',
+      hash: PBKDF2_DIGEST,
+      salt,
+      iterations,
+    },
+    keyMaterial,
+    PBKDF2_KEY_LENGTH * 8,
+  );
+
+  return new Uint8Array(derived);
 }
 
 function hashLegacyPassword(password: string, salt: string): string {
@@ -84,7 +86,11 @@ async function burnPasswordCheck(password: string): Promise<void> {
   await derivePbkdf2(password, DUMMY_SALT, PBKDF2_ITERATIONS);
 }
 
-async function verifyPassword(password: string, storedHash: string, legacySalt: string): Promise<{ valid: boolean; upgradedHash?: string }> {
+async function verifyPassword(
+  password: string,
+  storedHash: string,
+  legacySalt: string,
+): Promise<{ valid: boolean; upgradedHash?: string; requiresPasswordReset?: boolean }> {
   const parts = storedHash.split('$');
   if (parts.length === 5 && parts[0] === PBKDF2_PREFIX && parts[1] === PBKDF2_DIGEST.toLowerCase()) {
     const iterations = Number(parts[2]);
@@ -93,6 +99,10 @@ async function verifyPassword(password: string, storedHash: string, legacySalt: 
 
     if (!Number.isInteger(iterations) || iterations < 100000 || salt.byteLength === 0 || expected.byteLength === 0) {
       return { valid: false };
+    }
+
+    if (iterations > PBKDF2_WEBCRYPTO_MAX_ITERATIONS) {
+      return { valid: false, requiresPasswordReset: true };
     }
 
     const derived = await derivePbkdf2(password, salt, iterations);
@@ -166,6 +176,16 @@ async function enforceAuthRateLimit(ctx: Context, scope: 'login' | 'register', e
   }
 }
 
+async function recordFailedLoginAttempt(ctx: Context, email: string): Promise<void> {
+  const normalizedEmail = normalizeIdentity(email);
+  const normalizedIp = normalizeIdentity(ctx.ip ?? 'unknown');
+  const loginIpAllowed = await consumeRateLimit(ctx, `auth:login:ip:${normalizedIp}`, 10, 15 * 60 * 1000);
+  const loginEmailAllowed = await consumeRateLimit(ctx, `auth:login:email:${normalizedEmail}`, 5, 15 * 60 * 1000);
+  if (!loginIpAllowed || !loginEmailAllowed) {
+    throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please wait and try again.' });
+  }
+}
+
 async function enforceForgotPasswordRateLimit(ctx: Context, email: string): Promise<void> {
   const normalizedEmail = normalizeIdentity(email);
   const normalizedIp = normalizeIdentity(ctx.ip ?? 'unknown');
@@ -208,25 +228,42 @@ export const authRouter = router({
       };
       await ctx.db.insert(users).values(user);
       const token = await signToken(user.id, ctx.env.JWT_SECRET);
-      return { token, user: { id: user.id, name: user.name, email: user.email, role: user.role } };
+      return {
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          creatorPlanId: null,
+          creatorPlanActivatedAt: null,
+        },
+      };
     }),
 
   login: publicProc
     .input(LoginInput)
     .mutation(async ({ ctx, input }) => {
-      await enforceAuthRateLimit(ctx, 'login', input.email);
-
       const user = await ctx.db.query.users.findFirst({
         where: eq(users.email, input.email),
       });
 
       if (!user) {
         await burnPasswordCheck(input.password);
+        await recordFailedLoginAttempt(ctx, input.email);
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid email or password.' });
       }
 
       const passwordResult = await verifyPassword(input.password, user.passwordHash, ctx.env.PASSWORD_SALT);
+      if (passwordResult.requiresPasswordReset) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This account needs a password reset before you can sign in. Use Forgot password to continue.',
+        });
+      }
+
       if (!passwordResult.valid) {
+        await recordFailedLoginAttempt(ctx, input.email);
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid email or password.' });
       }
 
@@ -248,7 +285,17 @@ export const authRouter = router({
       }
 
       const token = await signToken(user.id, ctx.env.JWT_SECRET);
-      return { token, user: { id: user.id, name: user.name, email: user.email, role: effectiveRole } };
+      return {
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: effectiveRole,
+          creatorPlanId: user.creatorPlanId,
+          creatorPlanActivatedAt: user.creatorPlanActivatedAt,
+        },
+      };
     }),
 
   forgotPassword: publicProc
@@ -311,6 +358,14 @@ export const authRouter = router({
       where: eq(users.id, ctx.userId),
     });
     if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
-    return { id: user.id, name: user.name, email: user.email, role: user.role, isAdmin: user.role === 'admin' };
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isAdmin: user.role === 'admin',
+      creatorPlanId: user.creatorPlanId,
+      creatorPlanActivatedAt: user.creatorPlanActivatedAt,
+    };
   }),
 });

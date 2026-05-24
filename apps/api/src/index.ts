@@ -10,6 +10,7 @@ import { authRouter } from './auth/router';
 import { formsRouter } from './routers/forms';
 import { responsesRouter } from './routers/responses';
 import { adminRouter } from './routers/admin';
+import { billingRouter } from './routers/billing';
 import {
   RegisterInput,
   LoginInput,
@@ -306,6 +307,7 @@ export const appRouter = router({
   auth:      authRouter,
   forms:     formsRouter,
   responses: responsesRouter,
+  billing:   billingRouter,
   admin: adminRouter,
 });
 

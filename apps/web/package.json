@@ -8,7 +8,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:preview-videos": "playwright test tests/experience-preview-videos.spec.ts"
+    "test:e2e:preview-videos": "playwright test tests/experience-preview-videos.spec.ts",
+    "test:e2e:social-demo": "playwright test tests/social-demo.spec.ts --reporter=line",
+    "test:e2e:realm-rainbow-demo": "playwright test tests/realm-rainbow-demo.spec.ts --reporter=line",
+    "test:e2e:production-showcase-demo": "playwright test tests/production-showcase-demo.spec.ts --reporter=line"
   },
   "dependencies": {
     "@formverse/shared": "*",

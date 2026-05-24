@@ -9,6 +9,7 @@ import { copyText } from '../utils/clipboard';
 import { ControlledFormField, StructureFieldBanner } from './FormFieldRenderer';
 import { countInteractiveFields, getFormPages } from '../utils/formFlow';
 import { buildRespondentTokenKey, buildSubmissionLockKey, getOrCreateRespondentToken, hasSubmissionLock, setSubmissionLock } from '../utils/submissionLock';
+import { ensureRazorpayCheckoutLoaded, openRazorpayCheckout } from '../utils/razorpayCheckout';
 
 type SharedPayload = {
   formTitle: string;
@@ -19,8 +20,36 @@ type SharedPayload = {
 
 type Props = { encoded?: string; slug?: string; onBack: () => void };
 
+type FormPaymentConfig = {
+  enabled: boolean;
+  amount: number;
+  currency: string;
+  description?: string;
+};
+
+type RazorpayOrderResponse = {
+  keyId?: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+  formTitle: string;
+  description: string;
+  prefill: {
+    name: string | null;
+    email: string | null;
+  };
+};
+
+function formatAmount(amount: number, currency: string) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 2,
+  }).format(amount / 100);
+}
+
 function isStructuralSharedField(field: Pick<FormField, 'type'>): boolean {
-  return field.type === 'section' || field.type === 'section_divider';
+  return field.type === 'section';
 }
 
 function countryToSharedWorld(country: Country): WorldTheme {
@@ -204,19 +233,28 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
   const [submittedAccessPassword, setSubmittedAccessPassword] = useState<string | undefined>(undefined);
   const [unlockAttempted, setUnlockAttempted] = useState(false);
   const respondentToken = useMemo(() => getOrCreateRespondentToken(buildRespondentTokenKey('form', slug)), [slug]);
+  const lockKey = useMemo(() => buildSubmissionLockKey('form', slug), [slug]);
   const { data, isLoading, error } = trpc.forms.getBySlug.useQuery({ slug, accessPassword: submittedAccessPassword, respondentToken });
+  const createPaymentOrder = trpc.responses.createPaymentOrder.useMutation();
   const submit = trpc.responses.submit.useMutation();
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
   const [submissionState, setSubmissionState] = useState<'idle' | 'created' | 'updated'>('idle');
   const [submitError, setSubmitError] = useState('');
+  const [storedSubmissionLock, setStoredSubmissionLock] = useState(false);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   const world = resolveSharedWorld(data?.worldTheme ?? '');
-  const formFields = (data?.schema as unknown as FormField[] | undefined) ?? [];
+  const formFields = data?.access === 'available'
+    ? data.schema as unknown as FormField[]
+    : [];
   const pages = useMemo(() => getFormPages(formFields, formValues), [formFields, formValues]);
   const currentPage = pages[Math.min(currentPageIndex, Math.max(pages.length - 1, 0))];
   const hasEditableResponse = data?.access === 'available' ? data.canEditResponse : false;
-  const submissionLocked = data?.access === 'available' ? data.alreadySubmitted && !data.canEditResponse : false;
+  const paymentConfig = data?.access === 'available' ? (data.paymentConfig as FormPaymentConfig | null | undefined) ?? null : null;
+  const paymentRequired = data?.access === 'available' ? Boolean(data.paymentRequired) : false;
+  const submissionLocked = data?.access === 'available'
+    ? (data.alreadySubmitted && !data.canEditResponse) || storedSubmissionLock
+    : false;
   const showSubmissionConfirmation = submissionState !== 'idle';
   const existingResponseDataJson = data?.access === 'available' && data.existingResponseData
     ? JSON.stringify(data.existingResponseData)
@@ -227,6 +265,10 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
       setCurrentPageIndex(Math.max(pages.length - 1, 0));
     }
   }, [currentPageIndex, pages.length]);
+
+  useEffect(() => {
+    setStoredSubmissionLock(hasSubmissionLock(lockKey));
+  }, [lockKey]);
 
   useEffect(() => {
     if (!existingResponseDataJson) {
@@ -244,13 +286,35 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
     if (!data || data.access !== 'available') return;
     setSubmitError('');
     try {
+      const payment = paymentRequired
+        ? await (async () => {
+          await ensureRazorpayCheckoutLoaded();
+          const order = await createPaymentOrder.mutateAsync({
+            formId: data.id,
+            accessPassword: submittedAccessPassword,
+            respondentToken,
+            data: formValues,
+          });
+          return await openRazorpayCheckout({
+            ...(order as RazorpayOrderResponse),
+            name: order.formTitle,
+            themeColor: '#0ea5e9',
+          });
+        })()
+        : undefined;
+
       await submit.mutateAsync({
         formId: data.id,
         accessPassword: submittedAccessPassword,
         respondentToken,
+        payment,
         data: formValues,
       });
       setSubmissionState(hasEditableResponse ? 'updated' : 'created');
+      if (!data.allowResponseEdits) {
+        setSubmissionLock(lockKey);
+        setStoredSubmissionLock(true);
+      }
       setCurrentPageIndex(0);
     } catch (issue: unknown) {
       setSubmitError(issue instanceof Error ? issue.message : 'Submission failed. Please try again.');
@@ -323,6 +387,7 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
                 {data.expiresAt && <span style={{ fontSize: 10, color: world.accentColor, border: `1px solid ${world.accentColor}33`, borderRadius: 999, padding: '4px 8px' }}>Expires {new Date(data.expiresAt).toLocaleString()}</span>}
                 {data.remainingResponses !== null && <span style={{ fontSize: 10, color: world.accentColor, border: `1px solid ${world.accentColor}33`, borderRadius: 999, padding: '4px 8px' }}>{data.remainingResponses} responses remaining</span>}
+                {paymentConfig?.enabled && <span style={{ fontSize: 10, color: world.accentColor, border: `1px solid ${world.accentColor}33`, borderRadius: 999, padding: '4px 8px' }}>Premium Access {formatAmount(paymentConfig.amount, paymentConfig.currency)}</span>}
               </div>
             )}
             {currentPage && <PageHeader world={world} pageIndex={currentPageIndex} pageCount={pages.length} title={currentPage.title} description={currentPage.description} />}
@@ -330,6 +395,11 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
 
           {!submissionLocked && !showSubmissionConfirmation ? (
             <div style={{ padding: '22px 26px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {paymentConfig?.enabled && (
+                <div style={{ background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 10, padding: '10px 14px', color: '#bfe9ff', fontSize: 13, fontFamily: "'Rajdhani', sans-serif" }}>
+                  This form requires a Razorpay payment of {formatAmount(paymentConfig.amount, paymentConfig.currency)} before submission.
+                </div>
+              )}
               {hasEditableResponse && (
                 <div data-testid="shared-form-edit-banner" style={{ background: 'rgba(255,220,120,0.08)', border: '1px solid rgba(255,220,120,0.24)', borderRadius: 10, padding: '10px 14px', color: '#ffe7a1', fontSize: 13, fontFamily: "'Rajdhani', sans-serif" }}>
                   You already submitted this form from this browser. Saving again will update your previous response.
@@ -338,7 +408,7 @@ function ApiFormView({ slug, onBack }: { slug: string; onBack: () => void }) {
               {currentPage ? renderPageRows(currentPage.fields, world, formValues, updateValue) : null}
               {submitError && <div style={{ background: 'rgba(255,60,60,0.1)', border: '1px solid rgba(255,60,60,0.3)', borderRadius: 8, padding: '10px 14px', color: '#ff8888', fontSize: 13, fontFamily: "'Rajdhani', sans-serif" }}>⚠ {submitError}</div>}
               <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${world.borderColor}66, transparent)`, marginTop: 8 }} />
-              <NavigationRow world={world} canGoBack={currentPageIndex > 0} isLastPage={isLastPage} onPrevious={() => setCurrentPageIndex((page) => Math.max(page - 1, 0))} onNext={() => setCurrentPageIndex((page) => Math.min(page + 1, pages.length - 1))} onSubmit={handleSubmit} isSubmitting={submit.isPending} submitLabel={hasEditableResponse ? '💾 UPDATE RESPONSE' : '🏃 SUBMIT FORM'} />
+              <NavigationRow world={world} canGoBack={currentPageIndex > 0} isLastPage={isLastPage} onPrevious={() => setCurrentPageIndex((page) => Math.max(page - 1, 0))} onNext={() => setCurrentPageIndex((page) => Math.min(page + 1, pages.length - 1))} onSubmit={handleSubmit} isSubmitting={submit.isPending || createPaymentOrder.isPending} submitLabel={hasEditableResponse ? '💾 UPDATE RESPONSE' : paymentRequired ? `Pay ${paymentConfig ? formatAmount(paymentConfig.amount, paymentConfig.currency) : ''} & Submit` : '🏃 SUBMIT FORM'} />
             </div>
           ) : (
             <div style={{ padding: '48px 26px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>

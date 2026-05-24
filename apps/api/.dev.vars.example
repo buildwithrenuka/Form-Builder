@@ -16,6 +16,12 @@ ALLOWED_ORIGINS=http://localhost:4173,http://localhost:4174,http://localhost:517
 # Public web app URL used in outbound emails
 APP_BASE_URL=http://localhost:5173
 
+# ── Razorpay Test Mode (Optional) ───────────────────────────────────────────
+# Use your Razorpay test dashboard keys here while integrating payments locally.
+# Leave blank to disable paid-form checkout in local development.
+RAZORPAY_KEY_ID=rzp_test_your_key_id
+RAZORPAY_KEY_SECRET=your_test_key_secret
+
 # ── Email Notifications (Optional) ──────────────────────────────────────────
 # Get your key at https://resend.com — free tier: 3,000 emails/month
 # For local testing, keep the default sender below unless you have verified your own domain in Resend.

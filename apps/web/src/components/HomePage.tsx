@@ -14,6 +14,7 @@ const HOME_GALLERY_PREVIEW_LIMIT = 6;
 
 type Props = {
   onEnter: () => void;
+  onEnablePayments?: (planId: 'adventurer' | 'legend') => void;
   onLogin?: () => void;
   onRegister?: () => void;
   onTutorial: () => void;
@@ -797,7 +798,7 @@ function JugnuCanvas({ active }: { active: boolean }) {
   return <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, opacity: 0.92 }} />;
 }
 
-export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, onPricing, onExplore, onViewForm, onDashboard, onAdmin, playerName, theme, onThemeChange }: Props) {
+export function HomePage({ onEnter, onEnablePayments, onLogin, onRegister, onTutorial, onApiDocs, onPricing, onExplore, onViewForm, onDashboard, onAdmin, playerName, theme, onThemeChange }: Props) {
   const [heroIn,    setHeroIn]    = useState(false);
   const [hovExp,    setHovExp]    = useState<number | null>(null);
   const [hovFeat,   setHovFeat]   = useState<number | null>(null);
@@ -1611,7 +1612,7 @@ export function HomePage({ onEnter, onLogin, onRegister, onTutorial, onApiDocs, 
         </div>
       </section>
 
-      <PricingSection sectionId="pricing" onEnter={handlePrimaryStart} embedded surface={theme === 'light' ? 'light' : 'dark'} />
+      <PricingSection sectionId="pricing" onEnter={handlePrimaryStart} onEnablePayments={onEnablePayments} embedded surface={theme === 'light' ? 'light' : 'dark'} />
 
       {previewModalExperience && (
         <div
